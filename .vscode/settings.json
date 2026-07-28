@@ -1,0 +1,36 @@
+{
+  "gitlab.featureFlags.flowBuilder": true,
+
+  // Save when focus leaves the editor. codeActionsOnSave (ESLint --fix below)
+  // does NOT run on "afterDelay" auto-saves, so onFocusChange is what makes
+  // the code reformat automatically on save.
+  "files.autoSave": "onFocusChange",
+
+  // ESLint is the single source of truth for both linting and formatting.
+  // Disable the built-in formatters so they don't fight ESLint's stylistic
+  // rules, and let ESLint fix everything (including formatting) on save.
+  "editor.formatOnSave": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+
+  // Fix the whole file on save (not just changed lines) and log the ESLint
+  // language server to the Output panel so save issues are diagnosable.
+  "eslint.codeActionsOnSave.mode": "all",
+  "eslint.run": "onType",
+  "eslint.debug": true,
+
+  // Don't auto-format with Prettier/built-in formatters for these languages;
+  // ESLint handles them on save via the action above.
+  "prettier.enable": false,
+  "eslint.useFlatConfig": true,
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "vue"
+  ],
+
+  // Use the workspace TypeScript version so types match the project.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}
