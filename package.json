@@ -44,7 +44,7 @@
     "@vueuse/nuxt": "14.3.0",
     "cloudinary": "^2.10.0",
     "drizzle-orm": "^0.45.2",
-    "nuxt": "^4.4.5",
+    "nuxt": "^4.5.1",
     "nuxt-auth-utils": "0.5.29",
     "nuxt-security": "2.6.0",
     "pinia": "^3.0.4",
