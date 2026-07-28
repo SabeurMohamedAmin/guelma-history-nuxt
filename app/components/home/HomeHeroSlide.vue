@@ -75,7 +75,7 @@ function getArticleLink(slug: string): string {
             rounded="lg"
             variant="flat"
           >
-            <div class="featured-image-wrapper position-relative">
+            <div class="featured-image-wrapper position-relative d-flex justify-end">
               <!-- This is the page's LCP element. `preload` emits a
                    <link rel="preload"> in the head and fetchpriority="high"
                    tells the browser to fetch it immediately instead of
@@ -98,29 +98,31 @@ function getArticleLink(slug: string): string {
                    covers exactly the image area. -->
               <div class="image-gradient-overlay"></div>
 
-              <v-chip
-                v-if="getCategoryName(featuredArticle)"
-                color="surface-variant"
-                size="small"
-                class="position-absolute top-0 end-0 ma-3 featured-badge"
-                variant="elevated"
-              >
-                {{ getCategoryName(featuredArticle) }}
-              </v-chip>
+              <div class="position-absolute top-0 d-flex justify-end w-100">
+                <v-chip
+                  v-if="getCategoryName(featuredArticle)"
+                  color="surface-variant"
+                  size="small"
+                  class="ma-2 py-0 featured-badge text-label-small text-md-body-small"
+                  variant="elevated"
+                >
+                  {{ getCategoryName(featuredArticle) }}
+                </v-chip>
 
-              <v-chip
-                color="primary"
-                size="small"
-                class="position-absolute top-0 start-0 ma-3"
-                variant="elevated"
-              >
-                <v-icon
-                  start
-                  size="x-small"
-                  icon="mdi-star"
-                />
-                {{ t('home.featured') }}
-              </v-chip>
+                <v-chip
+                  color="primary"
+                  size="small"
+                  class="ma-2 py-0 text-label-small text-md-body-small"
+                  variant="elevated"
+                >
+                  <v-icon
+                    start
+                    size="x-small"
+                    icon="mdi-star"
+                  />
+                  {{ t('home.featured') }}
+                </v-chip>
+              </div>
             </div>
 
             <div class="featured-content pa-6 pa-md-8 flex-grow-1 d-flex flex-column justify-center">
@@ -293,7 +295,7 @@ function getArticleLink(slug: string): string {
 
 .featured-badge {
   backdrop-filter: blur(8px);
-  background: rgba(var(--v-theme-surface), 0.9);
+  background: rgba(var(--v-theme-surface), 0.3);
 }
 
 /* Articles List Styles */

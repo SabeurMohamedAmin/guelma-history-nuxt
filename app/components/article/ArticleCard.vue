@@ -95,7 +95,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
             color="primary"
             variant="flat"
             label
-            class="article-card__category-badge"
+            class="article-card__category-badge text-label-small text-md-body-small py-0"
           >
             {{ categoryName }}
           </v-chip>
@@ -177,7 +177,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
           color="primary"
           variant="flat"
           label
-          class="article-card__category-badge"
+          class="article-card__category-badge text-label-small text-md-body-small py-0 start-0"
         >
           {{ categoryName }}
         </v-chip>
@@ -372,6 +372,10 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
   position: absolute;
   top: 10px;
   inset-inline-start: 10px; /* RTL-aware */
+  -webkit-backdrop-filter: blur(10px) brightness(.5);
+  backdrop-filter: blur(10px) brightness(.5);
+  background-color: rgb(var(--v-theme-surface) / 0.20);
+
 }
 
 /* ─── Bookmark toggle (over image, opposite the category badge) ─── */
