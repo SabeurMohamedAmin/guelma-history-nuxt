@@ -435,9 +435,9 @@ function toggleTheme() {
 }
 
 .app-header {
-  background-color: rgb(var(--v-theme-surface) / 0.90) !important;
-  backdrop-filter: blur(10px) brightness(0.75);
-  -webkit-backdrop-filter: blur(10px) brightness(0.75);
+  -webkit-backdrop-filter: blur(10px) brightness(.75);
+  backdrop-filter: blur(10px) brightness(.75);
+  background-color: rgb(var(--v-theme-surface) / 0.90);
   border-bottom: 1px solid rgb(var(--v-border-color) / 0.10) !important;
   transition:
     top 0.3s cubic-bezier(0.16, 1, 0.3, 1),
