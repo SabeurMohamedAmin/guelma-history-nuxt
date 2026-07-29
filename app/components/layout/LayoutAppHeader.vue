@@ -461,17 +461,13 @@ watch(
   transition-duration: 0ms !important;
 }
 
-.app-nav-drawer--locale-changing :deep(*) {
-  transition-duration: 0ms !important;
-}
-
 /* ── Drawer: "floating" style when page is scrolled ────────────── */
 .drw {
-  top: 75px !important;
+  top: 72px !important;
   height: calc(100vh - 90px) !important;
   border-radius: 16px !important;
   overflow: hidden !important;
-  padding-top: 10px;
+  padding-top: 0px;
 }
 
 .v-navigation-drawer--active.drw {
@@ -480,6 +476,10 @@ watch(
 
 #app-nav-drawer > * {
   width: 99%;
+}
+
+#app-nav-drawer {
+  min-height: 340px;
 }
 
 /* ── App bar: glass background + border ─────────────────────────── */
@@ -568,6 +568,7 @@ watch(
 }
 
 /* ── Glass background: fallback first, glass on @supports ── */
+/* ── Header and Drawer ── */
 .app-header,
 #app-nav-drawer {
   background-color: rgb(var(--v-theme-surface) / 0.94);
