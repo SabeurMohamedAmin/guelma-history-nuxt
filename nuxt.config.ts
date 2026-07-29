@@ -228,13 +228,47 @@ export default defineNuxtConfig({
         transformAssetUrls,
       },
     },
-    build: {
-      // One CSS bundle instead of ~23 per-component files (VList.css,
-      // VMenu.css, ...). Every split file is a render-blocking request on
-      // first paint; a single file is one request, cached after the first
-      // page load. Total CSS byte size is unchanged.
-      cssCodeSplit: false,
+
+    /* ------------------------------------------------------------------ */
+    /* CSS build pipeline                                                  */
+    /* ------------------------------------------------------------------ */
+    css: {
+      transformer: 'lightningcss',
+      lightningcss: {
+      // Without explicit targets, Lightning CSS assumes the OLDEST
+      // possible browsers and "helpfully" rewrites/strips modern
+      // properties — which is how the unprefixed `backdrop-filter`
+      // line disappeared from the production bundle while the
+      // -webkit- variant survived (dev mode skips minification, so
+      // the bug only shows after deploy).
+      //
+      // These targets match the browsers we actually support; with
+      // them, `backdrop-filter`, `@supports` and CSS custom
+      // properties are emitted untouched. Safari 15.4+ handles
+      // backdrop-filter UNPREFIXED, so keeping our hand-written
+      // -webkit- line in the source covers the older iOS versions.
+        targets: {
+          chrome: 100 << 16, // Chrome 100
+          edge: 100 << 16, // Edge 100
+          firefox: 103 << 16, // Firefox 103 (first with backdrop-filter)
+          safari: 15 << 16 | 4 << 8, // Safari 15.4
+          ios_saf: 15 << 16 | 4 << 8, // iOS Safari 15.4
+        },
+      },
     },
+
+    build: {
+    // One CSS bundle instead of ~23 per-component files (VList.css,
+    // VMenu.css, ...). Every split file is a render-blocking request on
+    // first paint; a single file is one request, cached after the first
+    // page load. Total CSS byte size is unchanged.
+      cssCodeSplit: false,
+
+      // Be explicit so a future Vite/Nuxt upgrade cannot silently switch
+      // the minifier back to esbuild with different behavior.
+      cssMinify: 'lightningcss',
+    },
+
     plugins: [
       vuetify({
         autoImport: true,

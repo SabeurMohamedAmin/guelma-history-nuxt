@@ -482,8 +482,8 @@ watch(
 .v-application .app-header,
 .v-application #app-nav-drawer {
   --glass-filter: blur(20px) brightness(0.7);
-  backdrop-filter: blur(20px) brightness(0.7);
-  -webkit-backdrop-filter: blur(20px) brightness(0.7);
+  backdrop-filter: blur(20px) brightness(0.7) !important;
+  -webkit-backdrop-filter: blur(20px) brightness(0.7) !important;
   background-color: rgba(var(--v-theme-surface), 0.4);
 }
 
