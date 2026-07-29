@@ -17,11 +17,23 @@ type ArticleDetail = {
   excerptAr?: string | null
   excerptFr?: string | null
   coverImage: string | null
+  coverImageVariants?: {
+    thumbnail: string
+    slider: string
+    main: string
+    original: string
+  } | null
   media?: Array<{
     type: 'image' | 'video' | 'youtube'
     url: string
     publicId?: string | null
     posterUrl?: string | null
+    imageVariants?: {
+      thumbnail: string
+      slider: string
+      main: string
+      original: string
+    } | null
     captionAr?: string | null
     captionFr?: string | null
   }> | null
@@ -165,11 +177,17 @@ const mediaItems = computed<MediaItem[]>(() => {
         src: item.url,
         publicId: item.publicId ?? undefined,
         poster: item.posterUrl ?? undefined,
+        imageVariants: item.imageVariants ?? undefined,
         alt: caption || title.value,
       }
     })
   }
-  return [{ type: 'image', src: coverImage.value, alt: title.value }]
+  return [{
+    type: 'image',
+    src: article.value?.coverImageVariants?.main || coverImage.value,
+    imageVariants: article.value?.coverImageVariants ?? undefined,
+    alt: title.value,
+  }]
 })
 
 useSeoMeta({
@@ -373,7 +391,7 @@ useHead(() => ({
 
         <div class="article-hero-media">
           <ArticleHero
-            :image-url="coverImage"
+            :image-url="article.coverImageVariants?.main || coverImage"
             :alt="title"
           />
         </div>

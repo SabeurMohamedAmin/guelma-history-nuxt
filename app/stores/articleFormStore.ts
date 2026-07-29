@@ -541,7 +541,16 @@ export const useArticleFormStore = defineStore('articleForm', () => {
 
   // ─── Media gallery helpers ──────────────────────────────────────────────
   function addMedia(type: MediaFormItem['type'] = 'image') {
-    fields.media.push({ type, url: '', publicId: '', resourceType: null, posterUrl: '', captionAr: '', captionFr: '' })
+    fields.media.push({
+      type,
+      url: '',
+      publicId: '',
+      resourceType: null,
+      posterUrl: '',
+      imageVariants: null,
+      captionAr: '',
+      captionFr: '',
+    })
   }
 
   function removeMedia(index: number) {
