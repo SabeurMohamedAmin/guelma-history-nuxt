@@ -1,19 +1,16 @@
 <script setup lang="ts">
-/** The four criteria a result set can be narrowed by. */
-export type SearchFilterKey = 'q' | 'category' | 'dateFrom' | 'dateTo'
-</script>
+import type { SearchFilterKey } from '~~/shared/types/search'
 
-<script setup lang="ts">
 /**
  * SearchActiveFilters — the criteria behind the current results, as chips.
  *
  * Each chip removes one criterion, so users can widen a search without
- * scrolling back to the form. Renders nothing when no filter is active.
+ * scrolling back up to the form. Renders nothing when no filter is active.
  */
 const props = defineProps<{
   /** The submitted search term (not the live input value). */
   q: string
-  /** Category name already resolved in the active locale. */
+  /** Category name, already resolved in the active locale. */
   categoryLabel: string | null
   dateFrom: string | null
   dateTo: string | null

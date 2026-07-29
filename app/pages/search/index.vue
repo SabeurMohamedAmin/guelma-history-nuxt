@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CategoryTree } from '~~/shared/types/category'
+import type { SearchFilterKey } from '~~/shared/types/search'
 import type { DisplayMode } from '~~/app/constants/articleSort'
-import type { SearchFilterKey } from '~/components/search/SearchActiveFilters.vue'
 
 const { t, locale } = useI18n()
 
