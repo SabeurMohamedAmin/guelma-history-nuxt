@@ -13,7 +13,8 @@
  */
 import { useTheme } from 'vuetify'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
 const localePath = useLocalePath()
 const route = useRoute()
 const vuetifyTheme = useTheme()
@@ -65,6 +66,27 @@ function toggleTheme() {
   vuetifyTheme.change(next)
   themeCookie.value = next
 }
+
+const isRtl = computed(() => locale.value === 'ar')
+
+const isLocaleChanging = ref(false)
+
+watch(
+  () => locale.value,
+  () => {
+    if (!import.meta.client) {
+      return
+    }
+
+    isLocaleChanging.value = true
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        isLocaleChanging.value = false
+      })
+    })
+  },
+)
 </script>
 
 <template>
@@ -332,10 +354,13 @@ function toggleTheme() {
   <v-navigation-drawer
     id="app-nav-drawer"
     v-model="drawer"
-    location="end"
+    :location="isRtl ? 'right' : 'left'"
     width="300"
     temporary
-    :class="{ drw: isScrolled }"
+    :class="[
+      { drw: isScrolled },
+      { 'app-nav-drawer--locale-changing': isLocaleChanging },
+    ]"
   >
     <template #prepend>
       <div class="d-flex align-center justify-space-between px-4 py-1">
@@ -419,6 +444,14 @@ function toggleTheme() {
 </template>
 
 <style scoped>
+.app-nav-drawer--locale-changing {
+  transition-duration: 0ms !important;
+}
+
+.app-nav-drawer--locale-changing :deep(*) {
+  transition-duration: 0ms !important;
+}
+
 .drw {
   top: 75px !important;
   border-radius: 16px !important;
@@ -528,12 +561,5 @@ function toggleTheme() {
   box-shadow:
   0 4px 6px rgb(0 0 0 / 0.06),
   0 12px 24px rgb(0 0 0 / 0.10) !important;
-}
-
-@media (max-width: 599.98px) {
-  .general-nav-width {
-    min-width: 350px !important;
-    border: 1px solid rgb(var(--v-border-color) / 0.12);
-  }
 }
 </style>
