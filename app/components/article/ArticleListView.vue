@@ -66,6 +66,8 @@ const props = withDefaults(defineProps<{
   categoriesEndpoint: string
   /** Delete handler, required when `editable`. */
   deleteArticle?: (slug: string) => Promise<unknown>
+  /** Admin-only curated home-page position setter. */
+  setHomePosition?: (slug: string, position: number | null) => Promise<unknown>
 }>(), {
   showStatusFilter: true,
   publicBasePath: '/articles',
@@ -114,6 +116,14 @@ const categoryOptions = computed(() =>
   categories.value.map(category => ({ value: category.slug, title: category.nameAr })),
 )
 
+const homePositionOptions = [
+  { value: null, title: 'Not featured' },
+  { value: 0, title: 'Main article' },
+  { value: 1, title: 'Sub-main 1' },
+  { value: 2, title: 'Sub-main 2' },
+  { value: 3, title: 'Sub-main 3' },
+]
+
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / PER_PAGE)))
 
 const tableHeaders = computed(() => [
@@ -122,6 +132,7 @@ const tableHeaders = computed(() => [
   { title: t('article.titleFr'), key: 'titleFr', sortable: false },
   { title: t('nav.categories'), key: 'category', sortable: false },
   { title: t('article.publishedAt'), key: 'publishedAt', sortable: false },
+  ...(props.setHomePosition ? [{ title: 'Home page', key: 'homePosition', sortable: false, width: '170' }] : []),
   { title: '', key: 'actions', sortable: false, align: 'end' as const },
 ])
 
@@ -229,6 +240,19 @@ async function onDeleteConfirm() {
 function promptDelete(slug: string) {
   deletingSlug.value = slug
   deleteDialog.value = true
+}
+
+async function updateHomePosition(article: ArticleResponse, position: number | null) {
+  if (!props.setHomePosition) return
+
+  try {
+    await props.setHomePosition(article.slug, position)
+    notify('Home-page placement updated.')
+    await loadArticles()
+  }
+  catch {
+    notify('Could not update the home-page placement.', 'error')
+  }
 }
 
 function notify(text: string, color: 'success' | 'error' = 'success') {
@@ -473,6 +497,18 @@ onMounted(() => {
           >
             {{ t('admin.draft') }}
           </v-chip>
+        </template>
+
+        <template #[`item.homePosition`]="{ item }">
+          <v-select
+            :model-value="item.homePosition"
+            :items="homePositionOptions"
+            density="compact"
+            variant="outlined"
+            hide-details
+            :disabled="!item.publishedAt"
+            @update:model-value="updateHomePosition(item, $event)"
+          />
         </template>
 
         <template #[`item.actions`]="{ item }">

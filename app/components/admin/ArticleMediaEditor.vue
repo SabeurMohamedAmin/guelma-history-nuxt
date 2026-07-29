@@ -69,6 +69,7 @@ async function onFileSelected(event: Event, index: number) {
   item.url = result.url
   item.publicId = result.publicId
   item.resourceType = result.resourceType
+  item.imageVariants = result.imageVariants
   item.type = result.type
   if (result.posterUrl && !item.posterUrl) item.posterUrl = result.posterUrl
 }

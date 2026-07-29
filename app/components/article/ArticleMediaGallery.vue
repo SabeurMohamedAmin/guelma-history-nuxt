@@ -27,6 +27,12 @@ export interface MediaItem {
   publicId?: string
   /** Optional poster image shown for videos before playback. */
   poster?: string
+  imageVariants?: {
+    thumbnail: string
+    slider: string
+    main: string
+    original: string
+  }
   /** Accessible label / caption. */
   alt?: string
 }
@@ -114,7 +120,7 @@ function thumbUsesCloudinary(item: MediaItem): item is MediaItem & { publicId: s
 
 // Resolve the thumbnail shown in the strip for non-Cloudinary items.
 function thumbnailFor(item: MediaItem): string {
-  if (item.type === 'image') return item.src
+  if (item.type === 'image') return item.imageVariants?.thumbnail || item.src
   if (item.type === 'youtube') return item.poster || youTubeThumbnail(item.src) || item.src
   return item.poster || item.src
 }
@@ -507,7 +513,7 @@ async function copyCurrent() {
           />
           <NuxtImg
             v-else-if="activeItem?.type === 'image'"
-            :src="activeItem.src"
+            :src="activeItem.imageVariants?.original || activeItem.src"
             :alt="labelFor(activeItem, lightboxIndex)"
             class="article-lightbox__img rounded-lg"
             :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }"

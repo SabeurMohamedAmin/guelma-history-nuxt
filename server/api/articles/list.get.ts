@@ -109,6 +109,8 @@ export default defineEventHandler(async (event) => {
       titleFr: articles.titleFr,
       slug: articles.slug,
       coverImage: articles.coverImage,
+      coverImageVariants: articles.coverImageVariants,
+      homePosition: articles.homePosition,
       publishedAt: articles.publishedAt,
       readingTime: articles.readingTime,
       viewCount: articles.viewCount,

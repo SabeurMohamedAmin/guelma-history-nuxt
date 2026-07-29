@@ -31,7 +31,10 @@ async function onCoverSelected(event: Event) {
     store.endMediaUpload()
   }
 
-  if (result) store.fields.coverImage = result.url
+  if (result) {
+    store.fields.coverImage = result.url
+    store.fields.coverImageVariants = result.imageVariants
+  }
 }
 
 // ─── Reading time control ───────────────────────────────────────────────────
@@ -183,7 +186,7 @@ function stepReadingTime(delta: number) {
             color="error"
             variant="flat"
             class="cover-remove"
-            @click="store.fields.coverImage = ''"
+            @click="store.fields.coverImage = ''; store.fields.coverImageVariants = null"
           />
         </div>
         <button

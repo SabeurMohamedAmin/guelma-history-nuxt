@@ -8,7 +8,7 @@
  * the "My articles" window at /admin/articles.
  */
 
-const { fetchArticles, deleteArticle, loading, error } = useAdminArticles()
+const { fetchArticles, deleteArticle, setHomePosition, loading, error } = useAdminArticles()
 
 // keepalive: preserve scroll + state on return. Distinct key from the
 // "My articles" page so the shared component is cached per window.
@@ -24,6 +24,7 @@ definePageMeta({
   <ArticleListView
     :fetcher="fetchArticles"
     :delete-article="deleteArticle"
+    :set-home-position="setHomePosition"
     :loading="loading"
     :error="error"
     editable

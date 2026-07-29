@@ -56,8 +56,17 @@ const articles = computed<ArticleListItem[]>(() => {
 
 const hasArticles = computed(() => articles.value.length > 0)
 
-// Hero shows the four most recent articles; the sidebar shows five.
-const heroArticles = computed(() => allArticles.value.slice(0, 4))
+// Curated positions win. Empty positions gracefully fall back to recent
+// published articles so the hero always remains complete during setup.
+const heroArticles = computed(() => {
+  const selected = [...allArticles.value]
+    .filter(article => article.homePosition !== null)
+    .sort((a, b) => (a.homePosition ?? 99) - (b.homePosition ?? 99))
+
+  const selectedIds = new Set(selected.map(article => article.id))
+  const fallback = allArticles.value.filter(article => !selectedIds.has(article.id))
+  return [...selected, ...fallback].slice(0, 4)
+})
 const recentArticles = computed(() => allArticles.value.slice(0, 5))
 
 // Cap the main list so the home page stays a curated preview, not a full feed.

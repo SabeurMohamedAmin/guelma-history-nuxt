@@ -82,7 +82,7 @@ function getArticleLink(slug: string): string {
                    queuing it behind CSS/JS (the 6.7s "resource load delay"
                    Lighthouse reported). -->
               <NuxtImg
-                :src="featuredArticle.coverImage || '/og-default.jpg'"
+                :src="featuredArticle.coverImageVariants?.slider || featuredArticle.coverImage || '/og-default.jpg'"
                 :alt="getTitle(featuredArticle)"
                 cover
                 class="featured-image"
@@ -183,7 +183,7 @@ function getArticleLink(slug: string): string {
                     <!-- lazy: these small thumbnails must not compete with
                          the featured (LCP) image for bandwidth at startup. -->
                     <NuxtImg
-                      :src="article.coverImage || '/og-default.jpg'"
+                      :src="article.coverImageVariants?.thumbnail || article.coverImage || '/og-default.jpg'"
                       :alt="getTitle(article)"
                       cover
                       height="100%"

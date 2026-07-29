@@ -4,6 +4,13 @@
 // serializes it as a JSON NUMBER and it stays a number on the client. Only
 // switch these to digit strings if the column is ever widened to INT8.
 
+export interface ImageVariants {
+  thumbnail: string
+  slider: string
+  main: string
+  original: string
+}
+
 export interface Article {
   id: number
   titleAr: string
@@ -30,6 +37,8 @@ export interface ArticleListItem {
   titleFr: string
   slug: string
   coverImage: string | null
+  coverImageVariants: ImageVariants | null
+  homePosition: number | null
   publishedAt: Date | null
   readingTime: number
   viewCount: number

@@ -7,7 +7,7 @@
  * "All articles" window at /admin/articles/all. Both render <ArticleListView>.
  */
 
-const { fetchMyArticles, deleteArticle, loading, error } = useAdminArticles()
+const { fetchMyArticles, deleteArticle, setHomePosition, loading, error } = useAdminArticles()
 
 // keepalive: caches this instance so returning from an edit restores scroll +
 // state without re-searching. Distinct key keeps it separate from the
@@ -24,6 +24,7 @@ definePageMeta({
   <ArticleListView
     :fetcher="fetchMyArticles"
     :delete-article="deleteArticle"
+    :set-home-position="setHomePosition"
     :loading="loading"
     :error="error"
     editable

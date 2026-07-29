@@ -1,4 +1,5 @@
 import type { CreateArticleInput, UpdateArticleInput, ArticlesQueryInput } from '~~/server/validators/article.validator'
+import type { ImageVariants } from '~~/shared/types/article'
 
 /**
  * Server-side article types.
@@ -19,6 +20,7 @@ export interface ArticleMediaResponse {
   publicId: string | null
   resourceType: 'image' | 'video' | null
   posterUrl: string | null
+  imageVariants: ImageVariants | null
   captionAr: string | null
   captionFr: string | null
   position: number
@@ -45,6 +47,8 @@ export interface ArticleResponse {
   bodyAr: string
   bodyFr: string
   coverImage: string | null
+  coverImageVariants: ImageVariants | null
+  homePosition: number | null
   publishedAt: Date | null
   readingTime: number
   createdAt: Date

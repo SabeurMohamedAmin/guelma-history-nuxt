@@ -77,6 +77,13 @@ export function useAdminArticles() {
     )
   }
 
+  function setHomePosition(slug: string, position: number | null) {
+    return run(() => $fetch(`/api/admin/articles/${slug}/home-position`, {
+      method: 'PATCH',
+      body: { position },
+    }))
+  }
+
   return {
     loading: readonly(loading),
     error: readonly(error),
@@ -86,5 +93,6 @@ export function useAdminArticles() {
     createArticle,
     updateArticle,
     deleteArticle,
+    setHomePosition,
   }
 }

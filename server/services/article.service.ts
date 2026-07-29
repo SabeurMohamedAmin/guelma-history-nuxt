@@ -368,6 +368,7 @@ export class ArticleService {
       publicId: item.publicId?.trim() || null,
       resourceType: item.resourceType ?? null,
       posterUrl: item.posterUrl?.trim() || null,
+      imageVariants: item.imageVariants ?? null,
       captionAr: item.captionAr?.trim() || null,
       captionFr: item.captionFr?.trim() || null,
       position: item.position ?? index,
@@ -416,6 +417,8 @@ export class ArticleService {
       bodyAr: row.bodyAr,
       bodyFr: row.bodyFr,
       coverImage: row.coverImage ?? null,
+      coverImageVariants: row.coverImageVariants ?? null,
+      homePosition: row.homePosition ?? null,
       // No flat categoryId/authorId: the ids ship inside `category`/`author`
       // below (see the notice on ArticleResponse).
       publishedAt: row.publishedAt ?? null,
@@ -441,6 +444,7 @@ export class ArticleService {
         publicId: m.publicId ?? null,
         resourceType: m.resourceType ?? null,
         posterUrl: m.posterUrl ?? null,
+        imageVariants: m.imageVariants ?? null,
         captionAr: m.captionAr ?? null,
         captionFr: m.captionFr ?? null,
         position: m.position ?? 0,

@@ -13,6 +13,13 @@ import { z } from 'zod'
 
 const slugRegex = /^[\w\u0600-\u06FF]+(?:[-][\w\u0600-\u06FF]+)*$/
 
+const imageVariantsSchema = z.object({
+  thumbnail: z.string().url(),
+  slider: z.string().url(),
+  main: z.string().url(),
+  original: z.string().url(),
+})
+
 /**
  * A single gallery media item: an image, an uploaded video, or a YouTube link.
  * `url` holds the file/page URL (or the YouTube watch/share URL).
@@ -23,6 +30,7 @@ export const mediaItemSchema = z.object({
   publicId: z.string().trim().min(1).nullable().optional(),
   resourceType: z.enum(['image', 'video']).nullable().optional(),
   posterUrl: z.string().trim().min(1).nullable().optional(),
+  imageVariants: imageVariantsSchema.nullable().optional(),
   captionAr: z.string().max(255).nullable().optional(),
   captionFr: z.string().max(255).nullable().optional(),
   position: z.number().int().min(0).optional(),
@@ -47,6 +55,7 @@ export const createArticleSchema = z.object({
   bodyAr: z.string().trim().min(1, 'Arabic body content is required'),
   bodyFr: z.string().trim().min(1, 'French body content is required'),
   coverImage: z.string().min(1).nullable().optional(),
+  coverImageVariants: imageVariantsSchema.nullable().optional(),
   categoryId: relationId,
   authorId: relationId,
   publishedAt: z.coerce.date().nullable().optional(),

@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useFetch, useRouter } from '#app'
 import type { ArticleResponse } from '~~/server/types/article.types'
+import type { ImageVariants } from '~~/shared/types/article'
 
 interface SelectOption {
   id: number
@@ -21,6 +22,7 @@ export interface MediaFormItem {
    */
   resourceType: 'image' | 'video' | null
   posterUrl: string
+  imageVariants: ImageVariants | null
   captionAr: string
   captionFr: string
 }
@@ -34,6 +36,7 @@ interface ArticleFormFields {
   bodyAr: string
   bodyFr: string
   coverImage: string
+  coverImageVariants: ImageVariants | null
   categoryId: number | null
   authorId: number | null
   publishedAt: string | null
@@ -69,6 +72,7 @@ const createEmptyFields = (): ArticleFormFields => ({
   bodyAr: '',
   bodyFr: '',
   coverImage: '',
+  coverImageVariants: null,
   categoryId: null,
   authorId: null,
   publishedAt: null,
@@ -285,6 +289,7 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     fields.bodyAr = article.bodyAr ?? ''
     fields.bodyFr = article.bodyFr ?? ''
     fields.coverImage = article.coverImage ?? ''
+    fields.coverImageVariants = article.coverImageVariants ?? null
     // The response has no flat categoryId/authorId: the selects are bound to the
     // ids carried by the relation objects. Saving still sends categoryId /
     // authorId, see buildPayload().
@@ -298,6 +303,7 @@ export const useArticleFormStore = defineStore('articleForm', () => {
       publicId: item.publicId ?? '',
       resourceType: item.resourceType ?? null,
       posterUrl: item.posterUrl ?? '',
+      imageVariants: item.imageVariants ?? null,
       captionAr: item.captionAr ?? '',
       captionFr: item.captionFr ?? '',
     }))
@@ -313,6 +319,7 @@ export const useArticleFormStore = defineStore('articleForm', () => {
       excerptAr: fields.excerptAr.trim() || null,
       excerptFr: fields.excerptFr.trim() || null,
       coverImage: fields.coverImage.trim() || null,
+      coverImageVariants: fields.coverImageVariants,
       categoryId: toId(fields.categoryId),
       authorId: toId(fields.authorId),
       readingTime: fields.readingTime && fields.readingTime > 0 ? fields.readingTime : undefined,
@@ -326,6 +333,7 @@ export const useArticleFormStore = defineStore('articleForm', () => {
           publicId: item.publicId.trim() || null,
           resourceType: item.resourceType,
           posterUrl: item.posterUrl.trim() || null,
+          imageVariants: item.imageVariants,
           captionAr: item.captionAr.trim() || null,
           captionFr: item.captionFr.trim() || null,
           position: index,

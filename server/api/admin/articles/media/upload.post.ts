@@ -1,3 +1,4 @@
+import sharp from 'sharp'
 import { requireAdmin } from '~~/server/utils/auth'
 import { uploadToCloudinary } from '~~/server/utils/cloudinary'
 
@@ -45,15 +46,53 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'File is too large.' })
   }
 
-  const uploaded = await uploadToCloudinary(filePart.data)
+  // Videos keep their original upload path. Images are normalized once with
+  // Sharp and stored as purpose-built WebP files, avoiding a 1024px source in
+  // every thumbnail while retaining a high-quality original for the lightbox.
+  if (!type.startsWith('image/')) {
+    const uploaded = await uploadToCloudinary(filePart.data)
+    return {
+      url: uploaded.url,
+      type: 'video' as const,
+      posterUrl: uploaded.posterUrl,
+      publicId: uploaded.publicId,
+      resourceType: 'video' as const,
+      imageVariants: null,
+    }
+  }
+
+  const baseId = `image-${Date.now()}-${crypto.randomUUID()}`
+  const definitions = {
+    thumbnail: { width: 320, quality: 72 },
+    slider: { width: 960, quality: 80 },
+    main: { width: 1280, quality: 84 },
+    original: { width: 2000, quality: 90 },
+  } as const
+
+  const entries = await Promise.all(Object.entries(definitions).map(async ([name, options]) => {
+    const buffer = await sharp(filePart.data, { failOn: 'error' })
+      .rotate()
+      .resize({ width: options.width, withoutEnlargement: true })
+      .webp({ quality: options.quality })
+      .toBuffer()
+    const uploaded = await uploadToCloudinary(buffer, 'articles', `${baseId}-${name}`)
+    return [name, uploaded] as const
+  }))
+
+  const variants = Object.fromEntries(entries.map(([name, result]) => [name, result.url])) as {
+    thumbnail: string
+    slider: string
+    main: string
+    original: string
+  }
+  const originalUpload = entries.find(([name]) => name === 'original')![1]
 
   return {
-    url: uploaded.url,
-    type: uploaded.resourceType === 'video' ? 'video' : 'image',
-    posterUrl: uploaded.posterUrl,
-    publicId: uploaded.publicId,
-    // Persisted alongside the gallery item so deletion later targets the exact
-    // Cloudinary resource_type instead of guessing from the display type.
-    resourceType: uploaded.resourceType === 'video' ? 'video' : 'image',
+    url: variants.main,
+    type: 'image' as const,
+    posterUrl: null,
+    publicId: originalUpload.publicId,
+    resourceType: 'image' as const,
+    imageVariants: variants,
   }
 })

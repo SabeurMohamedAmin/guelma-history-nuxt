@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, text, serial, integer, timestamp, jsonb } from 'drizzle-orm/pg-core'
 import { categories } from './categories'
 import { authors } from './authors'
 import { users } from './users'
@@ -14,6 +14,15 @@ export const articles = pgTable('articles', {
   bodyAr: text('body_ar').notNull().default(''),
   bodyFr: text('body_fr').notNull().default(''),
   coverImage: text('cover_image'),
+  coverImageVariants: jsonb('cover_image_variants').$type<{
+    thumbnail: string
+    slider: string
+    main: string
+    original: string
+  }>(),
+  // 0 is the main home-page story; 1..3 are the three supporting stories.
+  // Null means the article is not curated for the home-page hero.
+  homePosition: integer('home_position'),
   categoryId: integer('category_id').references(() => categories.id),
   // Editorial byline (display only): whose name appears on the article. May be
   // shared across accounts or set by an admin to any author. NOT an owner.

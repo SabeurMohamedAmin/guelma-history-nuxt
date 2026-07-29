@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, serial, integer, text, timestamp, jsonb } from 'drizzle-orm/pg-core'
 import { articles } from './articles'
 
 /**
@@ -30,6 +30,12 @@ export const articleMedia = pgTable('article_media', {
   // inferring the type from `type`).
   resourceType: text('resource_type', { enum: ['image', 'video'] }),
   posterUrl: text('poster_url'),
+  imageVariants: jsonb('image_variants').$type<{
+    thumbnail: string
+    slider: string
+    main: string
+    original: string
+  }>(),
   captionAr: text('caption_ar'),
   captionFr: text('caption_fr'),
   position: integer('position').notNull().default(0),

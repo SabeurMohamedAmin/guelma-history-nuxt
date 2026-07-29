@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
+import type { ImageVariants } from '~~/shared/types/article'
 
 /**
  * Client helper for uploading a gallery media file (image or video) to
@@ -21,6 +22,7 @@ export interface MediaUploadResult {
    * item so a later delete targets the exact resource instead of guessing.
    */
   resourceType: 'image' | 'video'
+  imageVariants: ImageVariants | null
 }
 
 /** Native file input accept attribute: any image or video. */
