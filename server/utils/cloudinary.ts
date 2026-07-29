@@ -98,13 +98,17 @@ export async function destroyManyFromCloudinary(assets: CloudinaryAsset[]): Prom
 export async function uploadToCloudinary(
   data: Buffer,
   folder = 'articles',
-  publicId?: string,
+  requestedPublicId?: string,
 ): Promise<CloudinaryUploadResult> {
   const client = getClient()
 
   const result = await new Promise<Record<string, unknown>>((resolve, reject) => {
     const stream = client.uploader.upload_stream(
-      { folder, resource_type: 'auto', ...(publicId ? { public_id: publicId } : {}) },
+      {
+        folder,
+        resource_type: 'auto',
+        ...(requestedPublicId ? { public_id: requestedPublicId } : {}),
+      },
       (error, uploaded) => {
         if (error || !uploaded) {
           reject(error ?? new Error('Cloudinary upload failed.'))
