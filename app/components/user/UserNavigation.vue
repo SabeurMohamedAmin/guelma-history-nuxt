@@ -104,10 +104,12 @@ function toggleTheme() {
           />
         </v-btn>
 
+        <!-- `data-search-activator` lets <LayoutAppSearch> anchor itself here. -->
         <v-btn
           icon
           variant="text"
           size="small"
+          data-search-activator
           :aria-label="t('nav.search')"
           @click="uiStore.openSearch()"
         >
@@ -278,10 +280,12 @@ function toggleTheme() {
         />
       </v-btn>
 
+      <!-- `data-search-activator` lets <LayoutAppSearch> anchor itself here. -->
       <v-btn
         icon
         variant="text"
         size="small"
+        data-search-activator
         :aria-label="t('nav.search')"
         @click="uiStore.openSearch()"
       >
