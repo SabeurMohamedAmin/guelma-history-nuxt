@@ -27,7 +27,7 @@ const articleData = [
     slug: 'calama-thagaste-saint-augustin',
     excerptAr: 'كانت كالاما (قالمة) محطة بارزة في رحلات القديس أوغسطين، وأحد أهم المراكز المسيحية في نوميديا القديمة.',
     excerptFr: 'Calama (Guelma) fut une étape importante dans le parcours de Saint Augustin et un grand centre chrétien de l\'antique Numidie.',
-    body: `# كالاما على خطى القديس أوغسطين
+    bodyAr: `# كالاما على خطى القديس أوغسطين
 
 كانت مدينة كالاما، الاسم القديم لقالمة، واحدة من أهم المدن المسيحية في مقاطعة نوميديا خلال القرنين الرابع والخامس الميلاديين.
 
@@ -54,7 +54,7 @@ const articleData = [
     slug: 'barrage-hammam-debagh',
     excerptAr: 'يُعد سد حمام دباغ من أكبر السدود في الجزائر، ويلعب دوراً حيوياً في الري وتزويد المنطقة بالمياه.',
     excerptFr: 'Le barrage de Hammam Debagh, l\'un des plus grands d\'Algérie, joue un rôle vital dans l\'irrigation et l\'alimentation en eau de la région.',
-    body: `# سد حمام دباغ
+    bodyAr: `# سد حمام دباغ
 
 يقع سد حمام دباغ على وادي بوهمدان شمال غرب مدينة قالمة، ويُعد من أكبر السدود الترابية في الجزائر.
 
@@ -81,7 +81,7 @@ const articleData = [
     slug: 'cascade-chaude-guelma',
     excerptAr: 'يشكّل الشلال الحار بحمام دباغ ظاهرة طبيعية نادرة، حيث ترسبت المياه المعدنية على مر القرون مكوّنة جروفاً بيضاء مبهرة.',
     excerptFr: 'La cascade chaude de Hammam Debagh est un phénomène naturel rare, où les eaux minérales ont sculpté au fil des siècles d\'éblouissantes falaises blanches.',
-    body: `# الشلال الحار بقالمة
+    bodyAr: `# الشلال الحار بقالمة
 
 يُعد الشلال الحار في حمام دباغ من أبرز المعالم الطبيعية في ولاية قالمة، ويجذب الزوار من كل مكان.
 
@@ -108,7 +108,7 @@ const articleData = [
     slug: 'moudjahidine-guelma-guerre-liberation',
     excerptAr: 'لعبت منطقة قالمة دوراً محورياً في الثورة التحريرية، وأنجبت العديد من المجاهدين الذين ضحّوا في سبيل استقلال الجزائر.',
     excerptFr: 'La région de Guelma a joué un rôle central dans la guerre de libération et a donné de nombreux moudjahidine tombés pour l\'indépendance de l\'Algérie.',
-    body: `# مجاهدو قالمة في حرب التحرير
+    bodyAr: `# مجاهدو قالمة في حرب التحرير
 
 شكّلت منطقة قالمة إحدى ساحات الكفاح المسلح خلال الثورة التحريرية الجزائرية (1954-1962).
 
@@ -139,7 +139,7 @@ const articleData = [
     slug: 'artisanat-traditionnel-guelma',
     excerptAr: 'من النسيج إلى الفخار والنحاس، حافظت قالمة على حرف تقليدية تعكس هوية المنطقة وذوق سكانها.',
     excerptFr: 'Du tissage à la poterie et au cuivre, Guelma a préservé des métiers traditionnels qui reflètent l\'identité de la région.',
-    body: `# الصناعات التقليدية في قالمة
+    bodyAr: `# الصناعات التقليدية في قالمة
 
 تزخر منطقة قالمة بتراث حرفي عريق توارثته الأجيال، ويشكّل جزءاً أصيلاً من هويتها الثقافية.
 
@@ -170,7 +170,7 @@ const articleData = [
     slug: 'cuisine-guelma',
     excerptAr: 'يعكس المطبخ القالمي ثراء الأرض وتنوّع موارد المنطقة، من الأطباق الموسمية إلى الحلويات التقليدية.',
     excerptFr: 'La cuisine de Guelma reflète la richesse de la terre et la diversité des ressources de la région, des plats de saison aux pâtisseries traditionnelles.',
-    body: `# المطبخ القالمي
+    bodyAr: `# المطبخ القالمي
 
 يُعد المطبخ القالمي مرآة للحياة الريفية والفلاحية في المنطقة، حيث تتنوع الأطباق بتنوع المواسم.
 
@@ -201,7 +201,7 @@ const articleData = [
     slug: 'gare-guelma',
     excerptAr: 'شكّلت محطة القطار بقالمة نقطة وصل حيوية ربطت المدينة بالموانئ والمدن الكبرى منذ أواخر القرن التاسع عشر.',
     excerptFr: 'La gare de Guelma fut un point de jonction vital reliant la ville aux ports et grandes villes depuis la fin du XIXe siècle.',
-    body: `# محطة قطار قالمة
+    bodyAr: `# محطة قطار قالمة
 
 مثّلت السكة الحديدية أحد أبرز مظاهر التحوّل العمراني في قالمة منذ أواخر القرن التاسع عشر.
 
@@ -228,7 +228,7 @@ const articleData = [
     slug: 'independance-1962-guelma',
     excerptAr: 'في صيف 1962، عاشت قالمة كباقي مدن الجزائر لحظة تاريخية فارقة باسترجاع السيادة الوطنية بعد عقود من الاستعمار.',
     excerptFr: 'À l\'été 1962, Guelma a vécu, comme toute l\'Algérie, un moment historique avec le recouvrement de la souveraineté nationale.',
-    body: `# استقلال الجزائر 1962 في قالمة
+    bodyAr: `# استقلال الجزائر 1962 في قالمة
 
 شكّل الخامس من جويلية 1962 يوماً مشهوداً في تاريخ قالمة والجزائر بأسرها.
 

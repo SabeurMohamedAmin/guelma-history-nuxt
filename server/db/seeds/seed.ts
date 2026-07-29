@@ -115,7 +115,7 @@ const articleData = [
     slug: 'hammam-debagh-hippolis',
     excerptAr: 'تُعد حمامات دباغ من أقدم المنتجعات الحرارية في شمال أفريقيا، ويعود تاريخها إلى العصر الروماني عندما عُرفت باسم هيبوليس.',
     excerptFr: 'Les thermes de Hammam Debagh comptent parmi les plus anciennes stations thermales d\'Afrique du Nord, remontant à l\'époque romaine sous le nom d\'Hippolis.',
-    body: `# حمام دباغ: المنتجع الروماني هيبوليس
+    bodyAr: `# حمام دباغ: المنتجع الروماني هيبوليس
 
 تعد حمامات دباغ من أقدم المنتجعات الحرارية في شمال أفريقيا، حيث يعود تاريخها إلى العصر الروماني عندما كانت تُعرف باسم "هيبوليس". تقع على بعد 20 كيلومتراً شمال شرق مدينة قالمة.
 
@@ -142,7 +142,7 @@ const articleData = [
     slug: 'theatre-romain-guelma',
     excerptAr: 'يُعد المسرح الروماني بقالمة من أهم الآثار الرومانية في الجزائر، وشاهداً حياً على مدينة كالاما القديمة.',
     excerptFr: 'Le théâtre romain de Guelma est l\'un des plus importants vestiges romains d\'Algérie et un témoin vivant de l\'antique Calama.',
-    body: `# مسرح قالمة الروماني
+    bodyAr: `# مسرح قالمة الروماني
 
 يُعد المسرح الروماني بقالمة من أهم الآثار الرومانية في الجزائر، وهو شاهد حي على مدينة كالاما القديمة التي كانت من أبرز المدن في مقاطعة نوميديا الرومانية.
 
@@ -169,7 +169,7 @@ const articleData = [
     slug: 'massacres-8-mai-1945-guelma',
     excerptAr: 'تُعد مجازر 8 ماي 1945 من أبشع جرائم الاستعمار الفرنسي في الجزائر، وكانت في قالمة وحشية بشكل خاص.',
     excerptFr: 'Les massacres du 8 mai 1945 comptent parmi les pires crimes du colonialisme français en Algérie, d\'une violence particulière à Guelma.',
-    body: `# مجازر 8 ماي 1945 في قالمة
+    bodyAr: `# مجازر 8 ماي 1945 في قالمة
 
 تُعد مجازر 8 ماي 1945 من أبشع الجرائم التي ارتكبها الاستعمار الفرنسي في الجزائر. في قالمة، كانت المجزرة وحشية بشكل خاص، حيث قُتل آلاف الجزائريين العُزّل.
 
@@ -196,7 +196,7 @@ const articleData = [
     slug: 'banque-algerie-19e-siecle-guelma',
     excerptAr: 'شهدت قالمة خلال القرن التاسع عشر تطوراً عمرانياً كبيراً، ومن معالمه مبنى بنك الجزائر الذي لا يزال قائماً.',
     excerptFr: 'Au XIXe siècle, Guelma connut un essor urbain marqué, dont témoigne le bâtiment de la Banque d\'Algérie toujours debout.',
-    body: `# بنك الجزائر في القرن 19
+    bodyAr: `# بنك الجزائر في القرن 19
 
 شهدت مدينة قالمة خلال القرن التاسع عشر تطوراً عمرانياً ومؤسساتياً كبيراً، ومن بين المباني التي شُيّدت في تلك الفترة مبنى بنك الجزائر الذي لا يزال قائماً حتى اليوم.
 
@@ -223,7 +223,7 @@ const articleData = [
     slug: 'place-guelma-a-travers-ages',
     excerptAr: 'الساحة المركزية لقالمة من أقدم الفضاءات العمومية في المدينة، شهدت تحولات عديدة عبر الحقب التاريخية.',
     excerptFr: 'La place centrale de Guelma, l\'un des plus anciens espaces publics de la ville, a connu de nombreuses transformations au fil des époques.',
-    body: `# في قلب المدينة: ساحة قالمة عبر العصور
+    bodyAr: `# في قلب المدينة: ساحة قالمة عبر العصور
 
 تُعد الساحة المركزية لمدينة قالمة من أقدم الفضاءات العمومية في المدينة، وقد شهدت تحولات عديدة عبر مختلف الحقب التاريخية.
 
@@ -254,7 +254,7 @@ const articleData = [
     slug: 'fete-locale-guelma-1900',
     excerptAr: 'في مطلع القرن العشرين، شهدت قالمة احتفالات محلية تمزج بين التقاليد الجزائرية وطقوس المستوطنين الفرنسيين.',
     excerptFr: 'Au début du XXe siècle, Guelma vivait des fêtes locales mêlant traditions algériennes et rites introduits par les colons français.',
-    body: `# عيد المحلي: مهرجان من عبق التاريخ
+    bodyAr: `# عيد المحلي: مهرجان من عبق التاريخ
 
 في مطلع القرن العشرين، كانت مدينة قالمة تشهد احتفالات محلية تمزج بين التقاليد الجزائرية والطقوس التي أدخلها المستوطنون الفرنسيون.
 
@@ -281,7 +281,7 @@ const articleData = [
     slug: 'mokrani-ouled-saiha-resistance',
     excerptAr: 'تُعد ثورة المقراني عام 1871 من أكبر الانتفاضات الشعبية ضد الاستعمار الفرنسي، وشارك فيها أبناء قالمة بفعالية.',
     excerptFr: 'La révolte d\'El Mokrani de 1871 fut l\'un des plus grands soulèvements populaires contre le colonialisme français, auquel Guelma prit part activement.',
-    body: `# أحمد المقراني وأولاد سيحة في المقاومة
+    bodyAr: `# أحمد المقراني وأولاد سيحة في المقاومة
 
 تُعد ثورة المقراني عام 1871 من أكبر الانتفاضات الشعبية ضد الاستعمار الفرنسي في الجزائر، وقد شارك فيها أبناء منطقة قالمة بفعالية.
 
@@ -312,7 +312,7 @@ const articleData = [
     slug: 'evolution-poste-guelma',
     excerptAr: 'شهدت قالمة تطوراً عمرانياً ملحوظاً خلال القرنين التاسع عشر والعشرين، ومن أبرز معالمه مبنى البريد المركزي.',
     excerptFr: 'Guelma a connu un développement urbain notable aux XIXe et XXe siècles, illustré notamment par le bâtiment de la poste centrale.',
-    body: `# تطور مواطني مدينة قالمة
+    bodyAr: `# تطور مواطني مدينة قالمة
 
 شهدت مدينة قالمة تطوراً عمرانياً ملحوظاً خلال القرن التاسع عشر والعشرين، ومن أبرز المعالم التي تشهد على هذا التطور مبنى البريد المركزي.
 
@@ -339,7 +339,7 @@ const articleData = [
     slug: 'enseignement-coranique-guelma-19e',
     excerptAr: 'لعب التعليم القرآني دوراً محورياً في الحفاظ على الهوية الثقافية والدينية لسكان قالمة خلال الفترة الاستعمارية.',
     excerptFr: 'L\'enseignement coranique a joué un rôle central dans la préservation de l\'identité culturelle et religieuse des habitants de Guelma durant la période coloniale.',
-    body: `# قالمة والتعليم القرآني
+    bodyAr: `# قالمة والتعليم القرآني
 
 لعب التعليم القرآني دوراً محورياً في الحفاظ على الهوية الثقافية والدينية لسكان قالمة خلال الفترة الاستعمارية.
 
@@ -370,7 +370,7 @@ const articleData = [
     slug: 'nomination-bougimonini-guelma',
     excerptAr: 'تكشف الوثائق الإدارية الاستعمارية عن تفاصيل الحياة السياسية والإدارية في قالمة خلال القرن التاسع عشر.',
     excerptFr: 'Les archives administratives coloniales révèlent les détails de la vie politique et administrative de Guelma au XIXe siècle.',
-    body: `# يوم دائرة: تعيين جان بوجيمونيني في قالمة
+    bodyAr: `# يوم دائرة: تعيين جان بوجيمونيني في قالمة
 
 تكشف الوثائق الإدارية الاستعمارية عن تفاصيل الحياة السياسية والإدارية في قالمة خلال القرن التاسع عشر.
 
