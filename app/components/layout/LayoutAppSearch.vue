@@ -121,6 +121,7 @@ async function onSubmit() {
 <template>
   <v-dialog
     v-model="isOpen"
+    persistent
     max-width="760"
     scrim="rgba(15, 23, 42, 0.32)"
     :origin="transformOrigin"
@@ -217,10 +218,10 @@ async function onSubmit() {
               v-for="category in categories"
               :key="category.key"
               :to="category.to"
-              variant="flat"
+              variant="text"
               rounded="lg"
               size="small"
-              class="search-modal__chip"
+              class="search-modal__chip opacity-70 text-label-small text-sm-body-medium font-weight-thin"
               @click="close"
             >
               {{ category.title }}
@@ -248,7 +249,9 @@ async function onSubmit() {
     max-height: calc(100vh - var(--search-anchor-top) - 16px);
   }
 }
-
+.search-dialog{
+  top:52px;
+}
 .search-modal {
   background-color: rgb(var(--v-theme-surface));
   border-color: rgba(var(--v-border-color), 0.1) !important;
@@ -275,7 +278,6 @@ async function onSubmit() {
 .search-modal__chip {
   background-color: rgba(var(--v-theme-surface-variant), 0.32);
   border: 1px solid rgba(var(--v-border-color), 0.08);
-  font-weight: 500;
 }
 
 @media (max-width: 599px) {

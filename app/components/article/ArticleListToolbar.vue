@@ -39,7 +39,7 @@ function setDisplayMode(mode: DisplayMode) {
 
 <template>
   <div class="article-toolbar d-flex flex-wrap align-center justify-space-between ga-3">
-    <p class="text-body-2 text-medium-emphasis mb-0">
+    <p class="text-body-large align-center text-medium-emphasis my-0">
       {{ t('category.resultsCount', { count: props.total }) }}
     </p>
 
@@ -52,13 +52,13 @@ function setDisplayMode(mode: DisplayMode) {
             variant="tonal"
             color="primary"
             rounded="lg"
-            size="small"
-            class="text-none"
+            size="default"
+            class="text-none opacity-90 text-label-large text-sm-body-large"
           >
             <v-icon
               start
               icon="mdi-calendar-range"
-              size="18"
+              class="opacity-50 text-label-large text-sm-body-large"
             />
             {{ activeRangeLabel }}
             <v-icon
@@ -72,6 +72,7 @@ function setDisplayMode(mode: DisplayMode) {
         <v-list
           density="compact"
           min-width="180"
+          class="my-2"
         >
           <v-list-item
             v-for="preset in DATE_RANGE_PRESETS"
@@ -92,8 +93,8 @@ function setDisplayMode(mode: DisplayMode) {
             variant="tonal"
             color="primary"
             rounded="lg"
-            size="small"
-            class="text-none"
+            size="default"
+            class="text-none opacity-90 text-label-large text-sm-body-large"
           >
             <v-icon
               start
@@ -112,6 +113,7 @@ function setDisplayMode(mode: DisplayMode) {
         <v-list
           density="compact"
           min-width="200"
+          class="my-2"
         >
           <v-list-item
             v-for="option in ARTICLE_SORT_OPTIONS"
@@ -134,7 +136,7 @@ function setDisplayMode(mode: DisplayMode) {
       <v-btn-toggle
         :model-value="displayMode"
         color="primary"
-        density="comfortable"
+        density="compact"
         variant="outlined"
         rounded="lg"
         mandatory
@@ -142,17 +144,17 @@ function setDisplayMode(mode: DisplayMode) {
       >
         <v-btn
           value="grid"
-          size="small"
+          size="x-small"
           :aria-label="t('category.displayGrid')"
         >
-          <v-icon icon="mdi-view-grid-outline" />
+          <v-icon icon="mdi-view-grid-outline opacity-50" />
         </v-btn>
         <v-btn
           value="rows"
-          size="small"
+          size="x-small"
           :aria-label="t('category.displayRows')"
         >
-          <v-icon icon="mdi-view-sequential-outline" />
+          <v-icon icon="mdi-view-sequential-outline opacity-50" />
         </v-btn>
       </v-btn-toggle>
     </div>
