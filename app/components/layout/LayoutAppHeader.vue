@@ -478,15 +478,6 @@ watch(
   margin: 0 6px !important;
 }
 
-/* ── Drawer: glass background ───────────────────────────────────── */
-.v-application .app-header,
-.v-application #app-nav-drawer {
-  --glass-filter: blur(20px) brightness(0.7);
-  backdrop-filter: blur(20px) brightness(0.7) !important;
-  -webkit-backdrop-filter: blur(20px) brightness(0.7) !important;
-  background-color: rgba(var(--v-theme-surface), 0.4);
-}
-
 #app-nav-drawer > * {
   width: 99%;
 }
@@ -574,5 +565,44 @@ watch(
   box-shadow:
     0 4px 6px  rgb(0 0 0 / 0.06),
     0 12px 24px rgb(0 0 0 / 0.10) !important;
+}
+
+/* ── Glass background: fallback first, glass on @supports ── */
+.app-header,
+#app-nav-drawer {
+  background-color: rgb(var(--v-theme-surface) / 0.94);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .app-header,
+  #app-nav-drawer {
+    /* Define the filter ONCE as a custom property — Lightning CSS
+       does not inline or strip var() references, so both prefixed
+       and unprefixed lines survive the build. */
+    --glass-filter: blur(20px) brightness(0.7);
+
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+
+    background-color: rgb(var(--v-theme-surface) / 0.4);
+  }
+}
+
+/* ── Light mode: saturate keeps colors alive ── */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .v-theme--light .app-header,
+  .v-theme--light #app-nav-drawer {
+    --glass-filter: blur(20px) saturate(180%);
+    background-color: rgb(var(--v-theme-surface) / 0.7);
+  }
+}
+
+/* ── Dark mode: brightness dims the backdrop ── */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .v-theme--dark .app-header,
+  .v-theme--dark #app-nav-drawer {
+    --glass-filter: blur(20px) brightness(0.7);
+    background-color: rgb(var(--v-theme-surface) / 0.5);
+  }
 }
 </style>
