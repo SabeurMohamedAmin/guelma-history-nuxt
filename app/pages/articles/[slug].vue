@@ -12,7 +12,8 @@ type ArticleDetail = {
   titleAr: string
   titleFr: string
   slug: string
-  body: string
+  bodyAr: string
+  bodyFr: string
   excerptAr?: string | null
   excerptFr?: string | null
   coverImage: string | null
@@ -91,6 +92,15 @@ const excerpt = computed(() => {
   return isFrench.value
     ? article.value.excerptFr || article.value.excerptAr || ''
     : article.value.excerptAr || article.value.excerptFr || ''
+})
+
+// Localized body: FR readers get the French content, AR readers the Arabic
+// one, each falling back to the other language when a version is missing.
+const body = computed(() => {
+  if (!article.value) return ''
+  return isFrench.value
+    ? article.value.bodyFr || article.value.bodyAr
+    : article.value.bodyAr || article.value.bodyFr
 })
 
 const categoryName = computed(() => {
@@ -383,7 +393,7 @@ useHead(() => ({
             variant="flat"
           >
             <ArticleBody
-              :body="article.body"
+              :body="body"
               :title="title"
               :cover-image="coverImage"
               :media="mediaItems"

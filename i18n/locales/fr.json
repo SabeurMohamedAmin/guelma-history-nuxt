@@ -519,8 +519,7 @@
       "copyFromFr": "Copier depuis le français",
       "completion": "Progression de la traduction",
       "localized": "Contenu ({lang})",
-      "shared": "Contenu commun",
-      "sharedBodyHint": "Le contenu est partagé entre les langues pour l'instant. L'éditeur s'adapte au sens d'écriture de la langue sélectionnée."
+      "localizedBodyHint": "Chaque langue possède son propre contenu. Utilisez les onglets de langue ci-dessus pour rédiger l'autre version."
     },
     "media": {
       "title": "Galerie médias",

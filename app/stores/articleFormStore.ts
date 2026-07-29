@@ -31,7 +31,8 @@ interface ArticleFormFields {
   slug: string
   excerptAr: string
   excerptFr: string
-  body: string
+  bodyAr: string
+  bodyFr: string
   coverImage: string
   categoryId: number | null
   authorId: number | null
@@ -65,7 +66,8 @@ const createEmptyFields = (): ArticleFormFields => ({
   slug: '',
   excerptAr: '',
   excerptFr: '',
-  body: '',
+  bodyAr: '',
+  bodyFr: '',
   coverImage: '',
   categoryId: null,
   authorId: null,
@@ -280,7 +282,8 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     fields.slug = article.slug ?? ''
     fields.excerptAr = article.excerptAr ?? ''
     fields.excerptFr = article.excerptFr ?? ''
-    fields.body = article.body ?? ''
+    fields.bodyAr = article.bodyAr ?? ''
+    fields.bodyFr = article.bodyFr ?? ''
     fields.coverImage = article.coverImage ?? ''
     // The response has no flat categoryId/authorId: the selects are bound to the
     // ids carried by the relation objects. Saving still sends categoryId /
@@ -305,7 +308,8 @@ export const useArticleFormStore = defineStore('articleForm', () => {
       titleAr: fields.titleAr.trim(),
       titleFr: fields.titleFr.trim(),
       slug: fields.slug.trim() || undefined,
-      body: fields.body,
+      bodyAr: fields.bodyAr,
+      bodyFr: fields.bodyFr,
       excerptAr: fields.excerptAr.trim() || null,
       excerptFr: fields.excerptFr.trim() || null,
       coverImage: fields.coverImage.trim() || null,
@@ -330,13 +334,14 @@ export const useArticleFormStore = defineStore('articleForm', () => {
   }
 
   /**
-   * First required locale whose title is still empty, or null when both are
-   * filled. The API requires titleAr AND titleFr, so a one-locale article can
-   * never be saved. FR is checked first because it seeds the slug.
+   * First required locale whose title or body is still empty, or null when
+   * both locales are complete. The API requires the title AND the body in
+   * both FR and AR, so a one-locale article can never be saved. FR is checked
+   * first because it seeds the slug.
    */
   const incompleteTitleLocale = computed<'fr' | 'ar' | null>(() => {
-    if (!fields.titleFr.trim()) return 'fr'
-    if (!fields.titleAr.trim()) return 'ar'
+    if (!fields.titleFr.trim() || !fields.bodyFr.trim()) return 'fr'
+    if (!fields.titleAr.trim() || !fields.bodyAr.trim()) return 'ar'
     return null
   })
 
@@ -436,10 +441,10 @@ export const useArticleFormStore = defineStore('articleForm', () => {
   }
 
   // ─── Locale-aware editing (Phase 1, UI layer) ───────────────────────────
-  // The data model is still bilingual + flat (titleFr/titleAr, single body).
+  // The data model is bilingual + flat (titleFr/titleAr, bodyFr/bodyAr).
   // This layer lets the editor present FR | EN | AR tabs and per-locale
-  // completion without any backend change. English is read-only for now
-  // (`enabled: false`) until the Phase 2 translations table lands.
+  // completion. English is read-only for now (`enabled: false`) until a
+  // dedicated translations table lands.
 
   type EditableLocale = 'fr' | 'ar' | 'en'
 
@@ -486,16 +491,27 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     },
   })
 
+  /** Localized body bound to the active tab (maps onto the flat fields). */
+  const activeBody = computed<string>({
+    get: () => (activeLocale.value === 'ar' ? fields.bodyAr : fields.bodyFr),
+    set: (value) => {
+      if (activeLocale.value === 'ar') fields.bodyAr = value
+      else fields.bodyFr = value
+    },
+  })
+
   /**
-   * Per-locale completion, used for the tab badges. Body is shared in Phase 1,
-   * so it counts toward every enabled locale. English is always "missing".
+   * Per-locale completion, used for the tab badges. Title, excerpt and body
+   * are all localized, so each locale is scored on its own three fields.
+   * English is always "missing".
    */
   function localeCompletion(code: EditableLocale) {
     if (code === 'en') return { filled: 0, total: 3, percent: 0, complete: false }
 
     const title = code === 'ar' ? fields.titleAr : fields.titleFr
     const excerpt = code === 'ar' ? fields.excerptAr : fields.excerptFr
-    const checks = [title.trim().length > 0, excerpt.trim().length > 0, fields.body.trim().length > 0]
+    const body = code === 'ar' ? fields.bodyAr : fields.bodyFr
+    const checks = [title.trim().length > 0, excerpt.trim().length > 0, body.trim().length > 0]
     const filled = checks.filter(Boolean).length
     const total = checks.length
     return { filled, total, percent: Math.round((filled / total) * 100), complete: filled === total }
@@ -505,12 +521,13 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     LOCALES.map(meta => ({ ...meta, completion: localeCompletion(meta.code) })),
   )
 
-  /** Copy the French title/excerpt into the active (non-FR) locale as a head start. */
+  /** Copy the French title/excerpt/body into the active (non-FR) locale as a head start. */
   function copyFromFr() {
     if (activeLocale.value === 'fr') return
     if (activeLocale.value === 'ar') {
       fields.titleAr = fields.titleFr
       fields.excerptAr = fields.excerptFr
+      fields.bodyAr = fields.bodyFr
     }
   }
 
@@ -561,6 +578,7 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     activeDir,
     activeTitle,
     activeExcerpt,
+    activeBody,
     locales,
     setLocale,
     copyFromFr,
