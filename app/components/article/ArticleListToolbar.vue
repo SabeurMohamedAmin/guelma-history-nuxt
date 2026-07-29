@@ -58,7 +58,7 @@ function setDisplayMode(mode: DisplayMode) {
             <v-icon
               start
               icon="mdi-calendar-range"
-              class="opacity-50 text-label-large text-sm-body-large"
+              class="opacity-60 text-label-large text-sm-body-large"
             />
             {{ activeRangeLabel }}
             <v-icon
@@ -100,6 +100,7 @@ function setDisplayMode(mode: DisplayMode) {
               start
               icon="mdi-sort"
               size="18"
+              class="opacity-60"
             />
             {{ activeSortLabel }}
             <v-icon
@@ -125,6 +126,7 @@ function setDisplayMode(mode: DisplayMode) {
               <v-icon
                 :icon="option.icon"
                 size="20"
+                class="opacity-60"
               />
             </template>
             <v-list-item-title>{{ t(option.labelKey) }}</v-list-item-title>
@@ -147,14 +149,20 @@ function setDisplayMode(mode: DisplayMode) {
           size="x-small"
           :aria-label="t('category.displayGrid')"
         >
-          <v-icon icon="mdi-view-grid-outline opacity-50" />
+          <v-icon
+            icon="mdi-view-grid-outline"
+            class="opacity-60"
+          />
         </v-btn>
         <v-btn
           value="rows"
           size="x-small"
           :aria-label="t('category.displayRows')"
         >
-          <v-icon icon="mdi-view-sequential-outline opacity-50" />
+          <v-icon
+            icon="mdi-view-sequential-outline"
+            class="opacity-60"
+          />
         </v-btn>
       </v-btn-toggle>
     </div>

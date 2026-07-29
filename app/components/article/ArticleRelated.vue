@@ -1,18 +1,25 @@
 <script setup lang="ts">
 import ArticleCard from '~/components/article/ArticleCard.vue'
 import type { ArticleListItem } from '~~/shared/types/article'
+import { useLocale } from 'vuetify'
 
 const props = defineProps<{
-  /** Slug of the article currently being read. */
   slug: string
-  /** Optional category slug, used to link "view more" to the category page. */
   categorySlug?: string | null
 }>()
 
 const { t } = useI18n()
 const localePath = useLocalePath()
+const { isRtl } = useLocale()
 
-const { data, pending } = await useFetch<{ articles: ArticleListItem[], total: number }>(
+const arrowIcon = computed(() =>
+  isRtl.value ? 'mdi-arrow-right' : 'mdi-arrow-left',
+)
+
+const { data, pending } = await useFetch<{
+  articles: ArticleListItem[]
+  total: number
+}>(
   () => `/api/articles/related/${props.slug}`,
   { key: () => `related-${props.slug}` },
 )
@@ -20,8 +27,6 @@ const { data, pending } = await useFetch<{ articles: ArticleListItem[], total: n
 const articles = computed(() => data.value?.articles ?? [])
 const hasArticles = computed(() => articles.value.length > 0)
 
-// "View more" points to the article's category when known, otherwise to the
-// full articles listing.
 const viewMoreLink = computed(() =>
   localePath(props.categorySlug ? `/categories/${props.categorySlug}` : '/articles'),
 )
@@ -37,7 +42,7 @@ const viewMoreLink = computed(() =>
         :to="viewMoreLink"
         variant="text"
         color="primary"
-        append-icon="mdi-arrow-left"
+        :append-icon="arrowIcon"
         class="text-body-2 font-weight-bold"
       >
         {{ t('article.viewMore') }}

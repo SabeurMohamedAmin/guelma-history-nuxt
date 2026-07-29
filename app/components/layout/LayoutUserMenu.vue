@@ -84,7 +84,9 @@ async function onLogout() {
           <span
             v-else
             class="text-body-2 font-weight-bold"
-          >{{ initials }}</span>
+          >
+            {{ initials }}
+          </span>
         </v-avatar>
       </v-btn>
     </template>
