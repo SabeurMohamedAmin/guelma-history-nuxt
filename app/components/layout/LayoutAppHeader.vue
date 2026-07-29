@@ -479,7 +479,8 @@ watch(
 }
 
 /* ── Drawer: glass background ───────────────────────────────────── */
-#app-nav-drawer {
+.v-application .app-header,
+.v-application #app-nav-drawer {
   backdrop-filter: blur(20px) brightness(0.7);
   -webkit-backdrop-filter: blur(20px) brightness(0.7);
   background-color: rgba(var(--v-theme-surface), 0.4);
@@ -491,9 +492,6 @@ watch(
 
 /* ── App bar: glass background + border ─────────────────────────── */
 .app-header {
-  backdrop-filter: blur(20px) brightness(0.7);
-  -webkit-backdrop-filter: blur(20px) brightness(0.7);
-  background-color: rgba(var(--v-theme-surface), 0.4);
   border-bottom: 1px solid rgb(var(--v-border-color) / 0.10) !important;
   transition:
     top            0.3s cubic-bezier(0.16, 1, 0.3, 1),
