@@ -1,29 +1,61 @@
 import type { RouterConfig } from '@nuxt/schema'
 
+interface ScrollPosition {
+  left: number
+  top: number
+}
+
 /**
- * Custom router scroll behavior.
- *
- * By default Nuxt scrolls to the top (or a saved position) on every route
- * change. That includes query-only changes on the SAME page — e.g. the comment
- * focus/re-root view (`?comment=<uuid>`), and the sort/order toggles — which
- * made "Continuer ce fil" jump the page around.
- *
- * Rule: if only the query changed (same path), keep the current scroll
- * position. Otherwise fall back to the default behavior (saved position on
- * back/forward, hash anchor, or top of page).
+ * Must match the key used in LocaleSwitcher.vue.
+ */
+const LOCALE_SCROLL_KEY = 'locale-switch-scroll-position'
+
+/**
+ * Controls the window scroll position after each client-side navigation.
  */
 export default <RouterConfig>{
-  scrollBehavior(to, from, savedPosition) {
-    // Same page, only the query string changed: don't move the viewport.
-    if (to.path === from.path) return false
+  scrollBehavior(_to, _from, savedPosition) {
+    /**
+     * Browser Back and Forward:
+     * Vue Router provides the exact saved browser history position.
+     */
+    if (savedPosition) {
+      return savedPosition
+    }
 
-    // Back/forward: restore where the user was.
-    if (savedPosition) return savedPosition
+    /**
+     * Language switch:
+     * LocaleSwitcher.vue stores the current scroll coordinates immediately
+     * before Nuxt i18n changes the localized route.
+     */
+    if (import.meta.client) {
+      const savedPositionJson = sessionStorage.getItem(LOCALE_SCROLL_KEY)
 
-    // Anchor link: scroll to the element.
-    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+      if (savedPositionJson) {
+        sessionStorage.removeItem(LOCALE_SCROLL_KEY)
 
-    // New page: start at the top.
-    return { top: 0 }
+        try {
+          const position = JSON.parse(savedPositionJson) as ScrollPosition
+
+          return {
+            left: position.left,
+            top: position.top,
+            behavior: 'instant',
+          }
+        }
+        catch {
+          // Invalid session storage should not break routing.
+        }
+      }
+    }
+
+    /**
+     * Standard navigation:
+     * New pages always start at the top.
+     */
+    return {
+      left: 0,
+      top: 0,
+    }
   },
 }
