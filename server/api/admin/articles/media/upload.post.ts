@@ -63,9 +63,11 @@ export default defineEventHandler(async (event) => {
 
   const baseId = `image-${Date.now()}-${crypto.randomUUID()}`
   const definitions = {
-    thumbnail: { width: 320, height: 200, quality: 76 },
-    slider: { width: 960, height: 600, quality: 82 },
-    main: { width: 1280, height: 800, quality: 86 },
+    thumbnail: { width: 320, height: 200, quality: 76, fit: 'cover' },
+    // The hero slider must show the complete image. Width-only resizing keeps
+    // its original aspect ratio instead of cutting content from the edges.
+    slider: { width: 960, height: undefined, quality: 82, fit: 'inside' },
+    main: { width: 1280, height: 800, quality: 86, fit: 'cover' },
   } as const
 
   const croppedEntries = await Promise.all(Object.entries(definitions).map(async ([name, options]) => {
@@ -74,7 +76,7 @@ export default defineEventHandler(async (event) => {
       .resize({
         width: options.width,
         height: options.height,
-        fit: 'cover',
+        fit: options.fit,
         position: 'attention',
         withoutEnlargement: true,
       })

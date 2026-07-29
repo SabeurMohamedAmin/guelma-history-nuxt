@@ -84,7 +84,7 @@ function getArticleLink(slug: string): string {
               <NuxtImg
                 :src="featuredArticle.coverImageVariants?.slider || featuredArticle.coverImage || '/og-default.jpg'"
                 :alt="getTitle(featuredArticle)"
-                cover
+                contain
                 class="featured-image"
                 height="400"
                 loading="eager"
@@ -280,6 +280,8 @@ function getArticleLink(slug: string): string {
 .featured-image {
   width: 100%;
   display: block;
+  object-fit: contain;
+  background: rgba(var(--v-theme-surface-variant), 0.35);
 }
 
 .image-gradient-overlay {
