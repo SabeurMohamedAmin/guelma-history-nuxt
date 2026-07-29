@@ -102,18 +102,18 @@ function getArticleLink(slug: string): string {
                 <v-chip
                   v-if="getCategoryName(featuredArticle)"
                   color="surface-variant"
-                  size="small"
-                  class="ma-2 py-0 featured-badge text-label-small text-md-body-small"
-                  variant="elevated"
+                  size="x-small"
+                  class="my-2 py-1 align-center justify-center text-label-small text-md-body-small text-line-height-2 featured-badge"
+                  variant="text"
                 >
                   {{ getCategoryName(featuredArticle) }}
                 </v-chip>
 
                 <v-chip
                   color="primary"
-                  size="small"
-                  class="ma-2 py-0 text-label-small text-md-body-small"
-                  variant="elevated"
+                  size="x-small"
+                  class="ma-2 py-1 align-center justify-center text-label-small text-md-body-small text-line-height-2"
+                  variant="flat"
                 >
                   <v-icon
                     start
@@ -405,5 +405,9 @@ function getArticleLink(slug: string): string {
     margin-top: 0 !important;
     margin-bottom: 4px !important;
   }
+}
+
+.text-line-height-2{
+  line-height: 2;
 }
 </style>

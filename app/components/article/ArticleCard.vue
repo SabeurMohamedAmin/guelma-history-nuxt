@@ -92,8 +92,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
           <v-chip
             v-if="categoryName"
             size="x-small"
-            color="primary"
-            variant="flat"
+            variant="text"
             label
             class="article-card__category-badge text-label-small text-md-body-small py-0"
           >
@@ -177,7 +176,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
           color="primary"
           variant="flat"
           label
-          class="article-card__category-badge text-label-small text-md-body-small py-0 start-0"
+          class="article-card__category-badge text-caption text-sm-label-small text-md-body-small py-0 start-0"
         >
           {{ categoryName }}
         </v-chip>
@@ -371,10 +370,10 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
 .article-card__category-badge {
   position: absolute;
   top: 10px;
-  inset-inline-start: 10px; /* RTL-aware */
-  -webkit-backdrop-filter: blur(10px) brightness(.5);
-  backdrop-filter: blur(10px) brightness(.5);
-  background-color: rgb(var(--v-theme-surface) / 0.20);
+  inset-inline-start: 5px; /* RTL-aware */
+  -webkit-backdrop-filter: blur(15px) brightness(.7);
+  backdrop-filter: blur(15px) brightness(.7);
+  background-color: rgba(var(--v-theme-surface) , .15);
 
 }
 
@@ -444,7 +443,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
 
 .article-card__h-image-wrap {
   position: relative;
-  flex: 0 0 160px;
+  flex: 0 0 170px;
   overflow: hidden;
 }
 
@@ -470,7 +469,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
   }
 
   .article-card__h-image-wrap {
-    flex: 0 0 160px;
+    flex: 0 0 170px;
     width: 100%;
   }
 }

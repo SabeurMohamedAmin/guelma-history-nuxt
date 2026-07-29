@@ -334,13 +334,15 @@ function toggleTheme() {
     :class="{ drw: isScrolled }"
   >
     <template #prepend>
-      <div class="d-flex align-center justify-space-between pa-4">
+      <div class="d-flex align-center justify-space-between px-4 py-1">
         <layout-brand-logo />
         <v-btn
           icon="mdi-close"
           variant="text"
-          size="small"
+          size="xx-small"
+          rounded="lg"
           :aria-label="t('nav.closeMenu')"
+          class="align-self-start"
           @click="drawer = false"
         />
       </div>
@@ -426,8 +428,9 @@ function toggleTheme() {
 }
 
 #app-nav-drawer {
-  backdrop-filter: blur(20px) brightness(.5) !important;
-  background-color: rgb(var(--v-theme-surface) / .2) !important;
+  backdrop-filter: blur(15px) brightness(.7);
+  -webkit-backdrop-filter: blur(15px) brightness(.7);
+  background-color: rgba(var(--v-theme-surface) , .4);
 }
 
 #app-nav-drawer > * {
@@ -435,9 +438,9 @@ function toggleTheme() {
 }
 
 .app-header {
-  -webkit-backdrop-filter: blur(10px) brightness(.5);
-  backdrop-filter: blur(10px) brightness(.5);
-  background-color: rgb(var(--v-theme-surface) / 0.20);
+  backdrop-filter: blur(15px) brightness(.7);
+  -webkit-backdrop-filter: blur(15px) brightness(.7);
+  background-color: rgba(var(--v-theme-surface) , .4);
   border-bottom: 1px solid rgb(var(--v-border-color) / 0.10) !important;
   transition:
     top 0.3s cubic-bezier(0.16, 1, 0.3, 1),
