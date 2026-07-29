@@ -96,7 +96,7 @@ const activeLabel = computed(
       </v-card-text>
     </v-card>
 
-    <!-- Body (shared across locales) -->
+    <!-- Body (localized: each language has its own content) -->
     <v-card
       rounded="xl"
       elevation="0"
@@ -108,21 +108,13 @@ const activeLabel = computed(
         </div>
         <div class="flex-grow-1">
           <div class="text-subtitle-1 font-weight-bold">
-            {{ t('articleForm.body') }}
+            {{ t('articleForm.body') }} ({{ activeLabel }})
           </div>
         </div>
-        <v-chip
-          size="small"
-          variant="tonal"
-          color="medium-emphasis"
-          prepend-icon="mdi-share-variant-outline"
-        >
-          {{ t('articleForm.editor.shared') }}
-        </v-chip>
       </div>
       <v-card-text class="pt-4">
         <v-textarea
-          v-model="store.fields.body"
+          v-model="store.activeBody"
           :label="t('articleForm.bodyLabel')"
           :placeholder="t('articleForm.bodyPlaceholder')"
           :rules="[store.rules.required]"
@@ -134,7 +126,7 @@ const activeLabel = computed(
           :dir="store.activeDir"
         />
         <p class="text-caption text-medium-emphasis mt-1 mb-0">
-          {{ t('articleForm.markdownSupported') }} · {{ t('articleForm.editor.sharedBodyHint') }}
+          {{ t('articleForm.markdownSupported') }} · {{ t('articleForm.editor.localizedBodyHint') }}
         </p>
       </v-card-text>
     </v-card>
