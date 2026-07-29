@@ -82,7 +82,18 @@
     "dateTo": "Au",
     "resultsCount": "{count} résultat(s) pour « {query} »",
     "noResultsTitle": "Aucun résultat",
-    "noResultsText": "Aucun article ne correspond à « {query} »"
+    "noResultsText": "Aucun article ne correspond à « {query} »",
+    "subtitle": "Cherchez dans tous les articles sur l'histoire et le patrimoine de Guelma : saisissez un mot-clé, puis affinez par catégorie ou par date.",
+    "inputLabel": "Rechercher dans les articles",
+    "filters": "Filtres",
+    "category": "Catégorie",
+    "apply": "Appliquer",
+    "clearAll": "Tout effacer",
+    "activeFilters": "Filtres actifs :",
+    "searching": "Recherche en cours…",
+    "resultsRegion": "Résultats de la recherche",
+    "idleTitle": "Commencez par un mot",
+    "idleText": "Saisissez un titre ou un mot-clé ci-dessus, ou explorez l'un des thèmes suivants."
   },
   "newsletter": {
     "title": "Inscrivez votre e-mail pour recevoir les derniers articles",

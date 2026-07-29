@@ -1,10 +1,9 @@
 <script setup lang="ts">
-const { t } = useI18n()
+import type { CategoryTree } from '~~/shared/types/category'
+import type { DisplayMode } from '~~/app/constants/articleSort'
+import type { SearchFilterKey } from '~/components/search/SearchActiveFilters.vue'
 
-// Noindex is already applied via routeRules, but the tab still needs a name.
-useSeoMeta({
-  title: () => t('search.title'),
-})
+const { t, locale } = useI18n()
 
 const {
   params,
@@ -12,219 +11,400 @@ const {
   total,
   articles,
   pending,
+  error,
   isEmpty,
   hasQuery,
+  page,
+  pageCount,
   search,
+  goToPage,
+  refresh,
 } = useArticleSearch()
 
-// ─── Local form state seeded from current URL params ──────
+// ─── Local form state, seeded from the URL ────────────────
+// Shared links and browser history therefore prefill every input.
 const term = ref(params.value.q)
-const from = ref(params.value.dateFrom)
-const to = ref(params.value.dateTo)
+const category = ref(params.value.category)
+const dateFrom = ref(params.value.dateFrom)
+const dateTo = ref(params.value.dateTo)
 
-const advancedOpen = ref(Boolean(params.value.dateFrom || params.value.dateTo))
+// Grid or rows, a personal preference that only lives for the visit.
+const display = ref<DisplayMode>('rows')
 
-// ─── Sync local inputs if params change externally ────────
-// Covers browser back/forward and deep link navigation
-watch(params, (newParams) => {
-  term.value = newParams.q
-  from.value = newParams.dateFrom
-  to.value = newParams.dateTo
+// Categories power the filter select. An empty list keeps the panel usable
+// while the request is still in flight.
+const { data: categories } = await useFetch<CategoryTree[]>('/api/categories', {
+  default: () => [],
 })
 
-// ─── Scroll back to the top when the query changes ────────
-// The search popup can be opened from anywhere (e.g. near the footer) and
-// only changes the URL query (?q=...), so the router keeps the viewport in
-// place. Watch the query and, once the new results have rendered, scroll up
-// so the search box and results are visible. Client-only: no window on SSR.
-onMounted(async () => {
-  if (!import.meta.client) return
-  await nextTick()
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-})
+// Suggested entry points for visitors who land here without a query.
+const { categories: suggestions } = useNavCategories()
 
 // ─── Derived ──────────────────────────────────────────────
-const canSubmit = computed(() => term.value.trim().length > 0)
+const hasError = computed(() => Boolean(error.value))
 
-// ─── Actions ─────────────────────────────────────────────
-function toggleAdvanced(): void {
-  advancedOpen.value = !advancedOpen.value
+const categoryLabel = computed(() => {
+  const found = categories.value.find(item => item.slug === params.value.category)
+  if (!found) return null
+  return locale.value === 'ar' ? found.nameAr : found.nameFr
+})
+
+// Single sentence describing the current state, rendered in a live region so
+// screen readers hear "searching…" then the number of results.
+const statusText = computed(() => {
+  if (pending.value) return t('search.searching')
+  if (!hasQuery.value) return ''
+  return t('search.resultsCount', { count: total.value, query: query.value })
+})
+
+// ─── Behavior ─────────────────────────────────────────────
+const resultsRef = ref<HTMLElement | null>(null)
+
+/** Bring the results into view, honoring the reduced-motion preference. */
+function scrollToResults(): void {
+  if (!import.meta.client || !resultsRef.value) return
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  resultsRef.value.scrollIntoView({
+    behavior: reducedMotion ? 'auto' : 'smooth',
+    block: 'start',
+  })
 }
 
-async function onSubmit(): Promise<void> {
-  if (!canSubmit.value) return
+/** Run the search with whatever the form currently holds. */
+async function runSearch(): Promise<void> {
   await search({
     q: term.value.trim(),
-    dateFrom: from.value || null,
-    dateTo: to.value || null,
+    category: category.value || null,
+    dateFrom: dateFrom.value || null,
+    dateTo: dateTo.value || null,
   })
+  scrollToResults()
+}
+
+async function onRemoveFilter(key: SearchFilterKey): Promise<void> {
+  if (key === 'q') term.value = ''
+  if (key === 'category') category.value = null
+  if (key === 'dateFrom') dateFrom.value = null
+  if (key === 'dateTo') dateTo.value = null
+
+  await runSearch()
 }
 
 async function onReset(): Promise<void> {
   term.value = ''
-  from.value = null
-  to.value = null
-  advancedOpen.value = false
-  await search({ q: '', dateFrom: null, dateTo: null })
+  category.value = null
+  dateFrom.value = null
+  dateTo.value = null
+
+  await search({ q: '', category: null, dateFrom: null, dateTo: null })
 }
 
+async function onPageChange(next: number): Promise<void> {
+  await goToPage(next)
+  scrollToResults()
+}
+
+// Keep the inputs in step with the URL (back/forward, deep links).
+watch(params, (next) => {
+  term.value = next.q
+  category.value = next.category
+  dateFrom.value = next.dateFrom
+  dateTo.value = next.dateTo
+})
+
+// The search dialog can be opened from anywhere on a page (even next to the
+// footer) and only changes the query string, so the router keeps the viewport
+// where it was. Start this page at the top instead.
+onMounted(() => {
+  window.scrollTo({ top: 0 })
+})
+
 // ─── SEO ─────────────────────────────────────────────────
+// Indexing is already disabled for /search via routeRules; the title is here
+// so the browser tab and history entry stay meaningful.
 useSeoMeta({
-  title: () => `${t('nav.search')}${query.value ? ` — ${query.value}` : ''}`,
+  title: () => (query.value ? `${t('search.title')} — ${query.value}` : t('search.title')),
+  description: () => t('search.subtitle'),
 })
 </script>
 
 <template>
-  <v-container
-    class="py-8"
-    style="max-width: 960px"
-  >
-    <h1 class="text-headline-medium font-weight-bold mb-6">
-      {{ t('search.title') }}
-    </h1>
-
-    <!-- ─── Search input ─────────────────────────────────── -->
-    <div class="mb-2">
-      <v-text-field
-        v-model="term"
-        :placeholder="t('search.placeholder')"
-        variant="solo-filled"
-        density="comfortable"
-        flat
-        hide-details
-        rounded="lg"
-        prepend-inner-icon="mdi-magnify"
-        autocomplete="off"
-        :disabled="pending"
-        @keydown.enter="onSubmit"
-      >
-        <template #append-inner>
-          <v-btn
-            color="primary"
-            size="small"
-            rounded="lg"
-            :loading="pending"
-            :disabled="!canSubmit"
-            @click="onSubmit"
-          >
-            {{ t('search.action') }}
-          </v-btn>
-        </template>
-      </v-text-field>
-    </div>
-
-    <!-- ─── Advanced toggle ──────────────────────────────── -->
-    <div class="d-flex justify-end mb-2">
-      <v-btn
-        variant="text"
-        size="small"
-        :append-icon="advancedOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-        :aria-expanded="String(advancedOpen)"
-        aria-controls="advanced-search-panel"
-        @click="toggleAdvanced"
-      >
-        {{ t('search.advanced') }}
-      </v-btn>
-    </div>
-
-    <!-- ─── Advanced date filters ────────────────────────── -->
-    <v-expand-transition>
+  <div class="search-page">
+    <!-- ─── Hero + search form ───────────────────────────── -->
+    <header class="search-page__hero">
       <div
-        v-show="advancedOpen"
-        id="advanced-search-panel"
-        class="mb-8"
-      >
-        <v-sheet
-          rounded="lg"
-          border
-          class="pa-4"
-        >
-          <div class="d-flex flex-column flex-sm-row ga-3">
-            <v-text-field
-              v-model="from"
-              type="date"
-              :label="t('search.dateFrom')"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              rounded="lg"
-              clearable
-            />
-            <v-text-field
-              v-model="to"
-              type="date"
-              :label="t('search.dateTo')"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              rounded="lg"
-              clearable
-            />
-          </div>
-          <div class="d-flex ga-2 mt-3">
-            <v-btn
-              color="primary"
-              variant="flat"
-              rounded="lg"
-              :loading="pending"
-              :disabled="!canSubmit"
-              @click="onSubmit"
-            >
-              {{ t('search.action') }}
-            </v-btn>
-            <v-btn
-              variant="text"
-              rounded="lg"
-              :disabled="pending"
-              @click="onReset"
-            >
-              {{ t('common.cancel') }}
-            </v-btn>
-          </div>
-        </v-sheet>
-      </div>
-    </v-expand-transition>
+        class="search-page__glow"
+        aria-hidden="true"
+      ></div>
 
-    <!-- ─── Loading ──────────────────────────────────────── -->
-    <div
-      v-if="pending"
-      class="d-flex justify-center py-12"
-    >
-      <v-progress-circular
-        indeterminate
+      <div class="search-page__hero-content">
+        <v-chip
+          color="primary"
+          variant="elevated"
+          size="small"
+          class="mb-4"
+        >
+          <v-icon
+            start
+            size="x-small"
+            icon="mdi-magnify"
+          />
+          {{ t('search.title') }}
+        </v-chip>
+
+        <h1 class="search-page__title">
+          {{ t('search.prompt') }}
+        </h1>
+
+        <p class="search-page__subtitle">
+          {{ t('search.subtitle') }}
+        </p>
+
+        <SearchForm
+          v-model:term="term"
+          v-model:category="category"
+          v-model:date-from="dateFrom"
+          v-model:date-to="dateTo"
+          :categories="categories"
+          :pending="pending"
+          class="search-page__form"
+          @submit="runSearch"
+          @reset="onReset"
+        />
+      </div>
+    </header>
+
+    <!-- ─── Criteria behind the current results ──────────── -->
+    <SearchActiveFilters
+      :q="params.q"
+      :category-label="categoryLabel"
+      :date-from="params.dateFrom"
+      :date-to="params.dateTo"
+      class="mb-4"
+      @remove="onRemoveFilter"
+      @clear="onReset"
+    />
+
+    <!-- ─── Status + display mode ────────────────────────── -->
+    <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-4">
+      <!-- Always rendered: a live region must exist before it updates. -->
+      <p
+        class="text-body-2 text-medium-emphasis mb-0"
+        role="status"
+        aria-live="polite"
+      >
+        {{ statusText }}
+      </p>
+
+      <v-btn-toggle
+        v-if="hasQuery"
+        v-model="display"
         color="primary"
-      />
+        density="comfortable"
+        variant="outlined"
+        rounded="lg"
+        mandatory
+      >
+        <v-btn
+          value="grid"
+          size="small"
+          :aria-label="t('category.displayGrid')"
+        >
+          <v-icon icon="mdi-view-grid-outline" />
+        </v-btn>
+        <v-btn
+          value="rows"
+          size="small"
+          :aria-label="t('category.displayRows')"
+        >
+          <v-icon icon="mdi-view-sequential-outline" />
+        </v-btn>
+      </v-btn-toggle>
     </div>
 
     <!-- ─── Results ──────────────────────────────────────── -->
-    <template v-else-if="articles.length">
-      <p class="text-body-2 text-medium-emphasis mb-4">
-        {{ t('search.resultsCount', { count: total, query }) }}
-      </p>
-      <div class="d-flex flex-column ga-4">
-        <article-card
-          v-for="article in articles"
-          :key="article.id"
-          :article="article"
-          variant="horizontal"
+    <section
+      ref="resultsRef"
+      :aria-label="t('search.resultsRegion')"
+      :aria-busy="pending ? 'true' : 'false'"
+    >
+      <!-- Loading -->
+      <SearchResultsSkeleton
+        v-if="pending"
+        :display="display"
+      />
+
+      <!-- Error -->
+      <CategoryStateMessage
+        v-else-if="hasError"
+        variant="error"
+        @retry="refresh"
+      />
+
+      <!-- Results -->
+      <template v-else-if="articles.length">
+        <CategoryArticleList
+          :articles="articles"
+          :display="display"
         />
+
+        <div
+          v-if="pageCount > 1"
+          class="d-flex justify-center mt-8"
+        >
+          <v-pagination
+            :model-value="page"
+            :length="pageCount"
+            :total-visible="5"
+            :disabled="pending"
+            density="comfortable"
+            rounded="lg"
+            @update:model-value="onPageChange"
+          />
+        </div>
+      </template>
+
+      <!-- Searched, found nothing -->
+      <v-empty-state
+        v-else-if="isEmpty"
+        icon="mdi-magnify-close"
+        :title="t('search.noResultsTitle')"
+        :text="t('search.noResultsText', { query })"
+      >
+        <template #actions>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            rounded="lg"
+            class="text-none"
+            @click="onReset"
+          >
+            <v-icon
+              start
+              icon="mdi-filter-off-outline"
+              size="18"
+            />
+            {{ t('search.clearAll') }}
+          </v-btn>
+        </template>
+      </v-empty-state>
+
+      <!-- Idle: nothing searched yet -->
+      <div
+        v-else
+        class="search-page__idle text-center"
+      >
+        <v-icon
+          icon="mdi-compass-outline"
+          size="56"
+          color="primary"
+          class="mb-3"
+        />
+
+        <h2 class="text-headline-small font-weight-bold mb-2">
+          {{ t('search.idleTitle') }}
+        </h2>
+
+        <p class="text-body-2 text-medium-emphasis mb-5">
+          {{ t('search.idleText') }}
+        </p>
+
+        <nav
+          class="d-flex flex-wrap justify-center ga-2"
+          :aria-label="t('nav.categories')"
+        >
+          <v-chip
+            v-for="suggestion in suggestions"
+            :key="suggestion.key"
+            :to="suggestion.to"
+            color="primary"
+            variant="tonal"
+            rounded="lg"
+            size="small"
+          >
+            {{ suggestion.title }}
+          </v-chip>
+        </nav>
       </div>
-    </template>
-
-    <!-- ─── No results ───────────────────────────────────── -->
-    <v-empty-state
-      v-else-if="isEmpty"
-      icon="mdi-magnify-close"
-      :title="t('search.noResultsTitle')"
-      :text="t('search.noResultsText', { query: query })"
-    />
-
-    <!-- ─── Idle — no query yet ──────────────────────────── -->
-    <v-empty-state
-      v-else-if="!hasQuery"
-      icon="mdi-magnify"
-      :title="t('search.prompt')"
-      :text="t('search.placeholder')"
-    />
-  </v-container>
+    </section>
+  </div>
 </template>
+
+<style scoped>
+.search-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Same tinted, glowing header as the articles listing, so the search page
+   reads as part of the same family. */
+.search-page__hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(var(--v-theme-primary), 0.12), transparent 40%),
+    linear-gradient(135deg, rgba(var(--v-theme-surface), 0.9) 0%, rgba(var(--v-theme-primary), 0.06) 100%);
+  border: 1px solid rgba(var(--v-theme-primary), 0.15);
+}
+
+/* Decorative blur. `inset-inline-start` keeps it on the reading side in RTL. */
+.search-page__glow {
+  position: absolute;
+  top: -8rem;
+  inset-inline-start: -6rem;
+  width: 22rem;
+  height: 22rem;
+  border-radius: 999px;
+  filter: blur(20px);
+  opacity: 0.4;
+  background: rgba(var(--v-theme-primary), 0.22);
+  pointer-events: none;
+}
+
+.search-page__hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.search-page__title {
+  font-size: clamp(1.8rem, 5vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 0.75rem;
+  text-wrap: balance;
+}
+
+.search-page__subtitle {
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  max-width: 620px;
+  margin: 0 auto 1.75rem;
+}
+
+/* The form is centered but its own content stays start-aligned. */
+.search-page__form {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: start;
+}
+
+.search-page__idle {
+  padding: 3rem 1rem;
+}
+
+@media (max-width: 960px) {
+  .search-page {
+    padding: 0.5rem;
+  }
+
+  .search-page__hero {
+    padding: 2.5rem 1rem;
+  }
+}
+</style>

@@ -71,15 +71,30 @@ export function useArticleSearch() {
     await execute()
   }
 
+  /** Current page, and how many pages the total number of results spans. */
+  const page = computed(() => params.value.page)
+  const pageCount = computed(() =>
+    Math.max(1, Math.ceil(total.value / params.value.limit)),
+  )
+
+  /** Jump to a results page, keeping every other filter untouched. */
+  async function goToPage(next: number) {
+    await search({ page: next })
+  }
+
   return {
     params,
     query,
     articles,
     total,
+    page,
+    pageCount,
     pending,
     error,
     hasQuery,
     isEmpty,
     search,
+    goToPage,
+    refresh: execute,
   }
 }
