@@ -43,7 +43,8 @@ function buildConditions(params: SearchParams): SQL[] {
     const textMatch = or(
       ilike(articles.titleAr, pattern),
       ilike(articles.titleFr, pattern),
-      ilike(articles.body, pattern),
+      ilike(articles.bodyAr, pattern),
+      ilike(articles.bodyFr, pattern),
       ilike(authors.nameAr, pattern),
       ilike(authors.nameFr, pattern),
     )

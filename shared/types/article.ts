@@ -9,7 +9,8 @@ export interface Article {
   titleAr: string
   titleFr: string
   slug: string
-  body: string
+  bodyAr: string
+  bodyFr: string
   coverImage: string | null
   categoryId: number | null
   authorId: number | null

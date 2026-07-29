@@ -169,7 +169,8 @@ export class ArticleService {
     const data = validateCreateArticle(input)
 
     const slug = data.slug ?? slugify(data.titleFr)
-    const readingTime = data.readingTime ?? this.calcReadingTime(data.body)
+    // Reading time is estimated from the French body, falling back to Arabic.
+    const readingTime = data.readingTime ?? this.calcReadingTime(data.bodyFr || data.bodyAr)
     const { tagIds, media, slug: _slug, readingTime: _rt, ...fields } = data
 
     // postgres-js transactions are async: await every query inside the callback.
@@ -207,15 +208,17 @@ export class ArticleService {
     }
 
     const data = validateUpdateArticle(input)
-    const { tagIds, media, body, ...fields } = data
+    const { tagIds, media, ...fields } = data
 
-    const readingTime = body ? this.calcReadingTime(body) : undefined
+    // Recompute the reading time when a body changed (FR first, then AR).
+    const changedBody = data.bodyFr ?? data.bodyAr
+    const readingTime = changedBody ? this.calcReadingTime(changedBody) : undefined
 
     // postgres-js transactions are async: await every query inside the callback.
     await db.transaction(async (tx) => {
       await tx
         .update(articles)
-        .set({ ...fields, ...(body ? { body } : {}), ...(readingTime ? { readingTime } : {}), updatedAt: new Date() })
+        .set({ ...fields, ...(readingTime ? { readingTime } : {}), updatedAt: new Date() })
         .where(eq(articles.id, id))
 
       if (tagIds !== undefined) {
@@ -410,7 +413,8 @@ export class ArticleService {
       slug: row.slug,
       excerptAr: row.excerptAr ?? null,
       excerptFr: row.excerptFr ?? null,
-      body: row.body,
+      bodyAr: row.bodyAr,
+      bodyFr: row.bodyFr,
       coverImage: row.coverImage ?? null,
       // No flat categoryId/authorId: the ids ship inside `category`/`author`
       // below (see the notice on ArticleResponse).

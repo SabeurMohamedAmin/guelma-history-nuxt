@@ -10,7 +10,9 @@ export const articles = pgTable('articles', {
   slug: text('slug').notNull().unique(),
   excerptAr: text('excerpt_ar'),
   excerptFr: text('excerpt_fr'),
-  body: text('body').notNull().default(''),
+  // Localized bodies: each language has its own content (no shared body).
+  bodyAr: text('body_ar').notNull().default(''),
+  bodyFr: text('body_fr').notNull().default(''),
   coverImage: text('cover_image'),
   categoryId: integer('category_id').references(() => categories.id),
   // Editorial byline (display only): whose name appears on the article. May be

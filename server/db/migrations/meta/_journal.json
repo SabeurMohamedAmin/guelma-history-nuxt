@@ -50,6 +50,13 @@
       "when": 1782642137007,
       "tag": "0007_fluffy_toad_men",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785283200000,
+      "tag": "0008_split_article_body",
+      "breakpoints": true
     }
   ]
 }

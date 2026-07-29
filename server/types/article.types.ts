@@ -42,7 +42,8 @@ export interface ArticleResponse {
   slug: string
   excerptAr: string | null
   excerptFr: string | null
-  body: string
+  bodyAr: string
+  bodyFr: string
   coverImage: string | null
   publishedAt: Date | null
   readingTime: number
