@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ArticleListItem } from '~~/shared/types/article'
 import type { Category } from '~~/shared/types/category'
+import { useLocale } from 'vuetify'
 
 definePageMeta({ layout: 'default' })
 
@@ -62,6 +63,14 @@ const recentArticles = computed(() => allArticles.value.slice(0, 5))
 // Cap the main list so the home page stays a curated preview, not a full feed.
 const MAX_LIST_ITEMS = 8
 const listArticles = computed(() => articles.value.slice(0, MAX_LIST_ITEMS))
+
+const { isRtl } = useLocale()
+
+const readMoreIcon = computed(() =>
+  isRtl.value
+    ? 'mdi-arrow-left'
+    : 'mdi-arrow-right',
+)
 </script>
 
 <template>
@@ -126,7 +135,7 @@ const listArticles = computed(() => articles.value.slice(0, MAX_LIST_ITEMS))
           >
             {{ t('common.readMore') }}
             <v-icon
-              icon="mdi-arrow-left"
+              :icon="readMoreIcon"
               class="ms-1"
             />
           </v-btn>
