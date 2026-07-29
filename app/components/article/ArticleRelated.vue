@@ -13,7 +13,7 @@ const localePath = useLocalePath()
 const { isRtl } = useLocale()
 
 const arrowIcon = computed(() =>
-  isRtl.value ? 'mdi-arrow-right' : 'mdi-arrow-left',
+  isRtl.value ? 'mdi-arrow-left' : 'mdi-arrow-right',
 )
 
 const { data, pending } = await useFetch<{
@@ -43,7 +43,7 @@ const viewMoreLink = computed(() =>
         variant="text"
         color="primary"
         :append-icon="arrowIcon"
-        class="text-body-2 font-weight-bold"
+        class="text-body-2 font-weight-bold align-center"
       >
         {{ t('article.viewMore') }}
       </v-btn>
