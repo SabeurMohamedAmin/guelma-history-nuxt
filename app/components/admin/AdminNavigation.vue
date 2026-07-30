@@ -479,6 +479,13 @@ async function onLogout() {
           </v-list-item-subtitle>
         </v-list-item>
 
+        <div
+          class="admin-locale-switcher mb-1"
+          :class="{ 'd-flex justify-center': isRail }"
+        >
+          <layout-locale-switcher :block="!isRail" />
+        </div>
+
         <v-btn
           variant="tonal"
           color="error"
@@ -510,6 +517,10 @@ async function onLogout() {
 
 .admin-drawer {
   background-color: rgb(var(--v-theme-surface)) !important;
+}
+
+.admin-locale-switcher :deep(.v-btn) {
+  max-width: 100%;
 }
 
 .admin-avatar-image {
