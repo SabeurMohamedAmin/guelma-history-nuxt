@@ -290,7 +290,7 @@ function getArticleLink(slug: string): string {
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(var(--v-theme-surface), 0.1) 50%,
+    rgba(var(--v-theme-surface), 0.1) 90%,
     rgba(var(--v-theme-surface), 0.95) 100%
   );
 }
