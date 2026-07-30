@@ -46,7 +46,16 @@ useHead({
   // requested seconds after load (once adsbygoogle.js runs), long after the
   // early connection has been closed, so Lighthouse flags it as unused.
   script: adsenseClient
-    ? [{ src: scriptUrl, async: true, crossorigin: 'anonymous' }]
+    ? [
+        { src: scriptUrl, async: true, crossorigin: 'anonymous' },
+        { src: 'https://www.googletagmanager.com/gtag/js?id=G-5JMC9NREV8', async: true },
+        { innerHTML: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-5JMC9NREV8');
+          ` },
+      ]
     : [],
 })
 

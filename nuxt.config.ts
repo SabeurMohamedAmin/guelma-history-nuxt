@@ -21,6 +21,7 @@ export default defineNuxtConfig({
   /* ------------------------------------------------------------------ */
 
   modules: [
+    'nuxt-gtag',
     '@nuxt/eslint',
     '@nuxt/fonts',
     '@nuxt/icon',
