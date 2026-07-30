@@ -1,65 +1,60 @@
 <script setup lang="ts">
-import ArticleHero from '~/components/article/ArticleHero.vue'
-import ArticleBody from '~/components/article/ArticleBody.vue'
 import type { MediaItem } from '~/components/article/ArticleMediaGallery.vue'
-import ArticleRelated from '~/components/article/ArticleRelated.vue'
-import ArticleEngagementPanel from '~/components/article/ArticleEngagementPanel.vue'
-import NewsletterForm from '~/components/newsletter/NewsletterForm.vue'
+
+/* ------------------------------------------------------------------ */
+/* Types                                                               */
+/* ------------------------------------------------------------------ */
+
+/** Renditions Cloudinary returns for every uploaded image. */
+type ImageVariants = {
+  thumbnail: string
+  slider: string
+  main: string
+  original: string
+}
+
+/** Shape shared by categories, authors and tags. */
+type Term = {
+  id: number
+  nameAr: string
+  nameFr: string
+  slug: string
+}
+
+type ArticleMedia = {
+  type: 'image' | 'video' | 'youtube'
+  url: string
+  publicId?: string | null
+  posterUrl?: string | null
+  imageVariants?: ImageVariants | null
+  captionAr?: string | null
+  captionFr?: string | null
+}
 
 type ArticleDetail = {
-  // Int64 id serialized as a digit string (too big for a JS number).
+  /** Int64 id serialized as a digit string (too big for a JS number). */
   id: string
+  slug: string
   titleAr: string
   titleFr: string
-  slug: string
   bodyAr: string
   bodyFr: string
   excerptAr?: string | null
   excerptFr?: string | null
   coverImage: string | null
-  coverImageVariants?: {
-    thumbnail: string
-    slider: string
-    main: string
-    original: string
-  } | null
-  media?: Array<{
-    type: 'image' | 'video' | 'youtube'
-    url: string
-    publicId?: string | null
-    posterUrl?: string | null
-    imageVariants?: {
-      thumbnail: string
-      slider: string
-      main: string
-      original: string
-    } | null
-    captionAr?: string | null
-    captionFr?: string | null
-  }> | null
+  coverImageVariants?: ImageVariants | null
+  media?: ArticleMedia[] | null
   publishedAt: string | Date | null
   createdAt: string | Date
   readingTime: number
-  category?: {
-    id: number
-    nameAr: string
-    nameFr: string
-    slug: string
-  } | null
-  author?: {
-    id: number
-    nameAr: string
-    nameFr: string
-    slug: string
-    avatar?: string | null
-  } | null
-  tags?: Array<{
-    id: number
-    nameAr: string
-    nameFr: string
-    slug: string
-  }>
+  category?: Term | null
+  author?: (Term & { avatar?: string | null }) | null
+  tags?: Term[]
 }
+
+/* ------------------------------------------------------------------ */
+/* Page setup                                                          */
+/* ------------------------------------------------------------------ */
 
 const route = useRoute()
 const localePath = useLocalePath()
@@ -70,14 +65,56 @@ const slug = computed(() => String(route.params.slug || ''))
 const isFrench = computed(() => locale.value === 'fr')
 const siteUrl = computed(() => String(config.public.siteUrl || 'http://localhost:3000'))
 
-const buildAbsoluteUrl = (pathOrUrl: string) => {
+/** Reader's language first, the other one as fallback, never undefined. */
+function pick(fr?: string | null, ar?: string | null): string {
+  return (isFrench.value ? fr || ar : ar || fr) || ''
+}
+
+/** Crawlers and social cards only accept absolute URLs. */
+function toAbsoluteUrl(pathOrUrl: string): string {
   if (!pathOrUrl) return siteUrl.value
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl
 
   return new URL(pathOrUrl, siteUrl.value).toString()
 }
 
-const { data: response, pending, error } = await useFetch<{ success: boolean, data: ArticleDetail }>(
+/* ------------------------------------------------------------------ */
+/* Page copy                                                           */
+/* ------------------------------------------------------------------ */
+
+// Every visible string lives here, so the template stays free of
+// inline ternaries and new copy is edited in one single place.
+const text = computed(() => isFrench.value
+  ? {
+      home: 'Accueil',
+      articles: 'Articles',
+      breadcrumb: 'Fil d’ariane',
+      notFound: 'Article introuvable.',
+      loading: 'Chargement de l’article…',
+      defaultAuthor: 'Bily24 Team',
+      defaultCategory: 'Article',
+      tags: 'Mots-clés',
+      sidebar: 'À découvrir aussi',
+      readingTime: (minutes: number) => `${minutes} min de lecture`,
+    }
+  : {
+      home: 'الرئيسية',
+      articles: 'المقالات',
+      breadcrumb: 'مسار الصفحة',
+      notFound: 'تعذر العثور على المقال.',
+      loading: 'جارٍ تحميل المقال…',
+      defaultAuthor: 'فريق بيلي24',
+      defaultCategory: 'مقال',
+      tags: 'الكلمات المفتاحية',
+      sidebar: 'اقرأ أيضا',
+      readingTime: (minutes: number) => `${minutes} دقائق قراءة`,
+    })
+
+/* ------------------------------------------------------------------ */
+/* Data                                                                */
+/* ------------------------------------------------------------------ */
+
+const { data: response, status, error } = await useFetch<{ success: boolean, data: ArticleDetail }>(
   () => `/api/articles/${slug.value}`,
   { key: () => `article-${slug.value}` },
 )
@@ -93,95 +130,74 @@ if (!response.value?.data && error.value?.statusCode === 404) {
 }
 
 const article = computed(() => response.value?.data ?? null)
+const isLoading = computed(() => status.value === 'pending' && !article.value)
 
-const title = computed(() => {
-  if (!article.value) return ''
-  return isFrench.value ? article.value.titleFr || article.value.titleAr : article.value.titleAr || article.value.titleFr
-})
+/* ------------------------------------------------------------------ */
+/* Localized content                                                   */
+/* ------------------------------------------------------------------ */
 
-const excerpt = computed(() => {
-  if (!article.value) return ''
-  return isFrench.value
-    ? article.value.excerptFr || article.value.excerptAr || ''
-    : article.value.excerptAr || article.value.excerptFr || ''
-})
+const title = computed(() => pick(article.value?.titleFr, article.value?.titleAr))
+const excerpt = computed(() => pick(article.value?.excerptFr, article.value?.excerptAr))
+const body = computed(() => pick(article.value?.bodyFr, article.value?.bodyAr))
 
-// Localized body: FR readers get the French content, AR readers the Arabic
-// one, each falling back to the other language when a version is missing.
-const body = computed(() => {
-  if (!article.value) return ''
-  return isFrench.value
-    ? article.value.bodyFr || article.value.bodyAr
-    : article.value.bodyAr || article.value.bodyFr
-})
-
-const categoryName = computed(() => {
-  const category = article.value?.category
-  if (!category) return isFrench.value ? 'Article' : 'مقال'
-  return isFrench.value ? category.nameFr || category.nameAr : category.nameAr || category.nameFr
-})
-
-const authorName = computed(() => {
-  const author = article.value?.author
-  if (!author) return isFrench.value ? 'Bily24 Team' : 'فريق بيلي24'
-  return isFrench.value ? author.nameFr || author.nameAr : author.nameAr || author.nameFr
-})
-
-// Link target for the byline. Null when the article has no linked author, so
-// the template falls back to plain text instead of a dead link.
-const authorSlug = computed(() => article.value?.author?.slug ?? null)
-
-const publishedDate = computed(() => {
-  const date = article.value?.publishedAt || article.value?.createdAt
-  if (!date) return ''
-
-  return new Intl.DateTimeFormat(isFrench.value ? 'fr-FR' : 'ar-DZ', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(date))
-})
-
-const readingTimeLabel = computed(() => {
-  const minutes = article.value?.readingTime || 1
-  return isFrench.value ? `${minutes} min de lecture` : `${minutes} دقائق قراءة`
-})
-
-// Fallback share image for articles with no cover. Uses the site logo, which
-// is the only image guaranteed to exist in public/.
-const coverImage = computed(() => article.value?.coverImage || '/img/logo/dz_logo.png')
-const articleUrl = computed(() => buildAbsoluteUrl(route.fullPath))
-const socialImage = computed(() => buildAbsoluteUrl(coverImage.value))
+const category = computed(() => article.value?.category ?? null)
+const author = computed(() => article.value?.author ?? null)
 const tags = computed(() => article.value?.tags ?? [])
-const publishedIsoDate = computed(() => {
+
+const categoryName = computed(() => (category.value
+  ? pick(category.value.nameFr, category.value.nameAr)
+  : text.value.defaultCategory))
+
+const authorName = computed(() => (author.value
+  ? pick(author.value.nameFr, author.value.nameAr)
+  : text.value.defaultAuthor))
+
+// Null when the article has no linked author, so the byline chip renders as
+// plain text instead of a dead link.
+const authorSlug = computed(() => author.value?.slug ?? null)
+
+const tagNames = computed(() => tags.value.map(tag => pick(tag.nameFr, tag.nameAr)))
+
+/* ------------------------------------------------------------------ */
+/* Dates, cover and gallery                                            */
+/* ------------------------------------------------------------------ */
+
+// Machine-readable date for <time> and for structured data.
+const publishedIso = computed(() => {
   const date = article.value?.publishedAt || article.value?.createdAt
   return date ? new Date(date).toISOString() : ''
 })
 
-const tagNames = computed(() => tags.value.map((tag) => {
-  return isFrench.value ? tag.nameFr || tag.nameAr : tag.nameAr || tag.nameFr
-}))
+const publishedDate = computed(() => (publishedIso.value
+  ? formatDate(publishedIso.value, isFrench.value ? 'fr' : 'ar')
+  : ''))
 
-// Normalize the article media into the gallery's shape. When the article has a
-// media array we use it; otherwise we fall back to the single cover image so
-// the content gallery always has at least one slide to show.
+const readingTimeLabel = computed(() => text.value.readingTime(article.value?.readingTime || 1))
+
+// Fallback share image for articles with no cover: the site logo is the only
+// image guaranteed to exist in public/.
+const coverImage = computed(() => article.value?.coverImage || '/img/logo/dz_logo.png')
+
+// Query-free URL: /articles/x?ref=y must never be indexed as a second page.
+const articleUrl = computed(() => toAbsoluteUrl(route.path))
+const socialImage = computed(() => toAbsoluteUrl(coverImage.value))
+
+// Normalize the article media into the gallery's shape, falling back to the
+// cover image so there is always at least one slide.
 const mediaItems = computed<MediaItem[]>(() => {
   const media = article.value?.media
+
   if (media?.length) {
-    return media.map((item) => {
-      const caption = isFrench.value
-        ? item.captionFr || item.captionAr
-        : item.captionAr || item.captionFr
-      return {
-        type: item.type,
-        src: item.url,
-        publicId: item.publicId ?? undefined,
-        poster: item.posterUrl ?? undefined,
-        imageVariants: item.imageVariants ?? undefined,
-        alt: caption || title.value,
-      }
-    })
+    return media.map(item => ({
+      type: item.type,
+      src: item.url,
+      publicId: item.publicId ?? undefined,
+      poster: item.posterUrl ?? undefined,
+      imageVariants: item.imageVariants ?? undefined,
+      alt: pick(item.captionFr, item.captionAr) || title.value,
+    }))
   }
+
   return [{
     type: 'image',
     src: article.value?.coverImageVariants?.main || coverImage.value,
@@ -190,10 +206,35 @@ const mediaItems = computed<MediaItem[]>(() => {
   }]
 })
 
+/* ------------------------------------------------------------------ */
+/* Navigation                                                          */
+/* ------------------------------------------------------------------ */
+
+// Feeds both the visible breadcrumb and the BreadcrumbList structured data,
+// so the two can never drift apart.
+const breadcrumbs = computed(() => [
+  { title: text.value.home, to: localePath('/') },
+  { title: text.value.articles, to: localePath('/articles') },
+  ...(category.value
+    ? [{ title: categoryName.value, to: localePath(`/categories/${category.value.slug}`) }]
+    : []),
+])
+
+/* ------------------------------------------------------------------ */
+/* SEO                                                                 */
+/* ------------------------------------------------------------------ */
+
+// The canonical link, the hreflang alternates and og:locale are emitted once
+// for every route by useSeoCanonical() in app.vue: do not repeat them here.
 useSeoMeta({
   title: () => title.value || 'Article',
   description: () => excerpt.value || title.value,
   author: () => authorName.value,
+
+  // "max-image-preview:large" lets Search and Discover show the cover full
+  // width instead of a thumbnail, which is what drives clicks on articles.
+  robots: 'index, follow, max-image-preview:large, max-snippet:-1',
+
   ogTitle: () => title.value || 'Article',
   ogDescription: () => excerpt.value || title.value,
   ogType: 'article',
@@ -201,267 +242,297 @@ useSeoMeta({
   ogImage: () => socialImage.value,
   ogImageAlt: () => title.value || 'Article image',
   ogSiteName: 'Guelma History',
-  ogLocale: () => isFrench.value ? 'fr_FR' : 'ar_DZ',
+
   twitterCard: 'summary_large_image',
   twitterTitle: () => title.value || 'Article',
   twitterDescription: () => excerpt.value || title.value,
   twitterImage: () => socialImage.value,
   twitterImageAlt: () => title.value || 'Article image',
+
+  articlePublishedTime: () => publishedIso.value,
+  articleModifiedTime: () => publishedIso.value,
+  articleSection: () => categoryName.value,
+  articleAuthor: () => authorName.value,
 })
 
-// Structured data. Google uses this for article rich results: it needs an
-// absolute image URL, ISO dates and a publisher block to be eligible.
-const articleJsonLd = computed(() => ({
+// One JSON-LD block, two entities: the Article rich result needs absolute
+// image URLs, ISO dates and a publisher; the BreadcrumbList is what renders
+// the "Home > Articles > Category" trail under the search result.
+const jsonLd = computed(() => ({
   '@context': 'https://schema.org',
-  '@type': 'Article',
-  'headline': title.value,
-  'description': excerpt.value || title.value,
-  'image': [socialImage.value],
-  'inLanguage': isFrench.value ? 'fr-FR' : 'ar-DZ',
-  'datePublished': publishedIsoDate.value,
-  'dateModified': publishedIsoDate.value,
-  'articleSection': categoryName.value,
-  'keywords': tagNames.value.join(', '),
-  'mainEntityOfPage': {
-    '@type': 'WebPage',
-    '@id': articleUrl.value,
-  },
-  'author': {
-    '@type': 'Person',
-    'name': authorName.value,
-    ...(authorSlug.value
-      ? { url: buildAbsoluteUrl(localePath(`/authors/${authorSlug.value}`)) }
-      : {}),
-  },
-  'publisher': {
-    '@type': 'Organization',
-    'name': 'Guelma History',
-    'logo': {
-      '@type': 'ImageObject',
-      'url': buildAbsoluteUrl('/img/logo/dz_logo.png'),
+  '@graph': [
+    {
+      '@type': 'Article',
+      '@id': `${articleUrl.value}#article`,
+      'headline': title.value,
+      'description': excerpt.value || title.value,
+      'image': [socialImage.value],
+      'inLanguage': isFrench.value ? 'fr-FR' : 'ar-DZ',
+      'datePublished': publishedIso.value,
+      'dateModified': publishedIso.value,
+      'articleSection': categoryName.value,
+      'keywords': tagNames.value.join(', '),
+      'wordCount': body.value.split(/\s+/).filter(Boolean).length,
+      'mainEntityOfPage': {
+        '@type': 'WebPage',
+        '@id': articleUrl.value,
+      },
+      'author': {
+        '@type': 'Person',
+        'name': authorName.value,
+        ...(authorSlug.value
+          ? { url: toAbsoluteUrl(localePath(`/authors/${authorSlug.value}`)) }
+          : {}),
+      },
+      'publisher': {
+        '@type': 'Organization',
+        'name': 'Guelma History',
+        'logo': {
+          '@type': 'ImageObject',
+          'url': toAbsoluteUrl('/img/logo/dz_logo.png'),
+        },
+      },
     },
-  },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${articleUrl.value}#breadcrumb`,
+      'itemListElement': [
+        ...breadcrumbs.value.map((item, index) => ({
+          '@type': 'ListItem',
+          'position': index + 1,
+          'name': item.title,
+          'item': toAbsoluteUrl(item.to),
+        })),
+        // The current page closes the trail and carries no "item" URL.
+        {
+          '@type': 'ListItem',
+          'position': breadcrumbs.value.length + 1,
+          'name': title.value,
+        },
+      ],
+    },
+  ],
 }))
 
 useHead(() => ({
-  link: [
-    {
-      rel: 'canonical',
-      href: articleUrl.value,
-    },
-  ],
   script: [
     {
       type: 'application/ld+json',
-      innerHTML: JSON.stringify(articleJsonLd.value),
+      innerHTML: JSON.stringify(jsonLd.value),
     },
   ],
-  meta: [
-    {
-      property: 'article:published_time',
-      content: publishedIsoDate.value,
-    },
-    {
-      property: 'article:author',
-      content: authorName.value,
-    },
-    {
-      property: 'article:section',
-      content: categoryName.value,
-    },
-    ...tagNames.value.map(tagName => ({
-      property: 'article:tag',
-      content: tagName,
-    })),
-  ],
+  // article:tag repeats once per keyword, so each entry needs its own key or
+  // the head manager would keep only the last one.
+  meta: tagNames.value.map(tag => ({
+    key: `article-tag-${tag}`,
+    property: 'article:tag',
+    content: tag,
+  })),
 }))
 </script>
 
 <template>
   <div class="article-page">
+    <!-- Fetch failed: say so instead of rendering an empty page. -->
     <v-alert
       v-if="error"
       type="error"
       variant="tonal"
-      class="rounded-xl"
-    >
-      {{ isFrench ? 'Article introuvable.' : 'تعذر العثور على المقال.' }}
-    </v-alert>
+      role="alert"
+      rounded="xl"
+      :text="text.notFound"
+    />
 
+    <!-- Same shape as the real content, so nothing jumps once data lands. -->
     <v-skeleton-loader
-      v-else-if="pending && !article"
+      v-else-if="isLoading"
       type="heading, image, paragraph, paragraph"
       class="rounded-xl"
+      role="status"
+      :aria-label="text.loading"
     />
 
     <template v-else-if="article">
-      <nav
-        class="article-breadcrumb mb-4"
-        :aria-label="isFrench ? 'Fil d’ariane' : 'مسار الصفحة'"
-      >
-        <NuxtLink :to="localePath('/')">
-          {{ isFrench ? 'Accueil' : 'الرئيسية' }}
-        </NuxtLink>
-        <v-icon
-          icon="mdi-chevron-right"
-          size="18"
-        />
-        <NuxtLink :to="localePath('/articles')">
-          {{ isFrench ? 'Articles' : 'المقالات' }}
-        </NuxtLink>
-        <v-icon
-          icon="mdi-chevron-right"
-          size="18"
-        />
-        <span>{{ categoryName }}</span>
+      <!-- Orientation for readers, internal links for crawlers. -->
+      <nav :aria-label="text.breadcrumb">
+        <v-breadcrumbs
+          :items="breadcrumbs"
+          density="compact"
+          class="px-0 pt-0 text-body-2"
+        >
+          <template #divider>
+            <v-icon
+              :icon="isFrench ? 'mdi-chevron-right' : 'mdi-chevron-left'"
+              size="16"
+            />
+          </template>
+        </v-breadcrumbs>
       </nav>
 
-      <!-- Hero: two-column on desktop, header-first stacked on small screens -->
-      <section class="article-hero-card article-surface rounded-xl mb-8 mb-md-10 pa-1">
-        <div class="article-hero-copy">
-          <div class="article-hero-top pa-1">
-            <v-chip
-              color="primary"
-              variant="flat"
-              size="small"
-              class="font-weight-bold article-chip"
-            >
-              {{ categoryName }}
-            </v-chip>
-
-            <ArticleBookmarkButton
-              :article-slug="article.slug"
-              variant="button"
-            />
-          </div>
-
-          <h1 class="article-title mb-5 text-headline-small text-sm-headline-medium">
-            {{ title }}
-          </h1>
-
-          <p
-            v-if="excerpt"
-            class="article-excerpt mb-6"
-          >
-            {{ excerpt }}
-          </p>
-
-          <div class="d-flex flex-wrap ga-2">
-            <NuxtLink
-              v-if="authorSlug"
-              :to="localePath(`/authors/${authorSlug}`)"
-              class="meta-item meta-item--link"
-            >
-              <v-icon
-                icon="mdi-account-circle-outline"
-                size="20"
-              />
-              {{ authorName }}
-              <v-icon
-                :icon="isFrench ? 'mdi-arrow-right' : 'mdi-arrow-left'"
-                size="18"
-              />
-            </NuxtLink>
-            <span
-              v-else
-              class="meta-item"
-            >
-              <v-icon
-                icon="mdi-account-circle-outline"
-                size="20"
-              />
-              {{ authorName }}
-            </span>
-            <span class="meta-item">
-              <v-icon
-                icon="mdi-calendar-blank-outline"
-                size="20"
-              />
-              {{ publishedDate }}
-            </span>
-            <span class="meta-item">
-              <v-icon
-                icon="mdi-clock-outline"
-                size="20"
-              />
-              {{ readingTimeLabel }}
-            </span>
-          </div>
-        </div>
-
-        <div class="article-hero-media">
-          <ArticleHero
-            :image-url="article.coverImageVariants?.main || coverImage"
-            :alt="title"
-          />
-        </div>
-      </section>
-
-      <v-row
-        align="start"
-        class="article-layout"
-        style="row-gap: 24px;"
-      >
-        <v-col
-          cols="12"
-          lg="8"
+      <article aria-labelledby="article-title">
+        <!-- Hero: copy beside the cover on desktop, stacked on mobile. -->
+        <v-sheet
+          tag="header"
+          rounded="xl"
+          class="article-glass article-hero overflow-hidden mb-8 mb-md-10"
         >
-          <v-card
-            class="article-content-card article-surface rounded-xl"
-            variant="flat"
+          <v-row
+            no-gutters
+            align="center"
           >
-            <ArticleBody
-              :body="body"
-              :title="title"
-              :cover-image="coverImage"
-              :media="mediaItems"
-            />
-
-            <div
-              v-if="tags.length"
-              class="article-tags"
+            <v-col
+              cols="12"
+              md="6"
+              class="pa-4 pa-sm-6"
             >
-              <v-chip
-                v-for="tag in tags"
-                :key="tag.id"
-                variant="tonal"
-                color="primary"
-                size="small"
-                class="article-tag-chip"
+              <div class="d-flex align-center justify-space-between ga-3 mb-4">
+                <v-chip
+                  :to="category ? localePath(`/categories/${category.slug}`) : undefined"
+                  color="primary"
+                  variant="flat"
+                  size="small"
+                  class="font-weight-bold"
+                >
+                  {{ categoryName }}
+                </v-chip>
+
+                <ArticleBookmarkButton
+                  :article-slug="article.slug"
+                  variant="button"
+                />
+              </div>
+
+              <h1
+                id="article-title"
+                class="article-title text-headline-small text-sm-headline-medium font-weight-bold mb-4"
               >
-                {{ isFrench ? tag.nameFr || tag.nameAr : tag.nameAr || tag.nameFr }}
-              </v-chip>
-            </div>
-          </v-card>
+                {{ title }}
+              </h1>
 
-          <ArticleEngagementPanel
-            :slug="article.slug"
-            :title="title"
-            :excerpt="excerpt"
-            class="mt-6"
-          />
-        </v-col>
+              <p
+                v-if="excerpt"
+                class="article-excerpt text-body-1 text-medium-emphasis mb-6"
+              >
+                {{ excerpt }}
+              </p>
 
-        <v-col
-          cols="12"
-          lg="4"
-          class="position-sticky sticky-detail"
-        >
-          <aside class="article-sidebar">
-            <div class="article-sidebar-inner article-surface pa-2 rounded-xl">
-              <layout-app-sidebar />
-            </div>
-          </aside>
-        </v-col>
-      </v-row>
+              <!-- A list, so screen readers announce "3 items" instead of one
+                   long run-on sentence. -->
+              <ul class="article-meta d-flex flex-wrap ga-2 pa-0 ma-0">
+                <li>
+                  <v-chip
+                    :to="authorSlug ? localePath(`/authors/${authorSlug}`) : undefined"
+                    variant="tonal"
+                    prepend-icon="mdi-account-circle-outline"
+                  >
+                    {{ authorName }}
+                  </v-chip>
+                </li>
+                <li>
+                  <v-chip
+                    variant="tonal"
+                    prepend-icon="mdi-calendar-blank-outline"
+                  >
+                    <time :datetime="publishedIso">{{ publishedDate }}</time>
+                  </v-chip>
+                </li>
+                <li>
+                  <v-chip
+                    variant="tonal"
+                    prepend-icon="mdi-clock-outline"
+                  >
+                    {{ readingTimeLabel }}
+                  </v-chip>
+                </li>
+              </ul>
+            </v-col>
 
-      <CommentSection :article-slug="article.slug" />
+            <v-col
+              cols="12"
+              md="6"
+              class="pa-2 pa-sm-3"
+            >
+              <ArticleHero
+                :image-url="article.coverImageVariants?.main || coverImage"
+                :alt="title"
+              />
+            </v-col>
+          </v-row>
+        </v-sheet>
+
+        <v-row align="start">
+          <v-col
+            cols="12"
+            lg="8"
+          >
+            <v-card
+              variant="flat"
+              rounded="xl"
+              class="article-glass"
+            >
+              <ArticleBody
+                :body="body"
+                :title="title"
+                :cover-image="coverImage"
+                :media="mediaItems"
+              />
+
+              <v-card-text v-if="tags.length">
+                <v-divider class="mb-4" />
+
+                <h2 class="text-overline text-medium-emphasis mb-2">
+                  {{ text.tags }}
+                </h2>
+
+                <div class="d-flex flex-wrap ga-2">
+                  <v-chip
+                    v-for="(tag, index) in tags"
+                    :key="tag.id"
+                    color="primary"
+                    variant="tonal"
+                    size="small"
+                  >
+                    {{ tagNames[index] }}
+                  </v-chip>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <ArticleEngagementPanel
+              :slug="article.slug"
+              :title="title"
+              :excerpt="excerpt"
+              class="mt-6"
+            />
+          </v-col>
+
+          <!-- Sticky on the column itself: the aside would not stick inside a
+               column that is only as tall as its content. -->
+          <v-col
+            cols="12"
+            lg="4"
+            class="position-sticky article-sticky"
+          >
+            <aside :aria-label="text.sidebar">
+              <div class="article-glass article-sidebar rounded-xl pa-2">
+                <layout-app-sidebar />
+              </div>
+            </aside>
+          </v-col>
+        </v-row>
+      </article>
+
+      <CommentSection
+        :article-slug="article.slug"
+        class="mt-8"
+      />
 
       <ArticleRelated
         :slug="article.slug"
         :category-slug="article.category?.slug ?? null"
         class="my-6"
       />
+
       <NewsletterForm />
     </template>
   </div>
@@ -472,243 +543,80 @@ useHead(() => ({
   color: rgb(var(--v-theme-on-background));
 }
 
-.article-page :deep(a),
-.article-page :deep(button),
-.article-page :deep(.v-chip),
-.article-page :deep(.v-card) {
-  transition:
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 0.25s ease,
-    border-color 0.25s ease,
-    color 0.2s ease;
+/* Frosted panel shared by the hero, the body card and the sidebar. */
+.article-glass {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--v-theme-surface), 0.88),
+    rgba(var(--v-theme-surface), 0.72)
+  );
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: box-shadow 0.28s ease;
 }
 
-.article-surface {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  background:
-    linear-gradient(180deg,
+.article-glass:hover {
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* Declared after .article-glass so the brand tint wins over the flat
+   surface gradient. */
+.article-hero {
+  background-image:
+    radial-gradient(circle at top left, rgba(var(--v-theme-primary), 0.12), transparent 36%),
+    linear-gradient(
+      180deg,
       rgba(var(--v-theme-surface), 0.88),
       rgba(var(--v-theme-surface), 0.72)
     );
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.04),
-    0 2px 10px rgba(0, 0, 0, 0.03);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.article-breadcrumb {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  color: rgba(var(--v-theme-on-surface), 0.62);
-  font-size: 0.92rem;
-}
-
-.article-breadcrumb a {
-  color: inherit;
-  text-decoration: none;
-  transition: color 0.22s ease, opacity 0.22s ease;
-}
-
-.article-breadcrumb a:hover {
-  color: rgb(var(--v-theme-primary));
-  opacity: 1;
-}
-
-/* Desktop hero: copy on the left, media on the right. */
-.article-hero-card {
-  display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1.08fr);
-  gap: clamp(1.5rem, 3vw, 2.75rem);
-  align-items: start;
-  overflow: hidden;
-  position: relative;
-  isolation: isolate;
-}
-
-.article-hero-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at top left, rgba(var(--v-theme-primary), 0.12), transparent 36%),
-    radial-gradient(circle at bottom right, rgba(var(--v-theme-primary), 0.06), transparent 32%);
-  pointer-events: none;
-  z-index: -1;
-}
-
-.article-hero-copy {
-  position: relative;
-  z-index: 1;
-}
-
-/* Category chip on the start, save button facing it on the end. */
-.article-hero-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-
-.article-hero-media {
-  border-radius: 24px;
-  overflow: hidden;
-  transform: translateZ(0);
-
-}
-
-.article-hero-media :deep(img),
-.article-hero-media :deep(video),
-.article-hero-media :deep(.v-img__img) {
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.article-hero-card:hover .article-hero-media :deep(img),
-.article-hero-card:hover .article-hero-media :deep(video),
-.article-hero-card:hover .article-hero-media :deep(.v-img__img) {
-  transform: scale(1.02);
-}
-
-.article-chip {
-  box-shadow: 0 8px 20px rgba(var(--v-theme-primary), 0.16);
 }
 
 .article-title {
-  max-width: 780px;
+  line-height: 1.25;
 }
 
+/* ~68 characters is the comfortable reading width for an intro. */
 .article-excerpt {
   max-width: 68ch;
-  color: rgba(var(--v-theme-on-surface), 0.72);
-  font-size: clamp(1.02rem, 1.5vw, 1.18rem);
   line-height: 1.85;
 }
 
-.meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.62rem 0.9rem;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.07);
-  border-radius: 999px;
-  background: rgba(var(--v-theme-surface), 0.62);
-  color: rgba(var(--v-theme-on-surface), 0.78);
-  font-size: 0.92rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+.article-meta {
+  list-style: none;
 }
 
-.meta-item:hover {
-  background: rgba(var(--v-theme-surface), 0.82);
-  border-color: rgba(var(--v-theme-primary), 0.16);
-}
-
-/* The author byline is a link: keep it visually identical but interactive. */
-.meta-item--link {
-  text-decoration: none;
-  color: rgba(var(--v-theme-on-surface), 0.78);
-  cursor: pointer;
-}
-
-.meta-item--link:hover {
-  color: rgb(var(--v-theme-primary));
-}
-
-.article-layout {
-  align-items: flex-start;
-}
-
-.article-content-card {
-  border-radius: 28px !important;
-}
-
-.article-content-card:hover {
-  box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.05),
-    0 6px 20px rgba(0, 0, 0, 0.04);
-}
-
-.article-sidebar {
-
-}
-
-.article-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-}
-
-.article-tag-chip:hover {
-  transform: translateY(-1px);
-}
-
-.article-page :deep(.v-divider) {
-  opacity: 0.65;
-}
-
-.sticky-detail{
+/* Clears the fixed header when the sidebar sticks. */
+.article-sticky {
   top: 80px;
 }
 
+/* Below "lg" the sidebar flows under the article, so its panel styling would
+   look like a box inside a box. */
 @media (max-width: 1279px) {
-  .article-title {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 959px) {
-  /* Small screens: stack header first (smaller), image below it. */
-  .article-hero-card {
-    grid-template-columns: 1fr;
-  }
-
-  .article-hero-media {
-    order: 1;
-    border-radius: 20px;
-
-  }
-
-  .article-title {
-    line-height: 1.18;
-  }
-
-  .article-excerpt {
-    font-size: 0.98rem;
-    line-height: 1.75;
-  }
-
-  .article-content-card {
-    border-radius: 22px !important;
-  }
-
-  .article-sidebar-inner {
-    padding: 0;
-    background: transparent;
+  .article-sidebar {
+    padding: 0 !important;
     border: 0;
+    background: none;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
 }
 
+/* Keyboard users must always see where they are. */
+.article-page :deep(a:focus-visible),
+.article-page :deep(button:focus-visible),
+.article-page :deep(.v-chip:focus-visible) {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .article-page :deep(a),
-  .article-page :deep(button),
-  .article-page :deep(.v-chip),
-  .article-page :deep(.v-card),
-  .article-hero-media :deep(img),
-  .article-hero-media :deep(video),
-  .article-hero-media :deep(.v-img__img),
-  .meta-item {
+  .article-page :deep(*) {
     transition: none !important;
-    transform: none !important;
+    animation: none !important;
   }
 }
 </style>
