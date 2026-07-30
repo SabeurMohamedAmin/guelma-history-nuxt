@@ -15,8 +15,11 @@
       :pending-articles="0"
       :notifications="0"
     />
-    <v-main class="px-2">
-      <v-container fluid>
+    <v-main class="px-1">
+      <v-container
+        fluid
+        class="pa-0 pt-2 pa-lg-4"
+      >
         <slot></slot>
       </v-container>
     </v-main>

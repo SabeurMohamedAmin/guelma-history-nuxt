@@ -72,9 +72,9 @@ function stepReadingTime(delta: number) {
     <v-card
       rounded="xl"
       elevation="0"
-      class="editor-card mb-4"
+      class="editor-card mb-4 pa-2 px-md-4 py-3 py-md-4"
     >
-      <div class="d-flex align-center ga-3 px-4 pt-4">
+      <div class="d-flex align-center ga-3">
         <div class="card-icon">
           <v-icon icon="mdi-cog-outline" />
         </div>
@@ -82,7 +82,7 @@ function stepReadingTime(delta: number) {
           {{ t('articleForm.publishing') }}
         </div>
       </div>
-      <v-card-text class="pt-4 d-flex flex-column ga-4">
+      <v-card-text class="pa-0 pt-4 d-flex flex-column ga-4">
         <v-select
           v-model="store.fields.categoryId"
           :items="store.categories"
@@ -146,9 +146,9 @@ function stepReadingTime(delta: number) {
     <v-card
       rounded="xl"
       elevation="0"
-      class="editor-card mb-4"
+      class="editor-card mb-4 pa-2 px-md-4 py-3 py-md-4"
     >
-      <div class="d-flex align-center ga-3 px-4 pt-4">
+      <div class="d-flex align-center ga-3">
         <div class="card-icon">
           <v-icon icon="mdi-image-outline" />
         </div>
@@ -165,7 +165,7 @@ function stepReadingTime(delta: number) {
           {{ t('articleForm.optional') }}
         </v-chip>
       </div>
-      <v-card-text class="pt-4">
+      <v-card-text class="pa-0 py-3">
         <!-- Preview / dropzone -->
         <div
           v-if="store.fields.coverImage"
@@ -247,9 +247,9 @@ function stepReadingTime(delta: number) {
     <v-card
       rounded="xl"
       elevation="0"
-      class="editor-card mb-4"
+      class="editor-card mb-4 pa-2 px-md-4 py-3 py-md-4"
     >
-      <div class="d-flex align-center ga-3 px-4 pt-4">
+      <div class="d-flex align-center ga-3">
         <div class="card-icon">
           <v-icon icon="mdi-clock-time-four-outline" />
         </div>
@@ -257,7 +257,7 @@ function stepReadingTime(delta: number) {
           {{ t('articleForm.readingTime') }}
         </div>
       </div>
-      <v-card-text class="pt-4">
+      <v-card-text class="pa-0pt-4">
         <!-- Stepper -->
         <div class="reading-stepper d-flex align-baseline justify-center ga-4 mb-3">
           <v-btn
@@ -301,13 +301,13 @@ function stepReadingTime(delta: number) {
     </v-card>
 
     <!-- Actions -->
-    <div class="form-actions sidebar rounded-xl mb-4 pa-3 d-flex flex-column ga-2">
+    <div class="form-actions sidebar rounded-xl mb-4 pa-2 px-md-4 py-3 py-md-4 d-flex flex-column ga-2">
       <v-btn
         color="primary"
         variant="flat"
         block
         size="large"
-        rounded="lg"
+        rounded="xl"
         :loading="store.loading || store.isUploadingMedia"
         :disabled="store.isUploadingMedia"
         prepend-icon="mdi-check"
@@ -322,7 +322,7 @@ function stepReadingTime(delta: number) {
         block
         color="warning"
         variant="text"
-        rounded="lg"
+        rounded="xl"
         :to="store.listPath"
         :disabled="store.loading"
       >

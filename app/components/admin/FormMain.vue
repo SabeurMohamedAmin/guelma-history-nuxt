@@ -21,7 +21,7 @@ const activeLabel = computed(
       elevation="0"
       class="editor-card mb-4"
     >
-      <div class="d-flex align-center ga-3 px-4 pt-4">
+      <div class="d-flex align-center ga-3 pa-2 px-md-6 pt-3 pt-md-6">
         <div class="card-icon">
           <v-icon icon="mdi-format-title" />
         </div>
@@ -42,7 +42,7 @@ const activeLabel = computed(
           {{ t('articleForm.editor.copyFromFr') }}
         </v-btn>
       </div>
-      <v-card-text class="pt-4">
+      <v-card-text class="px-2 px-md-4 py-3 py-md-4">
         <v-text-field
           v-model="store.activeTitle"
           :label="t('articleForm.titles')"
@@ -70,7 +70,7 @@ const activeLabel = computed(
       elevation="0"
       class="editor-card mb-4"
     >
-      <div class="d-flex align-center ga-3 px-4 pt-4">
+      <div class="d-flex align-center ga-3 px-2 px-md-4 py-3 py-md-4">
         <div class="card-icon">
           <v-icon icon="mdi-link-variant" />
         </div>
@@ -100,9 +100,9 @@ const activeLabel = computed(
     <v-card
       rounded="xl"
       elevation="0"
-      class="editor-card mb-4"
+      class="editor-card mb-4 pa-2 px-md-4 py-3 py-md-4"
     >
-      <div class="d-flex align-center ga-3 px-4 pt-4">
+      <div class="d-flex align-center ga-3">
         <div class="card-icon">
           <v-icon icon="mdi-text-long" />
         </div>
@@ -112,7 +112,7 @@ const activeLabel = computed(
           </div>
         </div>
       </div>
-      <v-card-text class="pt-4">
+      <v-card-text class="pa-0 pt-4">
         <v-textarea
           v-model="store.activeBody"
           :label="t('articleForm.bodyLabel')"

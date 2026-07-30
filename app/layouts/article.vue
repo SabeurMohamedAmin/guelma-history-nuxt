@@ -5,7 +5,7 @@
 <template>
   <v-app>
     <layout-app-header />
-    <v-main class="px-2">
+    <v-main class="px-1">
       <v-container
         fluid
         class="pa-0 px-1"

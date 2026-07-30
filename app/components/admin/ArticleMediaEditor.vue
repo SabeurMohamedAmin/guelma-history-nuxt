@@ -78,11 +78,15 @@ async function onFileSelected(event: Event, index: number) {
 <template>
   <v-card
     variant="flat"
-    class="mb-4 rounded-lg"
+    class="mb-4 rounded-xl pa-2 px-md-4 py-3 py-md-4"
   >
-    <v-card-title class="d-flex align-center pa-4 pb-2">
-      <span class="text-subtitle-1 font-weight-medium">{{ t('articleForm.media.title') }}</span>
-      <span class="text-caption text-medium-emphasis font-weight-regular ml-2">{{ t('articleForm.optional') }}</span>
+    <v-card-title class="d-flex align-center pa-0">
+      <span class="text-subtitle-1 font-weight-medium">
+        {{ t('articleForm.media.title') }}
+      </span>
+      <span class="text-caption text-medium-emphasis font-weight-regular ml-2">
+        {{ t('articleForm.optional') }}
+      </span>
       <v-spacer />
       <v-chip
         size="small"
@@ -93,7 +97,7 @@ async function onFileSelected(event: Event, index: number) {
       </v-chip>
     </v-card-title>
 
-    <v-card-text class="pt-2">
+    <v-card-text class="pa-0">
       <p class="text-caption text-medium-emphasis mb-3">
         {{ t('articleForm.media.hint') }}
       </p>
@@ -109,7 +113,7 @@ async function onFileSelected(event: Event, index: number) {
 
       <div
         v-if="!store.fields.media.length"
-        class="media-empty d-flex flex-column align-center justify-center text-center pa-8 mb-3 rounded-lg"
+        class="media-empty d-flex flex-column align-center justify-center text-center pa-8 mb-3 rounded-xl"
       >
         <v-icon
           icon="mdi-image-multiple-outline"
@@ -133,7 +137,7 @@ async function onFileSelected(event: Event, index: number) {
         >
           <v-expansion-panel-title>
             <div class="d-flex align-center ga-3 w-100">
-              <div class="media-thumb d-flex align-center justify-center rounded-lg flex-shrink-0">
+              <div class="media-thumb d-flex align-center justify-center rounded-xl flex-shrink-0">
                 <v-img
                   v-if="item.type !== 'youtube' && item.posterUrl || (item.type === 'image' && item.url)"
                   :src="item.type === 'image' ? item.url : item.posterUrl"
@@ -187,7 +191,7 @@ async function onFileSelected(event: Event, index: number) {
                 variant="tonal"
                 color="primary"
                 prepend-icon="mdi-cloud-upload-outline"
-                class="mb-2"
+                class="mb-2 rounded-xl"
                 :loading="uploading && uploadingIndex === index"
                 :disabled="uploading"
                 @click="openPicker(index)"
@@ -283,6 +287,7 @@ async function onFileSelected(event: Event, index: number) {
         block
         variant="tonal"
         color="primary"
+        class="rounded-xl"
         prepend-icon="mdi-plus"
         @click="store.addMedia('image')"
       >

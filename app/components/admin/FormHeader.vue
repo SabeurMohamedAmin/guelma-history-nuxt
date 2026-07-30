@@ -19,7 +19,7 @@ function badge(complete: boolean, percent: number) {
 <template>
   <div class="editor-header mb-6 rounded-xl overflow-hidden">
     <!-- Title row -->
-    <div class="d-flex align-center ga-3 px-4 px-sm-6 pt-4 pt-sm-5">
+    <div class="d-flex align-baseline ga-3 pa-2 px-md-6 pt-2 pt-md-4">
       <v-btn
         icon="mdi-arrow-left"
         variant="tonal"
@@ -28,7 +28,7 @@ function badge(complete: boolean, percent: number) {
         :aria-label="t('articleForm.discard')"
       />
       <div class="flex-grow-1">
-        <h1 class="text-h5 text-sm-h4 font-weight-bold">
+        <h1 class="text-headline-small text-sm-headline-medium font-weight-bold my-2">
           {{ title }}
         </h1>
         <p class="text-body-2 text-medium-emphasis mt-1 mb-0">
@@ -37,13 +37,13 @@ function badge(complete: boolean, percent: number) {
       </div>
       <v-icon
         icon="mdi-text-box-edit-outline"
-        size="40"
+        size="x-large"
         class="d-none d-sm-flex header-watermark"
       />
     </div>
 
     <!-- Language switcher -->
-    <div class="language-switcher mt-4 mt-sm-5 px-4 px-sm-6 py-3 d-flex flex-wrap align-center ga-3">
+    <div class="language-switcher mt-4 mt-sm-5 pa-2 px-md-6 py-3 d-flex flex-wrap align-center ga-3">
       <div class="d-flex align-center ga-2">
         <v-icon
           icon="mdi-translate"
