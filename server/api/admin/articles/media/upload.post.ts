@@ -63,21 +63,23 @@ export default defineEventHandler(async (event) => {
 
   const baseId = `image-${Date.now()}-${crypto.randomUUID()}`
   const definitions = {
-    thumbnail: { width: 320, height: 200, quality: 76, fit: 'cover' },
-    // The hero slider must show the complete image. Width-only resizing keeps
-    // its original aspect ratio instead of cutting content from the edges.
-    slider: { width: 960, height: undefined, quality: 82, fit: 'inside' },
-    main: { width: 1280, height: 800, quality: 86, fit: 'cover' },
+    thumbnail: { width: 320, height: 200, quality: 80, fit: 'fill' },
+    // Width-only resizing keeps the original aspect ratio. Sharp's `fill` fit
+    // does not use `position`; there is no crop area to align.
+    slider: { width: 960, height: undefined, quality: 82, fit: 'fill' },
+    main: { width: 1280, height: 800, quality: 82, fit: 'fill' },
   } as const
 
-  const croppedEntries = await Promise.all(Object.entries(definitions).map(async ([name, options]) => {
+  type VariantOptions = (typeof definitions)[keyof typeof definitions]
+
+  const croppedEntries = await Promise.all(Object.entries(definitions).map(async ([name, rawOptions]) => {
+    const options = rawOptions as VariantOptions
     const buffer = await sharp(filePart.data, { failOn: 'error' })
       .rotate()
       .resize({
         width: options.width,
         height: options.height,
         fit: options.fit,
-        position: 'attention',
         withoutEnlargement: true,
       })
       .webp({ quality: options.quality })

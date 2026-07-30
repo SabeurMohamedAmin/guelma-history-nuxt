@@ -14,6 +14,8 @@ export const articles = pgTable('articles', {
   bodyAr: text('body_ar').notNull().default(''),
   bodyFr: text('body_fr').notNull().default(''),
   coverImage: text('cover_image'),
+  // Cards, sliders and article pages select the matching generated variant;
+  // focus mode uses the untouched original.
   coverImageVariants: jsonb('cover_image_variants').$type<{
     thumbnail: string
     slider: string

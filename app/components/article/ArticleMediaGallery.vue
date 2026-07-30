@@ -212,20 +212,27 @@ function onLightboxKey(event: KeyboardEvent) {
     zoomOut()
 }
 
+// Focus mode always uses the untouched original image. Other media types keep
+// their normal source because they do not have generated image variants.
+function focusSource(item: MediaItem): string {
+  return item.type === 'image' ? item.imageVariants?.original || item.src : item.src
+}
+
 // Derive a sensible file name from the media URL for downloads.
 function fileNameFor(item: MediaItem) {
-  const fromUrl = item.src.split('/').pop()?.split('?')[0]
+  const fromUrl = focusSource(item).split('/').pop()?.split('?')[0]
   return fromUrl || (item.type === 'video' ? 'video' : 'image')
 }
 
-// Download the current media file. We fetch it as a blob so the browser saves
-// the file instead of navigating to it.
+// Download the current media file. For images this downloads the untouched
+// original, matching what the user sees in focus mode.
 async function downloadCurrent() {
   const item = activeItem.value
   if (!item)
     return
+  const source = focusSource(item)
   try {
-    const response = await fetch(item.src)
+    const response = await fetch(source)
     const blob = await response.blob()
     const objectUrl = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -236,19 +243,19 @@ async function downloadCurrent() {
   }
   catch {
     // Fallback: open the file in a new tab if the fetch is blocked (e.g. CORS).
-    window.open(item.src, '_blank')
+    window.open(source, '_blank')
   }
 }
 
-// Copy the current media to the clipboard. Images are copied as an image blob
-// when the browser supports it; otherwise we copy the absolute URL. Videos
-// always copy their URL since clipboards cannot hold video data.
+// Copy the focused original image to the clipboard when supported; otherwise
+// copy its absolute URL. Videos always copy their URL.
 async function copyCurrent() {
   const item = activeItem.value
   if (!item)
     return
 
-  const absoluteUrl = new URL(item.src, window.location.origin).href
+  const source = focusSource(item)
+  const absoluteUrl = new URL(source, window.location.origin).href
 
   try {
     const canCopyImage = item.type === 'image'
@@ -256,7 +263,7 @@ async function copyCurrent() {
       && !!navigator.clipboard?.write
 
     if (canCopyImage) {
-      const response = await fetch(item.src)
+      const response = await fetch(source)
       const blob = await response.blob()
       await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
       return
@@ -287,21 +294,9 @@ async function copyCurrent() {
       :key="index"
     >
       <div class="article-gallery__frame">
-        <CldImage
-          v-if="item.type === 'image' && usesCloudinary(item)"
-          :src="item.publicId"
-          :alt="labelFor(item, index)"
-          class="article-gallery__media"
-          width="900"
-          height="563"
-          crop="fill"
-          gravity="auto"
-          sizes="xs:100vw sm:100vw md:900px lg:640px"
-          :loading="index === 0 ? 'eager' : 'lazy'"
-        />
         <NuxtImg
-          v-else-if="item.type === 'image'"
-          :src="item.src"
+          v-if="item.type === 'image'"
+          :src="item.imageVariants?.slider || item.src"
           :alt="labelFor(item, index)"
           class="article-gallery__media"
           sizes="xs:100vw sm:100vw md:900px lg:640px"
@@ -369,21 +364,7 @@ async function copyCurrent() {
       :class="{ 'article-gallery__thumb--active': current === index }"
       @click="current = index"
     >
-      <CldImage
-        v-if="thumbUsesCloudinary(item)"
-        :src="item.publicId"
-        :alt="labelFor(item, index)"
-        class="article-gallery__thumb-img"
-        width="96"
-        height="64"
-        crop="fill"
-        gravity="auto"
-        format="auto"
-        quality="auto"
-        loading="lazy"
-      />
       <NuxtImg
-        v-else
         :src="thumbnailFor(item)"
         :alt="labelFor(item, index)"
         class="article-gallery__thumb-img"
@@ -499,21 +480,9 @@ async function copyCurrent() {
           @pointerup="onPointerUp"
           @pointerleave="onPointerUp"
         >
-          <CldImage
-            v-if="activeItem?.type === 'image' && usesCloudinary(activeItem)"
-            :src="activeItem.publicId"
-            :alt="labelFor(activeItem, lightboxIndex)"
-            class="article-lightbox__img rounded-lg"
-            width="1600"
-            height="1200"
-            crop="limit"
-            :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }"
-            :draggable="false"
-            loading="eager"
-          />
           <NuxtImg
-            v-else-if="activeItem?.type === 'image'"
-            :src="activeItem.imageVariants?.original || activeItem.src"
+            v-if="activeItem?.type === 'image'"
+            :src="focusSource(activeItem)"
             :alt="labelFor(activeItem, lightboxIndex)"
             class="article-lightbox__img rounded-lg"
             :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }"

@@ -20,6 +20,23 @@ import { articles, articleMedia, authors, categories, db, eq, seedClient, users 
 
 console.log('\u{1F331} Seeding additional Guelma history articles...')
 
+type SeedImageVariants = {
+  thumbnail: string
+  slider: string
+  main: string
+  original: string
+}
+
+function seedImageVariants(name: string): SeedImageVariants {
+  const baseUrl = 'https://placehold.co'
+  return {
+    thumbnail: `${baseUrl}/320x200?text=${name}-thumbnail`,
+    slider: `${baseUrl}/960x540?text=${name}-slider`,
+    main: `${baseUrl}/1280x800?text=${name}-main`,
+    original: `${baseUrl}/1920x1080?text=${name}-original`,
+  }
+}
+
 const articleData = [
   {
     titleAr: 'سوق أهراس وقالمة: على خطى القديس أوغسطين',
@@ -328,6 +345,7 @@ const inserted = await db
   .insert(articles)
   .values(articleData.map((article, index) => ({
     ...article,
+    coverImageVariants: seedImageVariants(article.slug),
     categoryId: realId(article.categoryId, categorySlugByPosition, categoryIdBySlug, 'category'),
     authorId: realId(article.authorId, authorSlugByPosition, authorIdBySlug, 'author'),
     createdByUserId: ownerFor(index),
@@ -346,7 +364,8 @@ if (independence) {
     {
       articleId: independence.id,
       type: 'image',
-      url: 'https://placehold.co/1280x720?text=guelma-1962-celebration',
+      url: 'https://placehold.co/1280x800?text=guelma-1962-celebration-main',
+      imageVariants: seedImageVariants('guelma-1962-celebration'),
       captionAr: 'احتفالات الاستقلال في شوارع قالمة',
       captionFr: 'Célébrations de l\'indépendance dans les rues de Guelma',
       position: 0,
@@ -354,7 +373,8 @@ if (independence) {
     {
       articleId: independence.id,
       type: 'image',
-      url: 'https://placehold.co/1280x720?text=guelma-1962-drapeau',
+      url: 'https://placehold.co/1280x800?text=guelma-1962-drapeau-main',
+      imageVariants: seedImageVariants('guelma-1962-drapeau'),
       captionAr: 'رفع العلم الوطني',
       captionFr: 'Levée du drapeau national',
       position: 1,

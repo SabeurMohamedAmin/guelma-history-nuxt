@@ -30,6 +30,7 @@ export const articleMedia = pgTable('article_media', {
   // inferring the type from `type`).
   resourceType: text('resource_type', { enum: ['image', 'video'] }),
   posterUrl: text('poster_url'),
+  // Pre-generated display variants plus the untouched focus-mode source.
   imageVariants: jsonb('image_variants').$type<{
     thumbnail: string
     slider: string

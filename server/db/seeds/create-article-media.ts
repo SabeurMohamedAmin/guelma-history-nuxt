@@ -36,11 +36,20 @@ await seedClient`
   END $$
 `
 
-// Ensure the public_id column exists on pre-existing tables (idempotent).
+// Keep pre-existing tables compatible with the current media schema.
 await seedClient`
   ALTER TABLE "article_media" ADD COLUMN IF NOT EXISTS "public_id" text
 `
+await seedClient`
+  ALTER TABLE "article_media" ADD COLUMN IF NOT EXISTS "resource_type" text
+`
+await seedClient`
+  ALTER TABLE "article_media" ADD COLUMN IF NOT EXISTS "image_variants" jsonb
+`
+await seedClient`
+  ALTER TABLE "articles" ADD COLUMN IF NOT EXISTS "cover_image_variants" jsonb
+`
 
-console.log('\u2705 article_media table is ready')
+console.log('\u2705 article media and image variant columns are ready')
 
 await seedClient.end()

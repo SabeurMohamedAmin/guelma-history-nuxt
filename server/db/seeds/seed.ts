@@ -108,6 +108,23 @@ function ownerFor(index: number): number {
 }
 
 // --- Articles ---
+type SeedImageVariants = {
+  thumbnail: string
+  slider: string
+  main: string
+  original: string
+}
+
+function seedImageVariants(name: string): SeedImageVariants {
+  const baseUrl = 'https://placehold.co'
+  return {
+    thumbnail: `${baseUrl}/320x200?text=${name}-thumbnail`,
+    slider: `${baseUrl}/960x540?text=${name}-slider`,
+    main: `${baseUrl}/1280x800?text=${name}-main`,
+    original: `${baseUrl}/1920x1080?text=${name}-original`,
+  }
+}
+
 const articleData = [
   {
     titleAr: 'حمام دباغ: المنتجع الروماني هيبوليس',
@@ -426,6 +443,7 @@ await db
   .insert(articles)
   .values(articleData.map((article, index) => ({
     ...article,
+    coverImageVariants: seedImageVariants(article.slug),
     categoryId: realId(article.categoryId, categorySlugByPosition, categoryIdBySlug, 'category'),
     authorId: realId(article.authorId, authorSlugByPosition, authorIdBySlug, 'author'),
     createdByUserId: ownerFor(index),
