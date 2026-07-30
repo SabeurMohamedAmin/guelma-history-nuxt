@@ -615,7 +615,14 @@
     "coverAlt": "صورة المقال",
     "coverImage": "الصورة",
     "titleAr": "العنوان (عربي)",
-    "titleFr": "العنوان (فرنسي)"
+    "titleFr": "العنوان (فرنسي)",
+    "uncategorized": "مقال",
+    "notFound": "تعذر العثور على المقال.",
+    "loading": "جارٍ تحميل المقال…",
+    "breadcrumbLabel": "مسار الصفحة",
+    "metaLabel": "معلومات المقال",
+    "tagsLabel": "الكلمات المفتاحية",
+    "asideLabel": "اقرأ أيضا"
   },
   "sidebar": {
     "siteDescription": "منصة تحريرية مخصصة لتاريخ وتراث وثقافة مدينة قالمة الجزائرية",

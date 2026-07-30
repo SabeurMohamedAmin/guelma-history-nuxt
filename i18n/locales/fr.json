@@ -597,7 +597,14 @@
     "coverAlt": "Image de l'article",
     "coverImage": "Image",
     "titleAr": "Titre (arabe)",
-    "titleFr": "Titre (français)"
+    "titleFr": "Titre (français)",
+    "uncategorized": "Article",
+    "notFound": "Article introuvable.",
+    "loading": "Chargement de l’article…",
+    "breadcrumbLabel": "Fil d’ariane",
+    "metaLabel": "Informations sur l’article",
+    "tagsLabel": "Mots-clés",
+    "asideLabel": "À découvrir aussi"
   },
   "sidebar": {
     "siteDescription": "Plateforme éditoriale dédiée à l'histoire et au patrimoine culturel de Guelma, Algérie",

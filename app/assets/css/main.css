@@ -1,0 +1,36 @@
+/* ------------------------------------------------------------------ */
+/* Global utilities                                                    */
+/* ------------------------------------------------------------------ */
+
+/*
+  Frosted panel shared by the article page surfaces (header, body card,
+  companion rail). It lives here instead of in a scoped block because three
+  components need the exact same treatment, and scoped styles cannot be
+  shared between single-file components.
+
+  The class name is repeated on purpose: `.glass-surface.glass-surface` is
+  specific enough to sit above Vuetify's own `.v-card--variant-flat` /
+  `.v-sheet` background, without resorting to !important.
+*/
+.glass-surface.glass-surface {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--v-theme-surface), 0.88),
+    rgba(var(--v-theme-surface), 0.72)
+  );
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: box-shadow 0.28s ease;
+}
+
+.glass-surface.glass-surface:hover {
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-surface.glass-surface {
+    transition: none;
+  }
+}
