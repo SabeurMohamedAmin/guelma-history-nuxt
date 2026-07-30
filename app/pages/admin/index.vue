@@ -1,18 +1,24 @@
 <script setup lang="ts">
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface StatCard {
-  key: string
+interface DashboardStat {
+  key: keyof DashboardTotals
   icon: string
   color: string
-  routeName: string
+  to: string
 }
 
-interface QuickAction {
+interface DashboardAction {
   key: string
   icon: string
   color: string
   to: string
+  external?: boolean
+}
+
+interface DashboardTotals {
+  articles: number
+  categories: number
+  authors: number
+  subscribers: number
 }
 
 interface RecentArticle {
@@ -24,9 +30,8 @@ interface RecentArticle {
   status: 'published' | 'draft'
 }
 
-// ─── Composables ──────────────────────────────────────────────────────────────
-
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 const { user } = useUserSession()
 
 definePageMeta({
@@ -34,301 +39,325 @@ definePageMeta({
   middleware: ['admin'],
 })
 
-// ─── Stats configuration ──────────────────────────────────────────────────────
-
-const STAT_CARDS: StatCard[] = [
-  { key: 'articles', icon: 'mdi-text-box-multiple-outline', color: 'primary', routeName: 'admin-articles' },
-  { key: 'categories', icon: 'mdi-folder-multiple-outline', color: 'secondary', routeName: 'admin-categories' },
-  { key: 'authors', icon: 'mdi-account-group-outline', color: 'success', routeName: 'admin-authors' },
-  { key: 'subscribers', icon: 'mdi-email-newsletter', color: 'warning', routeName: 'admin-subscribers' },
+const stats: DashboardStat[] = [
+  { key: 'articles', icon: 'mdi-text-box-multiple-outline', color: 'primary', to: '/admin/articles' },
+  { key: 'categories', icon: 'mdi-shape-outline', color: 'secondary', to: '/admin/categories' },
+  { key: 'authors', icon: 'mdi-account-group-outline', color: 'success', to: '/admin/authors' },
+  { key: 'subscribers', icon: 'mdi-email-multiple-outline', color: 'warning', to: '/admin/subscribers' },
 ]
 
-const QUICK_ACTIONS: QuickAction[] = [
-  { key: 'newArticle', icon: 'mdi-plus-circle-outline', color: 'primary', to: '/admin/articles/create' },
-  { key: 'newCategory', icon: 'mdi-folder-plus-outline', color: 'secondary', to: '/admin/categories/create' },
-  { key: 'newAuthor', icon: 'mdi-account-plus-outline', color: 'success', to: '/admin/authors/create' },
-  { key: 'viewSite', icon: 'mdi-open-in-new', color: 'info', to: '/' },
+const quickActions: DashboardAction[] = [
+  { key: 'newArticle', icon: 'mdi-file-document-plus-outline', color: 'primary', to: '/admin/articles/create' },
+  { key: 'newCategory', icon: 'mdi-shape-plus-outline', color: 'secondary', to: '/admin/categories' },
+  { key: 'newAuthor', icon: 'mdi-account-plus-outline', color: 'success', to: '/admin/authors/new' },
+  { key: 'viewSite', icon: 'mdi-open-in-new', color: 'info', to: '/', external: true },
 ]
 
-// ─── Stats data ───────────────────────────────────────────────────────────────
-
-const stats = ref({
+const totals = ref<DashboardTotals>({
   articles: 0,
   categories: 0,
   authors: 0,
   subscribers: 0,
 })
-
 const recentArticles = ref<RecentArticle[]>([])
 const isLoading = ref(true)
+const errorMessage = ref<string | null>(null)
 
-// ─── Data fetching ────────────────────────────────────────────────────────────
+const displayName = computed(() => user.value?.displayName || user.value?.username || '')
 
-async function fetchDashboardStats() {
+async function loadDashboard() {
+  isLoading.value = true
+  errorMessage.value = null
+
   try {
-    const [articles, categories, authors, subscribers] = await Promise.all([
+    const [articles, categories, authors, subscribers, recent] = await Promise.all([
       $fetch<{ total: number }>('/api/admin/articles/count'),
       $fetch<{ total: number }>('/api/admin/categories/count'),
       $fetch<{ total: number }>('/api/admin/authors/count'),
       $fetch<{ total: number }>('/api/admin/subscribers/count'),
+      $fetch<RecentArticle[]>('/api/admin/articles/recent'),
     ])
-    stats.value = {
+
+    totals.value = {
       articles: articles.total,
       categories: categories.total,
       authors: authors.total,
       subscribers: subscribers.total,
     }
+    recentArticles.value = recent
   }
-  catch (err: unknown) {
-    // Show the actual error — 401 = session problem, 500 = DB problem
-    statsError.value = extractErrorMessage(err, 'Unknown error')
-    console.error('[Dashboard] Stats failed:', err)
+  catch (error: unknown) {
+    errorMessage.value = extractErrorMessage(error, t('newsletter.error'))
   }
-}
-
-async function fetchRecentArticles() {
-  try {
-    recentArticles.value = await $fetch<RecentArticle[]>('/api/admin/articles/recent')
-  }
-  catch {
-    recentArticles.value = []
+  finally {
+    isLoading.value = false
   }
 }
 
-async function loadDashboard() {
-  isLoading.value = true
-  await Promise.all([fetchDashboardStats(), fetchRecentArticles()])
-  isLoading.value = false
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat(locale.value === 'ar' ? 'ar-DZ' : 'fr-FR').format(value)
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getStatValue(key: string): number {
-  return stats.value[key as keyof typeof stats.value] ?? 0
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value))
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString(
-    locale.value === 'ar' ? 'ar-DZ' : 'fr-FR',
-    { year: 'numeric', month: 'short', day: 'numeric' },
-  )
-}
-
-function getStatusColor(status: RecentArticle['status']): string {
+function statusColor(status: RecentArticle['status']): string {
   return status === 'published' ? 'success' : 'warning'
 }
 
-// ─── Lifecycle ────────────────────────────────────────────────────────────────
-
 onMounted(loadDashboard)
-
-// ─── Error ────────────────────────────────────────────────────────────────
-const statsError = ref<string | null>(null)
 </script>
 
 <template>
-  <div class="pa-2">
-    <!-- ── Page header ──────────────────────────────────────────────────────── -->
-    <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between mb-6">
-      <div>
-        <h1 class="text-headline-small font-weight-bold">
-          {{ t('admin.dashboard.welcome', { name: user?.username }) }}
-        </h1>
-        <p class="text-body-2 text-medium-emphasis">
-          {{ t('admin.dashboard.subtitle') }}
-        </p>
-      </div>
-
-      <v-btn
-        :to="$localePath('/admin/articles/create')"
-        color="primary"
-        variant="flat"
-        rounded="lg"
-        prepend-icon="mdi-plus"
-      >
-        {{ t('admin.dashboard.newArticle') }}
-      </v-btn>
-    </div>
-
-    <!-- ── Stat cards ────────────────────────────────────────────────────────── -->
-    <v-row class="mb-6">
-      <v-col
-        v-for="card in STAT_CARDS"
-        :key="card.key"
-        cols="12"
-        sm="6"
-        lg="3"
-      >
-        <v-card
-          :to="$localePath(`/${card.routeName.replace('admin-', 'admin/')}`)"
-          :color="`${card.color}-lighten-5`"
-          variant="tonal"
-          rounded="lg"
-          class="cursor-pointer transition-swing"
-          hover
-        >
-          <v-card-text class="d-flex align-center ga-3 pa-4">
-            <v-sheet
-              :color="card.color"
-              width="44"
-              height="44"
-              rounded="lg"
-              class="d-flex align-center justify-center flex-shrink-0"
+  <main class="admin-dashboard">
+    <v-card
+      class="dashboard-hero mb-6"
+      color="primary"
+      rounded="xl"
+      variant="flat"
+    >
+      <v-card-text class="pa-5 pa-md-8">
+        <div class="d-flex flex-column flex-md-row align-md-center justify-space-between ga-5">
+          <div class="dashboard-hero__content">
+            <v-chip
+              color="white"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-view-dashboard-outline"
+              class="mb-4"
             >
-              <v-icon
-                :icon="card.icon"
-                size="22"
-                color="white"
-              />
-            </v-sheet>
+              {{ t('adminNav.dashboard') }}
+            </v-chip>
+            <h1 class="text-h4 text-md-h3 font-weight-bold mb-2">
+              {{ t('admin.dashboard.welcome', { name: displayName }) }}
+            </h1>
+            <p class="text-body-1 mb-0 dashboard-hero__subtitle">
+              {{ t('admin.dashboard.subtitle') }}
+            </p>
+          </div>
 
-            <div class="flex-grow-1">
-              <div class="text-caption text-medium-emphasis">
-                {{ t(`admin.dashboard.stats.${card.key}`) }}
+          <v-btn
+            :to="localePath('/admin/articles/create')"
+            color="white"
+            size="large"
+            rounded="lg"
+            prepend-icon="mdi-plus"
+            class="text-primary text-none align-self-start align-self-md-center"
+          >
+            {{ t('admin.dashboard.newArticle') }}
+          </v-btn>
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      variant="tonal"
+      rounded="lg"
+      closable
+      class="mb-6"
+      @click:close="errorMessage = null"
+    >
+      <div class="d-flex flex-wrap align-center justify-space-between ga-2">
+        <span>{{ errorMessage }}</span>
+        <v-btn
+          variant="text"
+          size="small"
+          @click="loadDashboard"
+        >
+          {{ t('common.submit') }}
+        </v-btn>
+      </div>
+    </v-alert>
+
+    <section
+      :aria-label="t('admin.dashboard.overview')"
+      class="mb-6"
+    >
+      <v-row>
+        <v-col
+          v-for="stat in stats"
+          :key="stat.key"
+          cols="12"
+          sm="6"
+          xl="3"
+        >
+          <v-card
+            :to="localePath(stat.to)"
+            rounded="xl"
+            variant="flat"
+            class="stat-card h-100 border"
+          >
+            <v-card-text class="pa-5">
+              <div class="d-flex align-start justify-space-between ga-3">
+                <v-avatar
+                  :color="stat.color"
+                  variant="tonal"
+                  rounded="lg"
+                  size="48"
+                >
+                  <v-icon :icon="stat.icon" />
+                </v-avatar>
+                <v-icon
+                  icon="mdi-arrow-top-right"
+                  size="18"
+                  class="text-medium-emphasis stat-card__arrow"
+                />
               </div>
-              <div class="text-headline-small font-weight-bold">
+
+              <div class="mt-5">
                 <v-skeleton-loader
                   v-if="isLoading"
-                  type="text"
-                  width="48"
+                  type="heading"
+                  width="72"
                 />
-                <span v-else>{{ getStatValue(card.key).toLocaleString() }}</span>
+                <div
+                  v-else
+                  class="text-h4 font-weight-bold"
+                >
+                  {{ formatNumber(totals[stat.key]) }}
+                </div>
+                <div class="text-body-2 text-medium-emphasis mt-1">
+                  {{ t(`admin.dashboard.stats.${stat.key}`) }}
+                </div>
               </div>
-            </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </section>
 
-            <v-icon
-              icon="mdi-chevron-right"
-              size="18"
-              class="text-medium-emphasis"
-            />
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <!-- ── Main content grid ─────────────────────────────────────────────────── -->
-    <v-row>
-      <!-- Recent articles -->
+    <v-row align="stretch">
       <v-col
         cols="12"
         lg="8"
       >
         <v-card
-          rounded="lg"
-          variant="text"
-          class="border-opacity border"
+          rounded="xl"
+          variant="flat"
+          class="dashboard-panel border h-100"
         >
-          <v-card-title class="d-flex align-center ga-2 text-subtitle-1 font-weight-medium pa-4">
-            <v-icon
-              icon="mdi-clock-outline"
-              size="18"
-            />
-            {{ t('admin.dashboard.recentArticles') }}
+          <v-card-title class="d-flex align-center pa-5">
+            <v-avatar
+              color="primary"
+              variant="tonal"
+              rounded="lg"
+              size="40"
+              class="me-3"
+            >
+              <v-icon icon="mdi-history" />
+            </v-avatar>
+            <div>
+              <div class="text-subtitle-1 font-weight-bold">
+                {{ t('admin.dashboard.recentArticles') }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ t('admin.dashboard.subtitle') }}
+              </div>
+            </div>
             <v-spacer />
             <v-btn
-              :to="$localePath('/admin/articles')"
+              :to="localePath('/admin/articles')"
               variant="text"
-              size="small"
               color="primary"
+              size="small"
+              append-icon="mdi-arrow-right"
               class="text-none"
             >
               {{ t('admin.dashboard.viewAll') }}
-              <v-icon
-                icon="mdi-chevron-right"
-                size="16"
-                end
-              />
             </v-btn>
           </v-card-title>
 
           <v-divider />
 
-          <!-- Loading state -->
-          <template v-if="isLoading">
+          <v-list
+            v-if="isLoading"
+            lines="two"
+            class="pa-2"
+          >
             <v-list-item
-              v-for="i in 5"
-              :key="i"
+              v-for="index in 4"
+              :key="index"
             >
-              <v-skeleton-loader type="list-item-two-line" />
+              <v-skeleton-loader type="list-item-avatar-two-line" />
             </v-list-item>
-          </template>
+          </v-list>
 
-          <!-- Empty state -->
-          <template v-else-if="recentArticles.length === 0">
-            <div class="d-flex flex-column align-center justify-center pa-8 text-center">
+          <div
+            v-else-if="recentArticles.length === 0"
+            class="empty-state pa-8 pa-md-12 text-center"
+          >
+            <v-avatar
+              color="primary"
+              variant="tonal"
+              size="64"
+              class="mb-4"
+            >
               <v-icon
-                icon="mdi-newspaper-variant-outline"
-                size="40"
-                color="disabled"
+                icon="mdi-file-document-plus-outline"
+                size="32"
               />
-              <p class="text-body-2 text-disabled mt-3 mb-0">
-                {{ t('admin.dashboard.noArticles') }}
-              </p>
-              <v-btn
-                :to="$localePath('/admin/articles/create')"
-                color="primary"
-                variant="tonal"
-                size="small"
-                rounded="lg"
-                class="mt-3"
-              >
-                {{ t('admin.dashboard.newArticle') }}
-              </v-btn>
-            </div>
-          </template>
+            </v-avatar>
+            <h2 class="text-subtitle-1 font-weight-bold mb-2">
+              {{ t('admin.dashboard.noArticles') }}
+            </h2>
+            <v-btn
+              :to="localePath('/admin/articles/create')"
+              color="primary"
+              variant="tonal"
+              rounded="lg"
+              prepend-icon="mdi-plus"
+              class="mt-2 text-none"
+            >
+              {{ t('admin.dashboard.newArticle') }}
+            </v-btn>
+          </div>
 
-          <!-- Articles list -->
           <v-list
             v-else
-            class="py-0"
+            lines="two"
+            class="article-list pa-2"
           >
             <v-list-item
               v-for="article in recentArticles"
               :key="article.id"
-              :to="$localePath(`/admin/articles/${article.slug}`)"
-              lines="two"
-              class="border-bottom"
+              :to="localePath(`/admin/articles/${article.slug}`)"
+              rounded="lg"
+              class="article-list__item mb-1"
             >
               <template #prepend>
-                <v-sheet
-                  color="primary-lighten-5"
-                  width="32"
-                  height="32"
+                <v-avatar
+                  color="primary"
+                  variant="tonal"
                   rounded="lg"
-                  class="d-flex align-center justify-center me-2"
+                  class="me-3"
                 >
-                  <v-icon
-                    icon="mdi-text-box-outline"
-                    size="18"
-                    color="primary"
-                  />
-                </v-sheet>
+                  <v-icon icon="mdi-text-box-outline" />
+                </v-avatar>
               </template>
 
-              <v-list-item-title
-                class="text-body-2 font-weight-medium text-truncate"
-                style="max-width: 380px;"
-              >
+              <v-list-item-title class="font-weight-medium">
                 {{ article.title }}
               </v-list-item-title>
-
-              <v-list-item-subtitle class="d-flex align-center ga-2 mt-1">
-                <v-chip
-                  size="x-small"
-                  variant="tonal"
-                  color="secondary"
-                >
-                  {{ article.category }}
-                </v-chip>
-                <span class="text-caption text-disabled">{{ formatDate(article.publishedAt) }}</span>
+              <v-list-item-subtitle class="d-flex flex-wrap align-center ga-2 mt-1">
+                <span>{{ article.category }}</span>
+                <span aria-hidden="true">•</span>
+                <time :datetime="article.publishedAt">
+                  {{ formatDate(article.publishedAt) }}
+                </time>
               </v-list-item-subtitle>
 
               <template #append>
                 <v-chip
-                  :color="getStatusColor(article.status)"
-                  size="x-small"
+                  :color="statusColor(article.status)"
                   variant="tonal"
-                  rounded="sm"
+                  size="small"
                 >
                   {{ t(`admin.status.${article.status}`) }}
                 </v-chip>
@@ -338,143 +367,149 @@ const statsError = ref<string | null>(null)
         </v-card>
       </v-col>
 
-      <!-- Right column -->
       <v-col
         cols="12"
         lg="4"
       >
-        <!-- density="compact" replaces the deprecated `dense` boolean -->
-        <v-row
-          density="compact"
-          class="mb-2 ga-2"
+        <v-card
+          rounded="xl"
+          variant="flat"
+          class="dashboard-panel border h-100"
         >
-          <!-- Quick actions -->
-          <v-col cols="12">
-            <v-alert
-              v-if="statsError"
-              type="error"
+          <v-card-title class="d-flex align-center pa-5">
+            <v-avatar
+              color="warning"
               variant="tonal"
-              density="compact"
-              class="mb-4"
-            >
-              {{ statsError }}
-            </v-alert>
-            <v-card
               rounded="lg"
-              variant="text"
-              class="border-opacity border"
+              size="40"
+              class="me-3"
             >
-              <v-card-title class="d-flex align-center ga-2 text-subtitle-1 font-weight-medium pa-4">
-                <v-icon
-                  icon="mdi-lightning-bolt-outline"
-                  size="18"
-                />
-                {{ t('admin.dashboard.quickActions') }}
-              </v-card-title>
+              <v-icon icon="mdi-lightning-bolt-outline" />
+            </v-avatar>
+            <span class="text-subtitle-1 font-weight-bold">
+              {{ t('admin.dashboard.quickActions') }}
+            </span>
+          </v-card-title>
 
-              <v-divider />
+          <v-divider />
 
-              <v-card-text class="pa-3">
-                <!-- density="compact" replaces the deprecated `dense` boolean -->
-                <v-row density="compact">
-                  <v-col
-                    v-for="action in QUICK_ACTIONS"
-                    :key="action.key"
-                    cols="6"
-                  >
-                    <v-btn
-                      :to="$localePath(action.to)"
-                      target="_blank"
-                      :color="action.color"
-                      variant="tonal"
-                      rounded="lg"
-                      block
-                      class="flex-column ga-1"
-                      height="64"
-                    >
-                      <v-icon
-                        :icon="action.icon"
-                        size="20"
-                      />
-                      <span class="text-caption text-none">
-                        {{ t(`admin.dashboard.actions.${action.key}`) }}
-                      </span>
-                    </v-btn>
-                  </v-col>
-                </v-row>
-              </v-card-text>
-            </v-card>
-          </v-col>
-
-          <!-- Site overview -->
-          <v-col cols="12">
-            <v-card
-              rounded="lg"
-              variant="text"
-              class="border-opacity border"
-            >
-              <v-card-title class="d-flex align-center ga-2 text-subtitle-1 font-weight-medium pa-4">
-                <v-icon
-                  icon="mdi-chart-donut"
-                  size="18"
-                />
-                {{ t('admin.dashboard.overview') }}
-              </v-card-title>
-
-              <v-divider />
-
-              <v-list class="py-0">
-                <v-list-item
-                  v-for="card in STAT_CARDS"
-                  :key="card.key"
-                  class="border-bottom"
-                  density="compact"
+          <v-card-text class="pa-4">
+            <v-row dense>
+              <v-col
+                v-for="action in quickActions"
+                :key="action.key"
+                cols="12"
+                sm="6"
+                lg="12"
+                xl="6"
+              >
+                <v-card
+                  :to="action.external ? undefined : localePath(action.to)"
+                  :href="action.external ? localePath(action.to) : undefined"
+                  :target="action.external ? '_blank' : undefined"
+                  :rel="action.external ? 'noopener' : undefined"
+                  rounded="lg"
+                  variant="tonal"
+                  :color="action.color"
+                  class="action-card h-100"
                 >
-                  <template #prepend>
+                  <v-card-text class="d-flex align-center ga-3 pa-4">
                     <v-icon
-                      :icon="card.icon"
-                      :color="card.color"
-                      size="16"
-                      class="me-3"
+                      :icon="action.icon"
+                      size="24"
                     />
-                  </template>
-
-                  <v-list-item-title class="text-body-2">
-                    {{ t(`admin.dashboard.stats.${card.key}`) }}
-                  </v-list-item-title>
-
-                  <template #append>
-                    <span class="text-body-2 font-weight-medium">
-                      <v-skeleton-loader
-                        v-if="isLoading"
-                        type="text"
-                        width="24"
-                      />
-                      <span v-else>{{ getStatValue(card.key).toLocaleString() }}</span>
+                    <span class="text-body-2 font-weight-bold">
+                      {{ t(`admin.dashboard.actions.${action.key}`) }}
                     </span>
-                  </template>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-col>
-        </v-row>
+                    <v-spacer />
+                    <v-icon
+                      :icon="action.external ? 'mdi-open-in-new' : 'mdi-chevron-right'"
+                      size="16"
+                    />
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
-  </div>
+  </main>
 </template>
 
 <style scoped>
-.border-bottom {
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+.admin-dashboard {
+  width: min(100%, 1600px);
+  margin-inline: auto;
+  padding-block: 8px 32px;
 }
 
-.v-list-item:last-child.border-bottom {
-  border-bottom: none;
-}
-
-.text-truncate {
+.dashboard-hero {
+  position: relative;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary))) !important;
+}
+
+.dashboard-hero::after {
+  position: absolute;
+  inset-block-start: -80px;
+  inset-inline-end: -60px;
+  width: 240px;
+  height: 240px;
+  border: 48px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.dashboard-hero__content {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+}
+
+.dashboard-hero__subtitle {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.stat-card,
+.action-card,
+.article-list__item {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.stat-card:hover,
+.action-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(var(--v-theme-on-surface), 0.1);
+}
+
+.stat-card:hover .stat-card__arrow {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+.dashboard-panel {
+  background: rgb(var(--v-theme-surface));
+}
+
+.article-list__item:hover {
+  background: rgba(var(--v-theme-primary), 0.06);
+}
+
+.empty-state {
+  min-height: 320px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-card,
+  .action-card,
+  .article-list__item {
+    transition: none;
+  }
+
+  .stat-card:hover,
+  .action-card:hover {
+    transform: none;
+  }
 }
 </style>
