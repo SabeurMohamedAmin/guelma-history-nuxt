@@ -95,7 +95,7 @@ const copiedBtnTooltipTxt = computed(() => {
 <template>
   <v-card
     variant="flat"
-    class="pa-5 share-card"
+    class="pa-1 py-2 share-card"
     rounded="xl"
     border
   >
@@ -130,19 +130,18 @@ const copiedBtnTooltipTxt = computed(() => {
 
     <v-row
       density="comfortable"
-      class="mb-1"
+      class="pa-1"
     >
       <v-col
         v-for="network in networks"
         :key="network.key"
         cols="12"
         sm="4"
-        class="px-1"
       >
         <v-btn
           class="share-button text-none font-weight-semibold"
           :class="{ 'is-sharing': sharing === network.key }"
-          variant="tonal"
+          variant="plain"
           rounded="xl"
           :color="network.color"
           block

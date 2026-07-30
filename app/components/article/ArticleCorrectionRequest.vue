@@ -34,18 +34,12 @@ const submit = async () => {
 
 <template>
   <v-card
-    class="correction-card rounded-xl"
+    class="correction-card rounded-xl pa-1"
     variant="flat"
   >
     <div class="d-flex align-center ga-3 mb-4">
-      <v-avatar
-        color="warning"
-        variant="tonal"
-      >
-        <v-icon icon="mdi-file-document-edit-outline" />
-      </v-avatar>
       <div>
-        <p class="section-kicker mb-1">
+        <p class="section-kicker mb-1 share-kicker text-primary text-uppercase font-weight-bold mb-0">
           {{ isFrench ? 'Contribution' : 'مساهمة' }}
         </p><h2 class="text-headline-small font-weight-bold">
           {{ isFrench ? 'Demander une correction' : 'طلب تصحيح المقال' }}
@@ -133,6 +127,15 @@ const submit = async () => {
 </template>
 
 <style scoped>
-.correction-card { padding: clamp(1rem, 3vw, 1.35rem); background: radial-gradient(circle at top right, rgba(var(--v-theme-warning), 0.09), transparent 18rem), rgba(var(--v-theme-surface), 0.48); }
-.section-kicker { color: rgb(var(--v-theme-warning)); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.correction-card { background: radial-gradient(circle at top right, rgba(var(--v-theme-warning), 0.09), transparent 18rem), rgba(var(--v-theme-surface), 0.48); }
+.section-kicker {
+   color: rgb(var(--v-theme-warning));
+   font-size: 0.68rem;
+   font-weight: 800;
+   letter-spacing: 0.14em;
+   text-transform: uppercase;
+  line-height: 1;
+  padding-inline-start: 10px;
+  border-inline-start: 3px solid currentColor;
+}
 </style>

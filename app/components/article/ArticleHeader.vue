@@ -16,19 +16,18 @@ defineProps<{
 <template>
   <v-sheet
     tag="header"
-    rounded="xl"
-    class="glass-surface article-header overflow-hidden mb-8 mb-md-10"
+    class="rounded-xl glass-surface article-header overflow-hidden mb-8 mb-md-10 pa-0"
   >
     <v-row
       no-gutters
-      align="center"
+      align="start"
     >
       <v-col
         cols="12"
         md="6"
-        class="pa-4 pa-sm-6"
+        class="pa-2 pa-md-3"
       >
-        <div class="d-flex align-center justify-space-between ga-3 mb-4">
+        <div class="d-flex align-center justify-space-between ga-2 mb-4">
           <v-chip
             :to="view.categoryTo || undefined"
             color="primary"
@@ -71,7 +70,7 @@ defineProps<{
       <v-col
         cols="12"
         md="6"
-        class="pa-2 pa-sm-3"
+        class="pa-1 pa-md-2 rounded-xl"
       >
         <ArticleHero
           :image-url="view.coverSrc"

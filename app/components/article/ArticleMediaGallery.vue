@@ -271,7 +271,7 @@ async function copyCurrent() {
   <!-- Main stage -->
   <v-carousel
     v-model="current"
-    class="article-gallery__stage rounded-lg"
+    class="article-gallery__stage rounded-xl"
     hide-delimiters
     :show-arrows="hasMultiple ? 'hover' : false"
     :continuous="hasMultiple"
@@ -282,7 +282,7 @@ async function copyCurrent() {
       v-for="(item, index) in items"
       :key="index"
     >
-      <div class="article-gallery__frame">
+      <div class="article-gallery__frame ">
         <NuxtImg
           v-if="item.type === 'image'"
           :src="item.imageVariants?.slider || item.src"
@@ -339,7 +339,7 @@ async function copyCurrent() {
   <!-- Thumbnail strip -->
   <div
     v-if="hasMultiple"
-    class="article-gallery__thumbs d-flex ga-2 mt-3 pb-1"
+    class="article-gallery__thumbs  d-flex ga-2 mt-3 pb-1"
     role="tablist"
   >
     <button
@@ -349,7 +349,7 @@ async function copyCurrent() {
       role="tab"
       :aria-selected="current === index"
       :aria-label="labelFor(item, index)"
-      class="article-gallery__thumb rounded-lg position-relative overflow-hidden border-md opacity-70"
+      class="article-gallery__thumb rounded-xl position-relative overflow-hidden border-md opacity-70"
       :class="{ 'article-gallery__thumb--active': current === index }"
       @click="current = index"
     >
@@ -618,6 +618,7 @@ async function copyCurrent() {
   background: rgba(var(--v-theme-surface-variant), 0.4);
   cursor: pointer;
   scroll-snap-align: start;
+  transform: scale(.98);
   transition:
     border-color 0.25s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.25s ease,
@@ -627,7 +628,7 @@ async function copyCurrent() {
 
 .article-gallery__thumb:hover {
   opacity: 1;
-  transform: translateY(-2px);
+  transform: scale(1);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
 }
 

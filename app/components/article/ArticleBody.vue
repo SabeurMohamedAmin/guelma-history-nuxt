@@ -79,7 +79,7 @@ function getVideoThumbnail(url: string) {
 </script>
 
 <template>
-  <article class="pa-2 text-body-large text-md-heading-small">
+  <article class="pa-1 pa-md-2 text-body-large text-md-heading-small">
     <div class="article-lead">
       <p
         v-for="paragraph in paragraphs"

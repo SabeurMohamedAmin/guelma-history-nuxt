@@ -25,10 +25,10 @@ const actions = computed(() => [
   <section class="rounded-xl overflow-hidden pa-2 engagement-panel">
     <!-- Header -->
     <div class="mb-4">
-      <p class="text-primary font-weight-black text-uppercase mb-1 engagement-kicker">
+      <p class="text-primary font-weight-black text-uppercase py-2 ma-0 engagement-kicker">
         {{ isFrench ? 'Interaction' : 'تفاعل' }}
       </p>
-      <h2 class="text-headline-small text-md-h4 font-weight-bold">
+      <h2 class="text-headline-small text-md-h4 my-1 font-weight-bold">
         {{ isFrench ? 'Participer à cet article' : 'شارك في هذا المقال' }}
       </h2>
     </div>
