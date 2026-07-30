@@ -391,6 +391,13 @@ export default defineNuxtConfig({
           'https://ep1.adtrafficquality.google',
           'https://ep2.adtrafficquality.google',
           'https://fundingchoicesmessages.google.com',
+          // GA4: gtag.js sends events via fetch to a regional collect endpoint.
+          // The region prefix varies per visitor (region1, region2, ...), so a
+          // wildcard is required.
+          'https://*.google-analytics.com',
+          'https://*.analytics.google.com',
+          'https://stats.g.doubleclick.net',
+
         ],
       },
 
