@@ -394,7 +394,7 @@ onMounted(loadDashboard)
           <v-divider />
 
           <v-card-text class="pa-4">
-            <v-row dense>
+            <v-row density="comfortable">
               <v-col
                 v-for="action in quickActions"
                 :key="action.key"
