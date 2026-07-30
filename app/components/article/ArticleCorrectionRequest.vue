@@ -34,7 +34,7 @@ const submit = async () => {
 
 <template>
   <v-card
-    class="correction-card rounded-xl pa-1"
+    class="correction-card rounded-xl pa-2"
     variant="flat"
   >
     <div class="d-flex align-center ga-3 mb-4">
@@ -60,7 +60,9 @@ const submit = async () => {
     >
       {{ isFrench ? 'Votre demande a été envoyée. Merci pour votre aide.' : 'تم إرسال طلبك. شكرا لمساعدتك.' }}
     </v-alert>
-    <v-form @submit.prevent="submit">
+    <v-form
+      @submit.prevent="submit"
+    >
       <v-row>
         <v-col
           cols="12"
@@ -116,7 +118,7 @@ const submit = async () => {
         type="submit"
         color="warning"
         variant="flat"
-        class="rounded-lg font-weight-bold"
+        class="rounded-xl font-weight-bold"
         :loading="loading"
         :disabled="!isValid"
       >
