@@ -280,7 +280,7 @@ function getArticleLink(slug: string): string {
 .featured-image {
   width: 100%;
   display: block;
-  object-fit: contain;
+  object-fit: fill;
   background: rgba(var(--v-theme-surface-variant), 0.35);
 }
 
