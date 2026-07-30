@@ -1,5 +1,6 @@
 import { inArray } from 'drizzle-orm'
 import { articles, articleMedia, authors, categories, db, eq, seedClient, users } from './_client'
+import { createSeedImageVariants } from './_image-variants'
 
 /**
  * Additional article seeder for Guelma History (تاريخ قالمة).
@@ -19,23 +20,6 @@ import { articles, articleMedia, authors, categories, db, eq, seedClient, users 
  */
 
 console.log('\u{1F331} Seeding additional Guelma history articles...')
-
-type SeedImageVariants = {
-  thumbnail: string
-  slider: string
-  main: string
-  original: string
-}
-
-function seedImageVariants(name: string): SeedImageVariants {
-  const baseUrl = 'https://placehold.co'
-  return {
-    thumbnail: `${baseUrl}/320x200?text=${name}-thumbnail`,
-    slider: `${baseUrl}/960x540?text=${name}-slider`,
-    main: `${baseUrl}/1280x800?text=${name}-main`,
-    original: `${baseUrl}/1920x1080?text=${name}-original`,
-  }
-}
 
 const articleData = [
   {
@@ -345,7 +329,7 @@ const inserted = await db
   .insert(articles)
   .values(articleData.map((article, index) => ({
     ...article,
-    coverImageVariants: seedImageVariants(article.slug),
+    coverImageVariants: createSeedImageVariants(article.slug),
     categoryId: realId(article.categoryId, categorySlugByPosition, categoryIdBySlug, 'category'),
     authorId: realId(article.authorId, authorSlugByPosition, authorIdBySlug, 'author'),
     createdByUserId: ownerFor(index),

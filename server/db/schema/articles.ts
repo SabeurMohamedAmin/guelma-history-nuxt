@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, timestamp, jsonb } from 'drizzle-orm/pg-core'
+import type { ImageVariants } from '../../../shared/types/article'
 import { categories } from './categories'
 import { authors } from './authors'
 import { users } from './users'
@@ -16,12 +17,7 @@ export const articles = pgTable('articles', {
   coverImage: text('cover_image'),
   // Cards, sliders and article pages select the matching generated variant;
   // focus mode uses the untouched original.
-  coverImageVariants: jsonb('cover_image_variants').$type<{
-    thumbnail: string
-    slider: string
-    main: string
-    original: string
-  }>(),
+  coverImageVariants: jsonb('cover_image_variants').$type<ImageVariants>(),
   // 0 is the main home-page story; 1..3 are the three supporting stories.
   // Null means the article is not curated for the home-page hero.
   homePosition: integer('home_position'),

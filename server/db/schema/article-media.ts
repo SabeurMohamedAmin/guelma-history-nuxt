@@ -1,4 +1,5 @@
 import { pgTable, serial, integer, text, timestamp, jsonb } from 'drizzle-orm/pg-core'
+import type { ImageVariants } from '../../../shared/types/article'
 import { articles } from './articles'
 
 /**
@@ -31,12 +32,7 @@ export const articleMedia = pgTable('article_media', {
   resourceType: text('resource_type', { enum: ['image', 'video'] }),
   posterUrl: text('poster_url'),
   // Pre-generated display variants plus the untouched focus-mode source.
-  imageVariants: jsonb('image_variants').$type<{
-    thumbnail: string
-    slider: string
-    main: string
-    original: string
-  }>(),
+  imageVariants: jsonb('image_variants').$type<ImageVariants>(),
   captionAr: text('caption_ar'),
   captionFr: text('caption_fr'),
   position: integer('position').notNull().default(0),

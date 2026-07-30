@@ -1,4 +1,6 @@
 import sharp from 'sharp'
+import type { FitEnum } from 'sharp'
+import type { ImageVariants } from '~~/shared/types/article'
 import { requireAdmin } from '~~/server/utils/auth'
 import { uploadToCloudinary } from '~~/server/utils/cloudinary'
 
@@ -46,9 +48,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'File is too large.' })
   }
 
-  // Videos keep their original upload path. For images, Sharp creates cropped
-  // variants that match their UI containers. The uploaded source is also kept
-  // untouched for zooming, downloading, and opening in a new window.
+  // Videos keep their original upload path. For images, Sharp creates display
+  // variants that match their UI containers. The uploaded source stays
+  // untouched for focus mode, zooming, copying, and downloading.
   if (!type.startsWith('image/')) {
     const uploaded = await uploadToCloudinary(filePart.data)
     return {
@@ -61,19 +63,25 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  type DisplayVariantName = Exclude<keyof ImageVariants, 'original'>
+  type DisplayVariantOptions = {
+    width: number
+    height?: number
+    quality: number
+    fit: keyof FitEnum
+  }
+
   const baseId = `image-${Date.now()}-${crypto.randomUUID()}`
-  const definitions = {
+  const variantDefinitions: Record<DisplayVariantName, DisplayVariantOptions> = {
     thumbnail: { width: 320, height: 200, quality: 80, fit: 'fill' },
-    // Width-only resizing keeps the original aspect ratio. Sharp's `fill` fit
-    // does not use `position`; there is no crop area to align.
-    slider: { width: 960, height: undefined, quality: 82, fit: 'fill' },
+    // Width-only resizing preserves the original aspect ratio. Sharp ignores
+    // `position` with `fill` because there is no crop area to align.
+    slider: { width: 960, quality: 82, fit: 'fill' },
     main: { width: 1280, height: 800, quality: 82, fit: 'fill' },
-  } as const
+  }
 
-  type VariantOptions = (typeof definitions)[keyof typeof definitions]
-
-  const croppedEntries = await Promise.all(Object.entries(definitions).map(async ([name, rawOptions]) => {
-    const options = rawOptions as VariantOptions
+  const variantEntries = await Promise.all(
+    Object.entries(variantDefinitions).map(async ([name, options]) => {
     const buffer = await sharp(filePart.data, { failOn: 'error' })
       .rotate()
       .resize({
@@ -84,9 +92,10 @@ export default defineEventHandler(async (event) => {
       })
       .webp({ quality: options.quality })
       .toBuffer()
-    const uploaded = await uploadToCloudinary(buffer, 'articles', `${baseId}-${name}`)
-    return [name, uploaded] as const
-  }))
+      const uploaded = await uploadToCloudinary(buffer, 'articles', `${baseId}-${name}`)
+      return [name, uploaded] as const
+    }),
+  )
 
   // Do not resize, crop, or re-encode the source. This preserves its original
   // dimensions, format, metadata, and quality for full-resolution actions.
@@ -95,14 +104,10 @@ export default defineEventHandler(async (event) => {
     'articles',
     `${baseId}-original`,
   )
-  const entries = [...croppedEntries, ['original', originalUpload] as const]
-
-  const variants = Object.fromEntries(entries.map(([name, result]) => [name, result.url])) as {
-    thumbnail: string
-    slider: string
-    main: string
-    original: string
-  }
+  const allEntries = [...variantEntries, ['original', originalUpload] as const]
+  const variants = Object.fromEntries(
+    allEntries.map(([name, result]) => [name, result.url]),
+  ) as ImageVariants
 
   return {
     url: variants.main,

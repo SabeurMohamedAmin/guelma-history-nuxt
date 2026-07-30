@@ -14,6 +14,7 @@
  * stays consistent with the rest of the design system and is easy to maintain.
  */
 import { useDisplay } from 'vuetify'
+import type { ImageVariants } from '~~/shared/types/article'
 
 export interface MediaItem {
   /** 'image', uploaded 'video', or a 'youtube' link. */
@@ -27,12 +28,7 @@ export interface MediaItem {
   publicId?: string
   /** Optional poster image shown for videos before playback. */
   poster?: string
-  imageVariants?: {
-    thumbnail: string
-    slider: string
-    main: string
-    original: string
-  }
+  imageVariants?: ImageVariants
   /** Accessible label / caption. */
   alt?: string
 }
@@ -111,14 +107,7 @@ const isZoomed = computed(() => zoom.value > 1)
 const hasMultiple = computed(() => props.items.length > 1)
 const activeItem = computed(() => props.items[lightboxIndex.value])
 
-// Whether an image thumbnail can be delivered through Cloudinary. Images stored
-// in Cloudinary expose a stable publicId; their raw versioned URLs can 404 once
-// the asset is re-uploaded, so we always prefer the publicId for thumbnails.
-function thumbUsesCloudinary(item: MediaItem): item is MediaItem & { publicId: string } {
-  return item.type === 'image' && !!item.publicId
-}
-
-// Resolve the thumbnail shown in the strip for non-Cloudinary items.
+// Resolve the best available image for the thumbnail strip.
 function thumbnailFor(item: MediaItem): string {
   if (item.type === 'image') return item.imageVariants?.thumbnail || item.src
   if (item.type === 'youtube') return item.poster || youTubeThumbnail(item.src) || item.src
