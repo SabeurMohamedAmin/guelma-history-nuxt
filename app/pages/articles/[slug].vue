@@ -317,9 +317,9 @@ useHead(() => ({
       </nav>
 
       <!-- Hero: two-column on desktop, header-first stacked on small screens -->
-      <section class="article-hero-card article-surface mb-8 mb-md-10 pa-2">
+      <section class="article-hero-card article-surface rounded-xl mb-8 mb-md-10 pa-1">
         <div class="article-hero-copy">
-          <div class="article-hero-top mt-1">
+          <div class="article-hero-top pa-1">
             <v-chip
               color="primary"
               variant="flat"
@@ -524,7 +524,6 @@ useHead(() => ({
   grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1.08fr);
   gap: clamp(1.5rem, 3vw, 2.75rem);
   align-items: start;
-  border-radius: 32px;
   overflow: hidden;
   position: relative;
   isolation: isolate;
@@ -668,7 +667,6 @@ useHead(() => ({
   /* Small screens: stack header first (smaller), image below it. */
   .article-hero-card {
     grid-template-columns: 1fr;
-    border-radius: 24px;
   }
 
   .article-hero-media {
