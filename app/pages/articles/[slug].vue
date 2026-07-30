@@ -252,7 +252,8 @@ useSeoMeta({
   articlePublishedTime: () => publishedIso.value,
   articleModifiedTime: () => publishedIso.value,
   articleSection: () => categoryName.value,
-  articleAuthor: () => authorName.value,
+  // article:author is a repeatable property, so it is typed as an array.
+  articleAuthor: () => [authorName.value],
 })
 
 // One JSON-LD block, two entities: the Article rich result needs absolute

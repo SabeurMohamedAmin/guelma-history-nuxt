@@ -14,7 +14,7 @@ const LOCALE_SCROLL_KEY = 'locale-switch-scroll-position'
  * Controls the window scroll position after each client-side navigation.
  */
 export default <RouterConfig>{
-  scrollBehavior(_to, _from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     /**
      * Browser Back and Forward:
      * Vue Router provides the exact saved browser history position.
@@ -47,6 +47,16 @@ export default <RouterConfig>{
           // Invalid session storage should not break routing.
         }
       }
+    }
+
+    /**
+     * Same page, only the query changed:
+     * comment sort and order, the ?comment= focus view, article list filters.
+     * The reader stays exactly where they are, because the content they are
+     * looking at is updated in place and is often far below the fold.
+     */
+    if (to.path === from.path) {
+      return false
     }
 
     /**
