@@ -76,18 +76,13 @@ async function onFileSelected(event: Event, index: number) {
 </script>
 
 <template>
-  <v-card
-    variant="flat"
-    class="mb-4 rounded-xl pa-2 px-md-4 py-3 py-md-4"
+  <AdminFormCard
+    icon="mdi-image-multiple-outline"
+    :title="t('articleForm.media.title')"
+    :hint="t('articleForm.media.hint')"
+    optional
   >
-    <v-card-title class="d-flex align-center pa-0">
-      <span class="text-subtitle-1 font-weight-medium">
-        {{ t('articleForm.media.title') }}
-      </span>
-      <span class="text-caption text-medium-emphasis font-weight-regular ml-2">
-        {{ t('articleForm.optional') }}
-      </span>
-      <v-spacer />
+    <template #actions>
       <v-chip
         size="small"
         variant="tonal"
@@ -95,266 +90,216 @@ async function onFileSelected(event: Event, index: number) {
       >
         {{ store.fields.media.length }}
       </v-chip>
-    </v-card-title>
+    </template>
 
-    <v-card-text class="pa-0">
-      <p class="text-caption text-medium-emphasis mb-3">
-        {{ t('articleForm.media.hint') }}
-      </p>
+    <v-alert
+      v-if="uploadError"
+      type="error"
+      variant="tonal"
+      density="compact"
+      role="alert"
+      class="mb-3"
+      :text="uploadError"
+    />
 
-      <v-alert
-        v-if="uploadError"
-        type="error"
-        variant="tonal"
-        density="compact"
-        class="mb-3"
-        :text="uploadError"
+    <!-- Empty state -->
+    <p
+      v-if="!store.fields.media.length"
+      class="media-empty d-flex flex-column align-center justify-center text-center text-body-2 text-medium-emphasis pa-6 mb-3 rounded-xl"
+    >
+      <v-icon
+        icon="mdi-image-multiple-outline"
+        size="40"
+        class="mb-2"
+        aria-hidden="true"
       />
+      {{ t('articleForm.media.hint') }}
+    </p>
 
-      <div
-        v-if="!store.fields.media.length"
-        class="media-empty d-flex flex-column align-center justify-center text-center pa-8 mb-3 rounded-xl"
+    <v-expansion-panels
+      v-if="store.fields.media.length"
+      variant="accordion"
+      class="mb-3"
+    >
+      <v-expansion-panel
+        v-for="(item, index) in store.fields.media"
+        :key="index"
       >
-        <v-icon
-          icon="mdi-image-multiple-outline"
-          size="40"
-          class="text-medium-emphasis mb-2"
-        />
-        <p class="text-body-2 text-medium-emphasis mb-0">
-          {{ t('articleForm.media.hint') }}
-        </p>
-      </div>
-
-      <v-expansion-panels
-        v-if="store.fields.media.length"
-        variant="accordion"
-        class="media-panels mb-3"
-      >
-        <v-expansion-panel
-          v-for="(item, index) in store.fields.media"
-          :key="index"
-          class="media-panel"
-        >
-          <v-expansion-panel-title>
-            <div class="d-flex align-center ga-3 w-100">
-              <div class="media-thumb d-flex align-center justify-center rounded-xl flex-shrink-0">
-                <v-img
-                  v-if="item.type !== 'youtube' && item.posterUrl || (item.type === 'image' && item.url)"
-                  :src="item.type === 'image' ? item.url : item.posterUrl"
-                  width="48"
-                  height="48"
-                  cover
-                  class="media-thumb-img rounded-lg"
-                >
-                  <template #error>
-                    <v-icon
-                      :icon="iconForType(item.type)"
-                      size="small"
-                      class="text-medium-emphasis"
-                    />
-                  </template>
-                </v-img>
-                <v-icon
-                  v-else
-                  :icon="iconForType(item.type)"
-                  size="small"
-                  class="text-medium-emphasis"
-                />
-              </div>
-              <span class="text-body-2 font-weight-medium">{{ t('media.item') }} {{ index + 1 }}</span>
-              <v-spacer />
-              <v-chip
-                size="x-small"
-                variant="tonal"
-                class="me-2 text-capitalize"
+        <v-expansion-panel-title>
+          <div class="d-flex align-center ga-3 w-100">
+            <span class="media-thumb d-flex align-center justify-center rounded-lg flex-shrink-0">
+              <v-img
+                v-if="item.type !== 'youtube' && item.posterUrl || (item.type === 'image' && item.url)"
+                :src="item.type === 'image' ? item.url : item.posterUrl"
+                width="40"
+                height="40"
+                cover
+                alt=""
+                class="rounded-lg"
               >
-                {{ item.type }}
-              </v-chip>
-            </div>
-          </v-expansion-panel-title>
-
-          <v-expansion-panel-text>
-            <v-select
-              v-model="item.type"
-              :items="typeOptions"
-              :label="t('articleForm.media.type')"
-              variant="outlined"
-              density="comfortable"
-              class="mb-3"
-              hide-details
-            />
-
-            <!-- Cloudinary upload (images & videos only; YouTube is link-only). -->
-            <template v-if="item.type !== 'youtube'">
-              <v-btn
-                block
-                variant="tonal"
-                color="primary"
-                prepend-icon="mdi-cloud-upload-outline"
-                class="mb-2 rounded-xl"
-                :loading="uploading && uploadingIndex === index"
-                :disabled="uploading"
-                @click="openPicker(index)"
-              >
-                {{ t('articleForm.media.upload') }}
-              </v-btn>
-              <input
-                :ref="el => setFileInput(index, el)"
-                type="file"
-                :accept="MEDIA_ACCEPT_ATTR"
-                class="d-none"
-                @change="event => onFileSelected(event, index)"
-              />
-              <p class="text-caption text-medium-emphasis mb-3">
-                {{ t('articleForm.media.uploadHint') }}
-              </p>
-            </template>
-
-            <v-text-field
-              v-model="item.url"
-              :label="item.type === 'youtube' ? t('articleForm.media.youtubeUrl') : t('articleForm.media.url')"
-              :placeholder="item.type === 'youtube' ? 'https://youtube.com/watch?v=…' : 'https://…'"
-              variant="outlined"
-              density="comfortable"
-              :prepend-inner-icon="iconForType(item.type)"
-              class="mb-3"
-              hide-details="auto"
-            />
-
-            <v-text-field
-              v-if="item.type !== 'image'"
-              v-model="item.posterUrl"
-              :label="t('articleForm.media.poster')"
-              placeholder="https://…"
-              variant="outlined"
-              density="comfortable"
-              prepend-inner-icon="mdi-image-multiple-outline"
-              class="mb-3"
-              hide-details
-            />
-
-            <v-text-field
-              v-model="item.captionFr"
-              :label="t('articleForm.media.captionFr')"
-              variant="outlined"
-              density="comfortable"
-              class="mb-3"
-              hide-details
-            />
-
-            <v-text-field
-              v-model="item.captionAr"
-              :label="t('articleForm.media.captionAr')"
-              variant="outlined"
-              density="comfortable"
-              dir="rtl"
-              class="mb-3"
-              hide-details
-            />
-
-            <div class="d-flex align-center ga-1">
-              <v-btn
-                icon="mdi-arrow-up"
-                variant="text"
+                <template #error>
+                  <v-icon
+                    :icon="iconForType(item.type)"
+                    size="small"
+                    class="text-medium-emphasis"
+                  />
+                </template>
+              </v-img>
+              <v-icon
+                v-else
+                :icon="iconForType(item.type)"
                 size="small"
-                :disabled="index === 0"
-                :aria-label="t('articleForm.media.moveUp')"
-                @click="store.moveMedia(index, -1)"
+                class="text-medium-emphasis"
+                aria-hidden="true"
               />
-              <v-btn
-                icon="mdi-arrow-down"
-                variant="text"
-                size="small"
-                :disabled="index === store.fields.media.length - 1"
-                :aria-label="t('articleForm.media.moveDown')"
-                @click="store.moveMedia(index, 1)"
-              />
-              <v-spacer />
-              <v-btn
-                icon="mdi-delete-outline"
-                variant="text"
-                size="small"
-                color="error"
-                :aria-label="t('common.delete')"
-                @click="store.removeMedia(index)"
-              />
-            </div>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
+            </span>
+            <span class="text-body-2 font-weight-medium">{{ t('media.item') }} {{ index + 1 }}</span>
+            <v-spacer />
+            <v-chip
+              size="x-small"
+              variant="tonal"
+              class="me-2 text-capitalize"
+            >
+              {{ item.type }}
+            </v-chip>
+          </div>
+        </v-expansion-panel-title>
 
-      <v-btn
-        block
-        variant="tonal"
-        color="primary"
-        class="rounded-xl"
-        prepend-icon="mdi-plus"
-        @click="store.addMedia('image')"
-      >
-        {{ t('articleForm.media.add') }}
-      </v-btn>
-    </v-card-text>
-  </v-card>
+        <v-expansion-panel-text>
+          <v-select
+            v-model="item.type"
+            :items="typeOptions"
+            :label="t('articleForm.media.type')"
+            variant="outlined"
+            density="comfortable"
+            class="mb-3"
+            hide-details
+          />
+
+          <!-- Cloudinary upload (images & videos only; YouTube is link-only). -->
+          <template v-if="item.type !== 'youtube'">
+            <v-btn
+              block
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-cloud-upload-outline"
+              class="mb-2 rounded-xl text-none"
+              :loading="uploading && uploadingIndex === index"
+              :disabled="uploading"
+              @click="openPicker(index)"
+            >
+              {{ t('articleForm.media.upload') }}
+            </v-btn>
+            <input
+              :ref="el => setFileInput(index, el)"
+              type="file"
+              :accept="MEDIA_ACCEPT_ATTR"
+              class="d-none"
+              tabindex="-1"
+              :aria-label="t('articleForm.media.upload')"
+              @change="event => onFileSelected(event, index)"
+            />
+            <p class="text-caption text-medium-emphasis mb-3">
+              {{ t('articleForm.media.uploadHint') }}
+            </p>
+          </template>
+
+          <v-text-field
+            v-model="item.url"
+            :label="item.type === 'youtube' ? t('articleForm.media.youtubeUrl') : t('articleForm.media.url')"
+            :placeholder="item.type === 'youtube' ? 'https://youtube.com/watch?v=…' : 'https://…'"
+            variant="outlined"
+            density="comfortable"
+            :prepend-inner-icon="iconForType(item.type)"
+            class="mb-3"
+            hide-details="auto"
+          />
+
+          <v-text-field
+            v-if="item.type !== 'image'"
+            v-model="item.posterUrl"
+            :label="t('articleForm.media.poster')"
+            placeholder="https://…"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-image-multiple-outline"
+            class="mb-3"
+            hide-details
+          />
+
+          <v-text-field
+            v-model="item.captionFr"
+            :label="t('articleForm.media.captionFr')"
+            variant="outlined"
+            density="comfortable"
+            class="mb-3"
+            hide-details
+          />
+
+          <v-text-field
+            v-model="item.captionAr"
+            :label="t('articleForm.media.captionAr')"
+            variant="outlined"
+            density="comfortable"
+            dir="rtl"
+            class="mb-3"
+            hide-details
+          />
+
+          <div class="d-flex align-center ga-1">
+            <v-btn
+              icon="mdi-arrow-up"
+              variant="text"
+              density="comfortable"
+              :disabled="index === 0"
+              :aria-label="t('articleForm.media.moveUp')"
+              @click="store.moveMedia(index, -1)"
+            />
+            <v-btn
+              icon="mdi-arrow-down"
+              variant="text"
+              density="comfortable"
+              :disabled="index === store.fields.media.length - 1"
+              :aria-label="t('articleForm.media.moveDown')"
+              @click="store.moveMedia(index, 1)"
+            />
+            <v-spacer />
+            <v-btn
+              icon="mdi-delete-outline"
+              variant="text"
+              density="comfortable"
+              color="error"
+              :aria-label="t('common.delete')"
+              @click="store.removeMedia(index)"
+            />
+          </div>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+    </v-expansion-panels>
+
+    <v-btn
+      block
+      variant="tonal"
+      color="primary"
+      class="rounded-xl text-none"
+      prepend-icon="mdi-plus"
+      @click="store.addMedia('image')"
+    >
+      {{ t('articleForm.media.add') }}
+    </v-btn>
+  </AdminFormCard>
 </template>
 
 <style scoped>
 .media-empty {
   border: 1px dashed rgba(var(--v-theme-on-surface), 0.18);
   background: rgba(var(--v-theme-on-surface), 0.02);
-  transition: border-color 0.25s ease, background-color 0.25s ease;
-}
-
-.media-empty:hover {
-  border-color: rgba(var(--v-theme-primary), 0.4);
-  background: rgba(var(--v-theme-primary), 0.04);
-}
-
-.media-panels {
-  border-radius: 12px;
-}
-
-.media-panel {
-  transition: box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.media-panel:hover {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
 .media-thumb {
-  width: 40px;
-  height: 40px;
-  background: rgba(var(--v-theme-on-surface), 0.05);
+  inline-size: 40px;
+  block-size: 40px;
   overflow: hidden;
-}
-
-.media-thumb-img {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-}
-
-@media (max-width: 600px) {
-  .media-empty {
-    padding: 1.5rem !important;
-  }
-
-  .media-thumb,
-  .media-thumb-img {
-    width: 32px;
-    height: 32px;
-  }
-
-  /* Drop hover shadow on touch devices to avoid sticky states. */
-  .media-panel:hover {
-    box-shadow: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .media-empty,
-  .media-panel {
-    transition: none;
-  }
+  background: rgba(var(--v-theme-on-surface), 0.05);
 }
 </style>

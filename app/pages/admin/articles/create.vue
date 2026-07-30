@@ -10,34 +10,40 @@ store.resetForm()
 </script>
 
 <template>
-  <div class="pa-1">
-    <!-- Header Component -->
+  <div class="editor-page mx-auto px-1 px-md-0">
     <AdminFormHeader />
 
-    <!-- Server error banner -->
+    <!-- Server error banner: role="alert" so it is read out immediately. -->
     <v-alert
       v-if="store.serverError"
       type="error"
       variant="tonal"
       closable
-      class="mb-6"
+      role="alert"
+      class="mb-4"
       @click:close="store.serverError = null"
     >
       {{ store.serverError }}
     </v-alert>
 
-    <!-- Form Wrapper -->
     <v-form
       :ref="store.setFormRef"
       @submit.prevent="store.submit"
     >
-      <v-row>
-        <!-- Main Content Component -->
-        <AdminFormMain />
+      <!-- Sticky Publish / Discard bar, before the fields in tab order. -->
+      <AdminFormActionBar />
 
-        <!-- Sidebar Component -->
+      <v-row>
+        <AdminFormMain />
         <AdminFormSidebar />
       </v-row>
     </v-form>
   </div>
 </template>
+
+<style scoped>
+/* Keep the two columns readable instead of stretching on ultra-wide screens. */
+.editor-page {
+  max-inline-size: 1400px;
+}
+</style>
