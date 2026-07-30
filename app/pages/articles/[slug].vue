@@ -378,14 +378,14 @@ useHead(() => ({
         >
           <v-row
             no-gutters
-            align="center"
+            align="start"
           >
             <v-col
               cols="12"
               md="6"
-              class="pa-4 pa-sm-6"
+              class="pa-2 pa-sm-3 pa-md-4"
             >
-              <div class="d-flex align-center justify-space-between ga-3 mb-4">
+              <div class="d-flex align-start justify-space-between ga-3 mb-4">
                 <v-chip
                   :to="category ? localePath(`/categories/${category.slug}`) : undefined"
                   color="primary"
