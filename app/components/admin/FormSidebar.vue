@@ -233,10 +233,11 @@ function stepReadingTime(delta: number) {
     <AdminFormCard
       icon="mdi-clock-time-four-outline"
       :title="t('articleForm.readingTime')"
-      :hint="t('articleForm.readingTimeHint')"
       optional
     >
-      <div class="d-flex align-center justify-center ga-2 mb-3">
+      <!-- Big, readable value between the two steppers. aria-live lets a screen
+           reader announce the new value after each step. -->
+      <div class="d-flex align-baseline justify-center ga-4 mb-3">
         <v-btn
           icon="mdi-minus"
           variant="tonal"
@@ -245,17 +246,15 @@ function stepReadingTime(delta: number) {
           :aria-label="t('articleForm.readingTimeDecrease')"
           @click="stepReadingTime(-1)"
         />
-        <v-text-field
-          v-model.number="readingTime"
-          :label="t('articleForm.minutes')"
-          :max="READING_TIME_MAX"
-          type="number"
-          min="0"
-          variant="outlined"
-          density="comfortable"
-          hide-details
-          class="reading-input"
-        />
+
+        <p
+          class="text-center mb-0"
+          aria-live="polite"
+        >
+          <span class="reading-value font-weight-bold">{{ readingTime || '—' }}</span>
+          <span class="text-caption text-medium-emphasis">{{ t('article.min') }}</span>
+        </p>
+
         <v-btn
           icon="mdi-plus"
           variant="tonal"
@@ -266,24 +265,24 @@ function stepReadingTime(delta: number) {
         />
       </div>
 
+      <!-- Quick picks -->
       <div
         role="group"
         :aria-label="t('articleForm.readingTimePresets')"
         class="d-flex flex-wrap justify-center ga-2"
       >
-        <v-btn
+        <v-chip
           v-for="preset in READING_TIME_PRESETS"
           :key="preset"
           size="small"
-          rounded="pill"
-          class="text-none"
+          class="reading-preset"
           :variant="readingTime === preset ? 'flat' : 'tonal'"
           :color="readingTime === preset ? 'primary' : undefined"
           :aria-pressed="readingTime === preset"
           @click="readingTime = preset"
         >
           {{ preset }} {{ t('article.min') }}
-        </v-btn>
+        </v-chip>
       </div>
     </AdminFormCard>
   </v-col>
@@ -353,15 +352,17 @@ function stepReadingTime(delta: number) {
   }
 }
 
-/* Reading time: wide enough for two digits, narrow enough to keep the
-   steppers on the same line on a small phone. */
-.reading-input {
-  max-inline-size: 120px;
+/* Reading time: one big number, easy to read at a glance. */
+.reading-value {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+  color: rgb(var(--v-theme-primary));
 }
 
-.reading-input :deep(input) {
-  text-align: center;
-  font-weight: 700;
+/* Comfortable tap height for the quick picks. */
+.reading-preset {
+  min-block-size: 32px;
 }
 
 /*
