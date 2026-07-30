@@ -248,11 +248,8 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     Array.isArray(rawAuthors.value) ? rawAuthors.value : [],
   )
 
-  const rules = {
-    required: (value: unknown) => !!value || 'This field is required',
-    slug: (value: string) =>
-      !value || /^[a-z0-9-]+$/.test(value) || 'Only lowercase letters, numbers and hyphens',
-  }
+  // Validation rules live in the useArticleFormRules() composable so their
+  // messages follow the interface language.
 
   watch(
     () => fields.titleFr,
@@ -581,7 +578,6 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     listPath,
     categories,
     authors,
-    rules,
     configureFlow,
     submit,
     loadArticle,

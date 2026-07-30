@@ -1,4 +1,11 @@
 <script setup lang="ts">
+/**
+ * Right column of the article editor: the settings shared by every language —
+ * category, author, publication state, cover image and reading time.
+ *
+ * Publish / Discard live in <AdminFormActionBar> so they exist only once and
+ * stay reachable while scrolling.
+ */
 import { ref } from 'vue'
 import { useArticleFormStore } from '~/stores/articleFormStore'
 import { useMediaUpload } from '~/composables/useMediaUpload'
@@ -6,9 +13,10 @@ import { useMediaUpload } from '~/composables/useMediaUpload'
 const store = useArticleFormStore()
 const { t } = useI18n()
 
-// Cover image upload: reuses the same Cloudinary endpoint as the gallery, but
-// restricted to images. The returned CDN URL is written into `coverImage`,
-// which stays a plain URL string (upload OR manual URL, both supported).
+/* ── Cover image ─────────────────────────────────────────────────────────── */
+// Reuses the gallery's Cloudinary endpoint, restricted to images. The returned
+// CDN URL is written into `coverImage`, which stays a plain URL string, so an
+// upload and a pasted URL are interchangeable.
 const { uploading: coverUploading, error: coverError, upload: uploadCover } = useMediaUpload()
 const coverInput = ref<HTMLInputElement | null>(null)
 
@@ -37,9 +45,14 @@ async function onCoverSelected(event: Event) {
   }
 }
 
-// ─── Reading time control ───────────────────────────────────────────────────
-// Small, friendly stepper around the raw number field, plus a few quick picks.
-const READING_TIME_MIN = 0
+function removeCover() {
+  store.fields.coverImage = ''
+  store.fields.coverImageVariants = null
+}
+
+/* ── Reading time ────────────────────────────────────────────────────────── */
+// A typable field between two steppers, plus a few quick picks. Typing matters:
+// stepper-only controls are slow with a keyboard and hard with a screen reader.
 const READING_TIME_MAX = 12
 const READING_TIME_PRESETS = [2, 5, 8, 12] as const
 
@@ -50,16 +63,13 @@ const readingTime = computed<number>({
       store.fields.readingTime = null
       return
     }
-    // Clamp to the allowed range so the value never exceeds the max.
+    // Clamp so the value can never exceed the allowed maximum.
     store.fields.readingTime = Math.min(READING_TIME_MAX, Math.round(value))
   },
 })
 
 function stepReadingTime(delta: number) {
-  readingTime.value = Math.min(
-    READING_TIME_MAX,
-    Math.max(READING_TIME_MIN, readingTime.value + delta),
-  )
+  readingTime.value = Math.min(READING_TIME_MAX, Math.max(0, readingTime.value + delta))
 }
 </script>
 
@@ -67,28 +77,20 @@ function stepReadingTime(delta: number) {
   <v-col
     cols="12"
     md="4"
+    class="editor-sidebar align-self-start"
   >
     <!-- Publication -->
-    <v-card
-      rounded="xl"
-      elevation="0"
-      class="editor-card mb-4 pa-2 px-md-4 py-3 py-md-4"
+    <AdminFormCard
+      icon="mdi-cog-outline"
+      :title="t('articleForm.publishing')"
     >
-      <div class="d-flex align-center ga-3">
-        <div class="card-icon">
-          <v-icon icon="mdi-cog-outline" />
-        </div>
-        <div class="text-subtitle-1 font-weight-bold">
-          {{ t('articleForm.publishing') }}
-        </div>
-      </div>
-      <v-card-text class="pa-0 pt-4 d-flex flex-column ga-4">
+      <div class="d-flex flex-column ga-4">
         <v-select
           v-model="store.fields.categoryId"
           :items="store.categories"
+          :label="t('articleForm.category')"
           item-title="nameFr"
           item-value="id"
-          :label="t('articleForm.category')"
           variant="outlined"
           density="comfortable"
           prepend-inner-icon="mdi-shape-outline"
@@ -97,278 +99,210 @@ function stepReadingTime(delta: number) {
         <v-select
           v-model="store.fields.authorId"
           :items="store.authors"
+          :label="t('articleForm.author')"
           item-title="name"
           item-value="id"
-          :label="t('articleForm.author')"
           variant="outlined"
           density="comfortable"
           prepend-inner-icon="mdi-account-outline"
           clearable
         />
 
-        <!-- Publish status -->
+        <!-- Publish state. The switch label is the accessible name; the line
+             below spells out what the current position means. -->
         <div
-          class="status-row d-flex align-center ga-3 pa-3 rounded-lg"
+          class="status-row pa-3 rounded-lg"
           :class="store.isPublished ? 'status-row--on' : 'status-row--off'"
         >
-          <v-icon
-            :icon="store.isPublished ? 'mdi-earth' : 'mdi-clock-outline'"
-            :color="store.isPublished ? 'success' : 'medium-emphasis'"
-          />
-          <div class="flex-grow-1">
-            <div class="text-body-2 font-weight-medium">
-              {{ store.isPublished ? t('articleForm.statusPublished') : t('articleForm.statusPending') }}
-            </div>
-          </div>
           <v-switch
             v-model="store.isPublished"
+            :label="t('articleForm.publishToggle')"
             color="success"
-            density="compact"
+            density="comfortable"
             hide-details
             inset
           />
+          <p class="text-caption text-medium-emphasis mb-0">
+            {{ store.isPublished ? t('articleForm.publishToggleOnHint') : t('articleForm.publishToggleOffHint') }}
+          </p>
         </div>
 
         <v-text-field
           v-model="store.fields.publishedAt"
           :label="t('articleForm.publishDate')"
+          :hint="t('articleForm.publishDateHint')"
           type="datetime-local"
           variant="outlined"
           density="comfortable"
           prepend-inner-icon="mdi-calendar-clock"
-          :hint="t('articleForm.publishDateHint')"
           persistent-hint
         />
-      </v-card-text>
-    </v-card>
+      </div>
+    </AdminFormCard>
 
     <!-- Cover image -->
-    <v-card
-      rounded="xl"
-      elevation="0"
-      class="editor-card mb-4 pa-2 px-md-4 py-3 py-md-4"
+    <AdminFormCard
+      icon="mdi-image-outline"
+      :title="t('articleForm.coverImage')"
+      :hint="t('articleForm.coverUploadHint')"
+      optional
     >
-      <div class="d-flex align-center ga-3">
-        <div class="card-icon">
-          <v-icon icon="mdi-image-outline" />
-        </div>
-        <div class="flex-grow-1">
-          <div class="text-subtitle-1 font-weight-bold">
-            {{ t('articleForm.coverImage') }}
-          </div>
-        </div>
-        <v-chip
-          size="x-small"
-          variant="tonal"
-          color="medium-emphasis"
-        >
-          {{ t('articleForm.optional') }}
-        </v-chip>
+      <!-- Preview once an image is set, dropzone before that. -->
+      <div
+        v-if="store.fields.coverImage"
+        class="cover-frame rounded-lg mb-3"
+      >
+        <NuxtImg
+          :src="store.fields.coverImage"
+          :alt="t('articleForm.coverPreviewAlt')"
+          width="400"
+          height="225"
+          fit="cover"
+          loading="lazy"
+          sizes="sm:100vw md:400px"
+          class="cover-preview"
+        />
+        <v-btn
+          icon="mdi-delete-outline"
+          size="small"
+          color="error"
+          variant="flat"
+          class="cover-remove"
+          :aria-label="t('articleForm.coverRemove')"
+          @click="removeCover"
+        />
       </div>
-      <v-card-text class="pa-0 py-3">
-        <!-- Preview / dropzone -->
-        <div
-          v-if="store.fields.coverImage"
-          class="cover-frame rounded-lg mb-3"
-        >
-          <NuxtImg
-            :src="store.fields.coverImage"
-            width="400"
-            height="225"
-            fit="cover"
-            loading="eager"
-            sizes="sm:100vw md:400px"
-            class="cover-preview"
-          />
-          <v-btn
-            icon="mdi-delete-outline"
-            size="small"
-            color="error"
-            variant="flat"
-            class="cover-remove"
-            @click="store.fields.coverImage = ''; store.fields.coverImageVariants = null"
-          />
-        </div>
-        <button
-          v-else
-          type="button"
-          class="cover-dropzone rounded-lg mb-3 d-flex flex-column align-center justify-center ga-1"
-          :disabled="coverUploading"
-          @click="openCoverPicker"
-        >
-          <v-progress-circular
-            v-if="coverUploading"
-            indeterminate
+      <button
+        v-else
+        type="button"
+        class="cover-dropzone rounded-lg mb-3 d-flex flex-column align-center justify-center ga-1"
+        :disabled="coverUploading"
+        :aria-label="t('articleForm.coverUpload')"
+        @click="openCoverPicker"
+      >
+        <v-progress-circular
+          v-if="coverUploading"
+          indeterminate
+          color="primary"
+          size="28"
+        />
+        <template v-else>
+          <v-icon
+            icon="mdi-cloud-upload-outline"
+            size="32"
             color="primary"
-            size="28"
+            aria-hidden="true"
           />
-          <template v-else>
-            <v-icon
-              icon="mdi-cloud-upload-outline"
-              size="32"
-              color="primary"
-            />
-            <span class="text-body-2 font-weight-medium">{{ t('articleForm.coverUpload') }}</span>
-            <span class="text-caption text-medium-emphasis">{{ t('articleForm.coverUploadHint') }}</span>
-          </template>
-        </button>
+          <span class="text-body-2 font-weight-medium">{{ t('articleForm.coverUpload') }}</span>
+        </template>
+      </button>
 
-        <v-alert
-          v-if="coverError"
-          type="error"
-          variant="tonal"
-          density="compact"
-          class="mb-3"
-          :text="coverError"
-        />
+      <v-alert
+        v-if="coverError"
+        type="error"
+        variant="tonal"
+        density="compact"
+        role="alert"
+        class="mb-3"
+        :text="coverError"
+      />
 
-        <input
-          ref="coverInput"
-          type="file"
-          accept="image/*"
-          class="d-none"
-          @change="onCoverSelected"
-        />
+      <input
+        ref="coverInput"
+        type="file"
+        accept="image/*"
+        class="d-none"
+        tabindex="-1"
+        :aria-label="t('articleForm.coverUpload')"
+        @change="onCoverSelected"
+      />
 
-        <v-text-field
-          v-model="store.fields.coverImage"
-          :label="t('articleForm.imageUrl')"
-          placeholder="https://…"
-          variant="outlined"
-          density="comfortable"
-          prepend-inner-icon="mdi-link-variant"
-          clearable
-          hide-details
-        />
-      </v-card-text>
-    </v-card>
+      <v-text-field
+        v-model="store.fields.coverImage"
+        :label="t('articleForm.imageUrl')"
+        placeholder="https://…"
+        variant="outlined"
+        density="comfortable"
+        prepend-inner-icon="mdi-link-variant"
+        clearable
+        hide-details
+      />
+    </AdminFormCard>
 
     <!-- Reading time -->
-    <v-card
-      rounded="xl"
-      elevation="0"
-      class="editor-card mb-4 pa-2 px-md-4 py-3 py-md-4"
+    <AdminFormCard
+      icon="mdi-clock-time-four-outline"
+      :title="t('articleForm.readingTime')"
+      :hint="t('articleForm.readingTimeHint')"
+      optional
     >
-      <div class="d-flex align-center ga-3">
-        <div class="card-icon">
-          <v-icon icon="mdi-clock-time-four-outline" />
-        </div>
-        <div class="text-subtitle-1 font-weight-bold">
-          {{ t('articleForm.readingTime') }}
-        </div>
+      <div class="d-flex align-center justify-center ga-2 mb-3">
+        <v-btn
+          icon="mdi-minus"
+          variant="tonal"
+          density="comfortable"
+          :disabled="readingTime <= 0"
+          :aria-label="t('articleForm.readingTimeDecrease')"
+          @click="stepReadingTime(-1)"
+        />
+        <v-text-field
+          v-model.number="readingTime"
+          :label="t('articleForm.minutes')"
+          :max="READING_TIME_MAX"
+          type="number"
+          min="0"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+          class="reading-input"
+        />
+        <v-btn
+          icon="mdi-plus"
+          variant="tonal"
+          density="comfortable"
+          :disabled="readingTime >= READING_TIME_MAX"
+          :aria-label="t('articleForm.readingTimeIncrease')"
+          @click="stepReadingTime(1)"
+        />
       </div>
-      <v-card-text class="pa-0pt-4">
-        <!-- Stepper -->
-        <div class="reading-stepper d-flex align-baseline justify-center ga-4 mb-3">
-          <v-btn
-            icon="mdi-minus"
-            variant="tonal"
-            size="small"
-            :disabled="readingTime <= 0"
-            @click="stepReadingTime(-1)"
-          />
-          <div class="text-center">
-            <div class="reading-value font-weight-bold">
-              {{ readingTime || '—' }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              {{ t('article.min') }}
-            </div>
-          </div>
-          <v-btn
-            icon="mdi-plus"
-            variant="tonal"
-            size="small"
-            :disabled="readingTime >= READING_TIME_MAX"
-            @click="stepReadingTime(1)"
-          />
-        </div>
 
-        <!-- Quick picks -->
-        <div class="d-flex flex-wrap justify-center ga-2">
-          <v-chip
-            v-for="preset in READING_TIME_PRESETS"
-            :key="preset"
-            size="small"
-            :variant="readingTime === preset ? 'flat' : 'tonal'"
-            :color="readingTime === preset ? 'primary' : undefined"
-            @click="readingTime = preset"
-          >
-            {{ preset }} {{ t('article.min') }}
-          </v-chip>
-        </div>
-      </v-card-text>
-    </v-card>
-
-    <!-- Actions -->
-    <div class="form-actions sidebar rounded-xl mb-4 pa-2 px-md-4 py-3 py-md-4 d-flex flex-column ga-2">
-      <v-btn
-        color="primary"
-        variant="flat"
-        block
-        size="large"
-        rounded="xl"
-        :loading="store.loading || store.isUploadingMedia"
-        :disabled="store.isUploadingMedia"
-        prepend-icon="mdi-check"
-        @click="store.submit"
+      <div
+        role="group"
+        :aria-label="t('articleForm.readingTimePresets')"
+        class="d-flex flex-wrap justify-center ga-2"
       >
-        {{ store.isUploadingMedia ? t('articleForm.media.uploadingWait') : t('articleForm.publish') }}
-      </v-btn>
-      <p class="text-body-small text-disabled text-start text-medium-emphasis px-2 mt-1 mb-0">
-        {{ t('articleForm.media.uploadingHint') }}
-      </p>
-      <v-btn
-        block
-        color="warning"
-        variant="text"
-        rounded="xl"
-        :to="store.listPath"
-        :disabled="store.loading"
-      >
-        {{ t('articleForm.discard') }}
-      </v-btn>
-    </div>
+        <v-btn
+          v-for="preset in READING_TIME_PRESETS"
+          :key="preset"
+          size="small"
+          rounded="pill"
+          class="text-none"
+          :variant="readingTime === preset ? 'flat' : 'tonal'"
+          :color="readingTime === preset ? 'primary' : undefined"
+          :aria-pressed="readingTime === preset"
+          @click="readingTime = preset"
+        >
+          {{ preset }} {{ t('article.min') }}
+        </v-btn>
+      </div>
+    </AdminFormCard>
   </v-col>
 </template>
 
 <style scoped>
-.editor-card {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  background: rgb(var(--v-theme-surface));
-  transition: box-shadow 0.2s ease;
-}
-
-.editor-card:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-}
-
-.card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: rgba(var(--v-theme-primary), 0.1);
-  color: rgb(var(--v-theme-primary));
-  flex-shrink: 0;
-}
-
-/* Publish status row */
+/* Publish state row */
 .status-row {
   border: 1px solid transparent;
-  transition: all 0.2s ease;
 }
 
 .status-row--on {
-  background: rgba(var(--v-theme-success), 0.08);
   border-color: rgba(var(--v-theme-success), 0.25);
+  background: rgba(var(--v-theme-success), 0.08);
 }
 
 .status-row--off {
-  background: rgba(var(--v-theme-on-surface), 0.04);
   border-color: rgba(var(--v-theme-on-surface), 0.08);
+  background: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 /* Cover image */
@@ -380,8 +314,8 @@ function stepReadingTime(delta: number) {
 }
 
 .cover-preview {
-  width: 100%;
-  height: 100%;
+  inline-size: 100%;
+  block-size: 100%;
   object-fit: cover;
 }
 
@@ -392,54 +326,59 @@ function stepReadingTime(delta: number) {
 }
 
 .cover-dropzone {
-  width: 100%;
+  inline-size: 100%;
   aspect-ratio: 16 / 9;
+  padding: 8px;
   border: 2px dashed rgba(var(--v-theme-primary), 0.35);
   background: rgba(var(--v-theme-primary), 0.04);
   color: rgb(var(--v-theme-on-surface));
-  cursor: pointer;
-  transition: all 0.2s ease;
   text-align: center;
-  padding: 8px;
-}
-
-.cover-dropzone:hover:not(:disabled) {
-  border-color: rgb(var(--v-theme-primary));
-  background: rgba(var(--v-theme-primary), 0.08);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .cover-dropzone:disabled {
   cursor: default;
 }
 
-/* Reading time stepper */
-.reading-value {
-  font-size: 2rem;
-  line-height: 1;
-  color: rgb(var(--v-theme-primary));
+.cover-dropzone:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
 }
 
-/*
- * On small devices the sidebar stacks below the long content form, so the
- * primary actions would sit far down the page. Make them float at the top while
- * scrolling so Save / Cancel are always reachable. On md and up the sidebar is
- * a normal column, so the actions stay in regular flow.
- */
-@media (max-width: 959px) {
-  .form-actions {
-    top: 12px;
-    z-index: 5;
-    background: rgba(var(--v-theme-surface), 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+@media (hover: hover) {
+  .cover-dropzone:hover:not(:disabled) {
+    border-color: rgb(var(--v-theme-primary));
+    background: rgba(var(--v-theme-primary), 0.08);
   }
 }
 
-@media (min-width: 840px) {
-  .sidebar {
-    position: sticky !important;
-    top: 80px;
+/* Reading time: wide enough for two digits, narrow enough to keep the
+   steppers on the same line on a small phone. */
+.reading-input {
+  max-inline-size: 120px;
+}
+
+.reading-input :deep(input) {
+  text-align: center;
+  font-weight: 700;
+}
+
+/*
+ * From md up the sidebar is a real second column, so it follows the (much
+ * taller) content column while scrolling. --v-layout-top is the app bar height
+ * exposed by Vuetify; the extra 80px clears the sticky action bar.
+ */
+@media (min-width: 960px) {
+  .editor-sidebar {
+    position: sticky;
+    top: calc(var(--v-layout-top, 64px) + 80px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-dropzone {
+    transition: none;
   }
 }
 </style>
