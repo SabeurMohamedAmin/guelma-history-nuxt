@@ -73,9 +73,9 @@ async function postRoot(body: string) {
 <template>
   <section
     ref="sectionEl"
-    class="comment-section mt-lg-6"
+    class="comment-section mt-lg-6 pa-2 pa-lg-4 rounded-xl"
   >
-    <h3 class="text-headline-small font-weight-bold mb-3">
+    <h3 class="text-headline-small font-weight-bold py-2 ma-0 mb-3">
       {{ t('comments.title') }}
     </h3>
 
@@ -179,6 +179,7 @@ async function postRoot(body: string) {
         variant="tonal"
         color="primary"
         class="rounded-lg font-weight-bold"
+        :disabled="roots.length === 0 || pending"
         :loading="pending"
         @click="loadMore"
       >
@@ -193,6 +194,9 @@ async function postRoot(body: string) {
 </template>
 
 <style scoped>
-.comment-section { padding: clamp(1rem, 3vw, 1.35rem); border-radius: 22px; background: rgba(var(--v-theme-surface), 0.48); }
-.comment-section__list { display: flex; flex-direction: column; }
+.comment-section { background: rgba(var(--v-theme-surface), 0.48); }
+.comment-section__list {
+   display: flex;
+   flex-direction: column;
+  }
 </style>

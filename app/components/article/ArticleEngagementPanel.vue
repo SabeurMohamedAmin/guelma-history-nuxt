@@ -22,7 +22,7 @@ const actions = computed(() => [
 </script>
 
 <template>
-  <section class="rounded-xl overflow-hidden pa-2 engagement-panel">
+  <section class="rounded-xl overflow-hidden pa-2 pa-lg-4 engagement-panel">
     <!-- Header -->
     <div class="mb-4">
       <p class="text-primary font-weight-black text-uppercase py-2 ma-0 engagement-kicker">

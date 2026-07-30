@@ -42,11 +42,11 @@ function date(article: ArticleListItem): string {
     <v-card
       color="surface"
       variant="flat"
-      class="rounded-xl pa-4 mb-6 border"
+      class="rounded-xl pa-2 pa-lg-4 mb-6 border"
     >
       <h2
         id="recent-articles-heading"
-        class="text-headline-small font-weight-bold pa-2 ma-0 mb-4"
+        class="text-headline-small font-weight-bold ma-0 mb-4"
       >
         {{ t('sidebar.recentArticles') }}
       </h2>
@@ -135,7 +135,7 @@ function date(article: ArticleListItem): string {
     <v-card
       color="surface"
       variant="flat"
-      class="rounded-xl mb-6 border social-card overflow-hidden"
+      class="rounded-xl mb-6 border overflow-hidden pa-2 pa-lg-4"
     >
       <div class="social-card__cover">
         <v-icon
@@ -145,7 +145,7 @@ function date(article: ArticleListItem): string {
         />
       </div>
 
-      <div class="social-card__content px-5 pb-5 text-center">
+      <div class="social-card__content  pb-5 text-center">
         <v-avatar
           size="78"
           class="social-card__avatar mb-3"

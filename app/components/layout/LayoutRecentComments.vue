@@ -58,12 +58,12 @@ function getCommentLink(comment: RecentComment): string | undefined {
   <v-card
     color="surface"
     variant="flat"
-    class="rounded-xl pa-4 mb-6 sidebar-card"
+    class="rounded-xl pa-2 pa-lg-4 mb-6 sidebar-card"
   >
     <!-- ── Heading ─────────────────────────────────────────────────────────── -->
     <h2
       id="recent-comments-heading"
-      class="text-headline-small font-weight-bold ma-0 mb-4 pa-2"
+      class="text-headline-small font-weight-bold ma-0 mb-4"
     >
       {{ t('sidebar.recentComments') }}
     </h2>
@@ -92,7 +92,7 @@ function getCommentLink(comment: RecentComment): string | undefined {
         v-for="comment in items"
         :key="comment.id"
         :to="getCommentLink(comment)"
-        class="comment-item rounded-lg px-3 py-2 text-decoration-none text-inherit"
+        class="comment-item rounded-lg px-2 py-2 text-decoration-none text-inherit"
       >
         <!-- Avatar -->
         <v-avatar

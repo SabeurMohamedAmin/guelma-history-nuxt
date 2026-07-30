@@ -70,7 +70,7 @@ defineProps<{
       <v-col
         cols="12"
         md="6"
-        class="pa-1 pa-md-2 rounded-xl"
+        class="pa-1 pa-md-2 pa-lg-4 rounded-xl"
       >
         <ArticleHero
           :image-url="view.coverSrc"

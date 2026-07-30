@@ -34,7 +34,7 @@ const submit = async () => {
 
 <template>
   <v-card
-    class="correction-card rounded-xl pa-2"
+    class="correction-card rounded-xl pa-2 pa-lg-4"
     variant="flat"
   >
     <div class="d-flex align-center ga-3 mb-4">
