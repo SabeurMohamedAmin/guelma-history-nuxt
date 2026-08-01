@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
   // Fallback: top up with the latest published articles when the category does
   // not provide enough, so the section is never half-empty.
   if (rows.length < limit) {
-    const excludeIds = new Set<number>([current.id, ...rows.map(row => row.id)])
+    const excludeIds = new Set<string>([current.id, ...rows.map(row => row.id)])
     const fillers = (await fetchArticles(
       [
         ne(articles.id, current.id),
