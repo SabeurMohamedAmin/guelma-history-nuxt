@@ -58,7 +58,7 @@ export class ArticleService {
    * decide the scope: admin endpoints omit it (all articles), the author's
    * "My articles" list passes the acting user's id.
    */
-  async getAll(params: ArticlesQueryParams, ownerId?: number): Promise<PaginatedResponse<ArticleResponse>> {
+  async getAll(params: ArticlesQueryParams, ownerId?: string): Promise<PaginatedResponse<ArticleResponse>> {
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = params
     const offset = (page - 1) * limit
 
@@ -92,7 +92,7 @@ export class ArticleService {
     }
   }
 
-  async getById(id: number): Promise<ArticleResponse | null> {
+  async getById(id: string): Promise<ArticleResponse | null> {
     const row = await db.query.articles.findFirst({
       where: eq(articles.id, id),
       with: ARTICLE_WITH,
@@ -101,7 +101,7 @@ export class ArticleService {
   }
 
   /** Resolve an article's numeric id from its unique slug, or null if missing. */
-  async resolveIdBySlug(slug: string): Promise<number | null> {
+  async resolveIdBySlug(slug: string): Promise<string | null> {
     const row = await db.query.articles.findFirst({
       where: eq(articles.slug, slug),
       columns: { id: true },
@@ -110,7 +110,7 @@ export class ArticleService {
   }
 
   /** List only the articles owned (created) by `ownerId` — the author's view. */
-  async getAllByOwner(ownerId: number, params: ArticlesQueryParams): Promise<PaginatedResponse<ArticleResponse>> {
+  async getAllByOwner(ownerId: string, params: ArticlesQueryParams): Promise<PaginatedResponse<ArticleResponse>> {
     return this.getAll(params, ownerId)
   }
 
@@ -132,14 +132,14 @@ export class ArticleService {
   }
 
   /** Total number of articles (for dashboard stats), optionally scoped to an owner. */
-  async count(ownerId?: number): Promise<number> {
+  async count(ownerId?: string): Promise<number> {
     const where = ownerId === undefined ? undefined : eq(articles.createdByUserId, ownerId)
     const [row] = await db.select({ count: count() }).from(articles).where(where)
     return row?.count ?? 0
   }
 
   /** Most recently created articles, shaped for the dashboard list. */
-  async getRecent(limit = 5, ownerId?: number): Promise<RecentArticleResponse[]> {
+  async getRecent(limit = 5, ownerId?: string): Promise<RecentArticleResponse[]> {
     const rows = await db.query.articles.findMany({
       where: ownerId === undefined ? undefined : eq(articles.createdByUserId, ownerId),
       with: { category: true },
@@ -164,7 +164,7 @@ export class ArticleService {
    * owner is required because articles.createdByUserId is NOT NULL and drives
    * the per-author ownership authorization.
    */
-  async create(input: CreateArticleDto, ownerId: number): Promise<ArticleResponse> {
+  async create(input: CreateArticleDto, ownerId: string): Promise<ArticleResponse> {
     // Zod throws ZodError on invalid input — endpoints catch it and map to 400.
     const data = validateCreateArticle(input)
 
@@ -201,7 +201,7 @@ export class ArticleService {
     return created
   }
 
-  async update(id: number, input: UpdateArticleDto): Promise<ArticleResponse> {
+  async update(id: string, input: UpdateArticleDto): Promise<ArticleResponse> {
     const existing = await this.getById(id)
     if (!existing) {
       throw createNotFoundError(id)
@@ -255,7 +255,7 @@ export class ArticleService {
     return updated
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     const existing = await this.getById(id)
     if (!existing) {
       throw createNotFoundError(id)
@@ -360,7 +360,7 @@ export class ArticleService {
   }
 
   /** Normalize incoming media items into insertable rows for an article. */
-  private toMediaRows(articleId: number, media: NonNullable<CreateArticleDto['media']>) {
+  private toMediaRows(articleId: string, media: NonNullable<CreateArticleDto['media']>) {
     return media.map((item, index) => ({
       articleId,
       type: item.type,
@@ -458,6 +458,6 @@ export class ArticleService {
 export const articleService = new ArticleService()
 
 // ─── Shared error factory ─────────────────────────────────────────────────────
-function createNotFoundError(identifier: number | string) {
+function createNotFoundError(identifier: string) {
   return createError({ statusCode: 404, statusMessage: 'Not Found', message: `Article ${identifier} not found.` })
 }
