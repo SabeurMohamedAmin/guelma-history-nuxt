@@ -304,7 +304,7 @@ export class ArticleService {
   // ─── Private helpers ────────────────────────────────────────────────────────
 
   /** Build the WHERE clause from optional query filters and an optional owner scope. */
-  private buildWhereClause(params: ArticlesQueryParams, ownerId?: number): SQL | undefined {
+  private buildWhereClause(params: ArticlesQueryParams, ownerId?: string): SQL | undefined {
     const conditions: SQL[] = []
 
     if (ownerId !== undefined) {

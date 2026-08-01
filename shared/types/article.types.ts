@@ -41,13 +41,13 @@ export interface ArticleResponse {
     slug: string
   }
   author?: {
-    id: number
+    id: string
     nameAr: string
     nameFr: string
     avatar: string | null
   }
   tags?: {
-    id: number
+    id: string
     nameAr: string
     nameFr: string
     slug: string

@@ -8,6 +8,7 @@ ALTER TABLE article_correction_requests DROP CONSTRAINT IF EXISTS article_correc
 ALTER TABLE article_media DROP CONSTRAINT IF EXISTS article_media_article_id_articles_id_fk;
 ALTER TABLE article_tags DROP CONSTRAINT IF EXISTS article_tags_article_id_articles_id_fk;
 ALTER TABLE article_tags DROP CONSTRAINT IF EXISTS article_tags_tag_id_tags_id_fk;
+ALTER TABLE article_tags DROP CONSTRAINT IF EXISTS article_tags_article_id_tag_id_pk;
 ALTER TABLE articles DROP CONSTRAINT IF EXISTS articles_category_id_categories_id_fk;
 ALTER TABLE articles DROP CONSTRAINT IF EXISTS articles_author_id_authors_id_fk;
 ALTER TABLE articles DROP CONSTRAINT IF EXISTS articles_created_by_user_id_users_id_fk;
@@ -160,6 +161,7 @@ ALTER TABLE article_correction_requests ADD CONSTRAINT article_correction_reques
 ALTER TABLE article_media ADD CONSTRAINT article_media_article_id_articles_id_fk FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE;
 ALTER TABLE article_tags ADD CONSTRAINT article_tags_article_id_articles_id_fk FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE;
 ALTER TABLE article_tags ADD CONSTRAINT article_tags_tag_id_tags_id_fk FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE;
+ALTER TABLE article_tags ADD CONSTRAINT article_tags_article_id_tag_id_pk PRIMARY KEY (article_id, tag_id);
 ALTER TABLE password_reset_tokens ADD CONSTRAINT password_reset_tokens_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE user_oauth_accounts ADD CONSTRAINT user_oauth_accounts_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE comments ADD CONSTRAINT comments_article_id_articles_id_fk FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE;

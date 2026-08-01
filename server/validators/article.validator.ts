@@ -39,10 +39,9 @@ export const mediaItemSchema = z.object({
 /**
  * A relation foreign key (category, author).
  *
- * The admin/author form fills these from a <v-select>, which can hand the id
- * back as a digit string ("3") instead of a number, so the value is coerced
- * before the numeric checks — same approach as articlesQuerySchema below.
- * `null` (the select was cleared) and an omitted field both mean "no relation".
+ * The admin/author form fills these from a <v-select>. UUIDs remain strings
+ * end-to-end so they are never coerced or lose precision. `null` (the select
+ * was cleared) and an omitted field both mean "no relation".
  */
 const relationId = z.string().uuid().nullable().optional()
 
