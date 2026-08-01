@@ -14,6 +14,12 @@ Back up the database before applying this migration. Run it only through
 prints the exact command if CockroachDB rejects it. Do not use `db:push` for this
 conversion because schema push cannot perform the data-preserving key mapping.
 
+The custom migrator verifies the live schema before it records `0011` as
+applied. It checks UUID column types, random UUID defaults, primary keys,
+foreign keys, and the composite `article_tags` primary key. The same audit runs
+when `0011` is baselined and whenever the database is already up to date, so a
+ledger row cannot hide a partial conversion or later schema drift.
+
 The latest committed Drizzle snapshot predates this hand-written conversion.
 Before running `pnpm db:generate` again, generate and commit a UUID-aware
 `meta/0011_snapshot.json`; otherwise Drizzle compares against the old integer
