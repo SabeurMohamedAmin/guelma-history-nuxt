@@ -552,13 +552,19 @@ try {
     console.log(`Applying ${entry.tag} (${statements.length} statement(s))...`)
 
     if (entry.tag === '0011_preserve_data_uuid_keys') {
-      // A schema-locked changefeed table rejects ALTER PRIMARY KEY. CockroachDB
-      // requires this setting change to be the only statement in an implicit
-      // transaction, so it must happen before sql.begin(). Restore the lock in
-      // finally even when the UUID transaction rolls back.
-      await sql.unsafe('ALTER TABLE article_tags SET (schema_locked = false)')
+      // Schema-locked changefeed tables reject the constraint and primary-key
+      // changes in this migration. CockroachDB requires each setting change to
+      // run alone in an implicit transaction, before sql.begin(). Restore every
+      // lock in finally even when the UUID transaction rolls back.
+      const schemaLockedTables = ['article_comments', 'article_tags'] as const
+      const unlockedTables: string[] = []
 
       try {
+        for (const table of schemaLockedTables) {
+          await sql.unsafe(`ALTER TABLE ${table} SET (schema_locked = false)`)
+          unlockedTables.push(table)
+        }
+
         await sql.begin(async (transaction) => {
           // CockroachDB 25.2+ commits before every DDL statement by default.
           // Keep this setting local so primary keys can be replaced safely in
@@ -577,7 +583,9 @@ try {
         })
       }
       finally {
-        await sql.unsafe('ALTER TABLE article_tags SET (schema_locked = true)')
+        for (const table of unlockedTables.reverse()) {
+          await sql.unsafe(`ALTER TABLE ${table} SET (schema_locked = true)`)
+        }
       }
 
       await assertUuidMigrationResult()
