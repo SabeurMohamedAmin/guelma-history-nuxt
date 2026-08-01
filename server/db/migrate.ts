@@ -174,6 +174,40 @@ const UUID_RELATION_COLUMNS = [
   ...EXISTING_UUID_RELATION_COLUMNS,
 ] as const
 
+/** Expected parent for every UUID relationship. */
+const UUID_FOREIGN_KEY_TARGETS = new Map<string, string>([
+  ['categories.parent_id', 'categories.id'],
+  ['users.author_id', 'authors.id'],
+  ['articles.category_id', 'categories.id'],
+  ['articles.author_id', 'authors.id'],
+  ['articles.created_by_user_id', 'users.id'],
+  ['article_comments.article_id', 'articles.id'],
+  ['article_correction_requests.article_id', 'articles.id'],
+  ['article_media.article_id', 'articles.id'],
+  ['article_tags.article_id', 'articles.id'],
+  ['article_tags.tag_id', 'tags.id'],
+  ['password_reset_tokens.user_id', 'users.id'],
+  ['user_oauth_accounts.user_id', 'users.id'],
+  ['comments.article_id', 'articles.id'],
+  ['comments.parent_id', 'comments.id'],
+  ['comments.author_id', 'users.id'],
+  ['comment_votes.comment_id', 'comments.id'],
+  ['comment_votes.user_id', 'users.id'],
+  ['comment_flags.comment_id', 'comments.id'],
+  ['comment_flags.reporter_id', 'users.id'],
+  ['notification_mutes.user_id', 'users.id'],
+  ['notification_mutes.article_id', 'articles.id'],
+  ['notification_mutes.comment_id', 'comments.id'],
+  ['notifications.recipient_id', 'users.id'],
+  ['notifications.actor_id', 'users.id'],
+  ['notifications.article_id', 'articles.id'],
+  ['notifications.comment_id', 'comments.id'],
+  ['bookmarks.user_id', 'users.id'],
+  ['bookmarks.article_id', 'articles.id'],
+  ['newsletter_article_emails.article_id', 'articles.id'],
+  ['newsletter_article_emails.subscriber_id', 'subscribers.id'],
+])
+
 async function assertUuidMigrationSourceSchema(): Promise<void> {
   const rows = await sql.unsafe<{
     table_name: string
@@ -265,24 +299,47 @@ async function assertUuidMigrationResult(): Promise<void> {
     table_name: string
     column_name: string
     constraint_type: string
+    referenced_table_name: string | null
+    referenced_column_name: string | null
   }[]>(
-    `SELECT tc.table_name, kcu.column_name, tc.constraint_type
+    `SELECT
+       tc.table_name,
+       kcu.column_name,
+       tc.constraint_type,
+       ccu.table_name AS referenced_table_name,
+       ccu.column_name AS referenced_column_name
      FROM information_schema.table_constraints AS tc
      JOIN information_schema.key_column_usage AS kcu
        ON tc.constraint_catalog = kcu.constraint_catalog
       AND tc.constraint_schema = kcu.constraint_schema
       AND tc.constraint_name = kcu.constraint_name
       AND tc.table_name = kcu.table_name
+     LEFT JOIN information_schema.constraint_column_usage AS ccu
+       ON tc.constraint_catalog = ccu.constraint_catalog
+      AND tc.constraint_schema = ccu.constraint_schema
+      AND tc.constraint_name = ccu.constraint_name
      WHERE tc.table_schema = 'public'
        AND tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY')`,
   )
   const constraintTypes = new Map<string, Set<string>>()
+  const foreignKeyTargets = new Map<string, string>()
 
   for (const row of constraintRows) {
     const key = `${row.table_name}.${row.column_name}`
     const types = constraintTypes.get(key) ?? new Set<string>()
     types.add(row.constraint_type)
     constraintTypes.set(key, types)
+
+    if (
+      row.constraint_type === 'FOREIGN KEY'
+      && row.referenced_table_name
+      && row.referenced_column_name
+    ) {
+      foreignKeyTargets.set(
+        key,
+        `${row.referenced_table_name}.${row.referenced_column_name}`,
+      )
+    }
   }
 
   const missingPrimaryKeys = UUID_PRIMARY_KEY_TABLES.flatMap((table) => {
@@ -298,10 +355,19 @@ async function assertUuidMigrationResult(): Promise<void> {
     const key = `article_tags.${column}`
     return constraintTypes.get(key)?.has('PRIMARY KEY') ? [] : [key]
   })
+  const incorrectForeignKeyTargets = [...UUID_FOREIGN_KEY_TARGETS].flatMap(
+    ([source, expectedTarget]) => {
+      const actualTarget = foreignKeyTargets.get(source)
+      return actualTarget === expectedTarget
+        ? []
+        : [`${source} references ${actualTarget ?? 'nothing'}, expected ${expectedTarget}`]
+    },
+  )
   const invalidConstraints = [
     ...missingPrimaryKeys.map(key => `${key}=missing primary key`),
     ...missingForeignKeys.map(key => `${key}=missing foreign key`),
     ...missingArticleTagPrimaryKey.map(key => `${key}=missing composite primary key`),
+    ...incorrectForeignKeyTargets,
   ]
 
   if (invalidTypes.length > 0 || invalidDefaults.length > 0 || invalidConstraints.length > 0) {
