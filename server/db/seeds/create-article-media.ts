@@ -25,15 +25,14 @@ await seedClient`
   )
 `
 
+// CockroachDB does not implement PostgreSQL's `DO $$` blocks. Its
+// `IF NOT EXISTS` form keeps this helper idempotent while preserving the UUID
+// relationship between article_media.article_id and articles.id.
 await seedClient`
-  DO $$ BEGIN
-    ALTER TABLE "article_media"
-      ADD CONSTRAINT "article_media_article_id_articles_id_fk"
-      FOREIGN KEY ("article_id") REFERENCES "public"."articles"("id")
-      ON DELETE cascade ON UPDATE no action;
-  EXCEPTION
-    WHEN duplicate_object THEN null;
-  END $$
+  ALTER TABLE "article_media"
+    ADD CONSTRAINT IF NOT EXISTS "article_media_article_id_articles_id_fk"
+    FOREIGN KEY ("article_id") REFERENCES "public"."articles"("id")
+    ON DELETE cascade ON UPDATE no action
 `
 
 // Keep pre-existing tables compatible with the current media schema.
