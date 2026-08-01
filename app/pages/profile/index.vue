@@ -28,7 +28,9 @@ const passwordDialog = ref(false)
 const emailDialog = ref(false)
 const deleteDialog = ref(false)
 const deletingAccount = ref(false)
+const deleteForm = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null)
 const deletePassword = ref('')
+const deletePasswordConfirmation = ref('')
 const deleteConfirmation = ref('')
 const deleteError = ref<string | null>(null)
 const snackbar = ref<{ show: boolean, text: string, color: 'success' | 'error' }>({
@@ -102,14 +104,22 @@ async function onEmailSubmit(email: string, current: string) {
   notify(t('profile.emailUpdated'))
 }
 
+const requiredRule = (value: string) => Boolean(value) || t('profile.deleteAccount.required')
+const matchingPasswordRule = (value: string) =>
+  value === deletePassword.value || t('profile.deleteAccount.passwordMismatch')
+const matchingUsernameRule = (value: string) =>
+  value.trim() === profile.value?.username || t('profile.deleteAccount.usernameMismatch')
+
 const canDeleteAccount = computed(() =>
   Boolean(deletePassword.value)
+  && deletePasswordConfirmation.value === deletePassword.value
   && deleteConfirmation.value.trim() === profile.value?.username
   && !deletingAccount.value,
 )
 
 function openDeleteDialog() {
   deletePassword.value = ''
+  deletePasswordConfirmation.value = ''
   deleteConfirmation.value = ''
   deleteError.value = null
   deleteDialog.value = true
@@ -121,7 +131,8 @@ function closeDeleteDialog() {
 }
 
 async function deleteAccount() {
-  if (!canDeleteAccount.value) return
+  const validation = await deleteForm.value?.validate()
+  if (!validation?.valid || !canDeleteAccount.value) return
 
   deletingAccount.value = true
   deleteError.value = null
@@ -131,6 +142,7 @@ async function deleteAccount() {
       method: 'DELETE',
       body: {
         currentPassword: deletePassword.value,
+        confirmPassword: deletePasswordConfirmation.value,
         confirmation: deleteConfirmation.value.trim(),
       },
     })
@@ -407,7 +419,12 @@ definePageMeta({
           <span>{{ t('profile.deleteAccount.dialogTitle') }}</span>
         </v-card-title>
 
-        <v-card-text class="px-5">
+        <v-form
+          ref="deleteForm"
+          validate-on="blur"
+          @submit.prevent="deleteAccount"
+        >
+          <v-card-text class="px-5">
           <p
             id="delete-account-description"
             class="text-body-2 mb-4"
@@ -434,6 +451,19 @@ definePageMeta({
             prepend-inner-icon="mdi-lock-outline"
             variant="outlined"
             :disabled="deletingAccount"
+            :rules="[requiredRule]"
+            class="mb-2"
+          />
+
+          <v-text-field
+            v-model="deletePasswordConfirmation"
+            :label="t('profile.deleteAccount.passwordConfirmLabel')"
+            type="password"
+            autocomplete="current-password"
+            prepend-inner-icon="mdi-lock-check-outline"
+            variant="outlined"
+            :disabled="deletingAccount"
+            :rules="[requiredRule, matchingPasswordRule]"
             class="mb-2"
           />
 
@@ -447,11 +477,11 @@ definePageMeta({
             prepend-inner-icon="mdi-account-check-outline"
             variant="outlined"
             :disabled="deletingAccount"
-            @keyup.enter="deleteAccount"
+            :rules="[requiredRule, matchingUsernameRule]"
           />
-        </v-card-text>
+          </v-card-text>
 
-        <v-card-actions class="px-5 pb-5 ga-2">
+          <v-card-actions class="px-5 pb-5 ga-2">
           <v-spacer />
           <v-btn
             variant="text"
@@ -461,16 +491,17 @@ definePageMeta({
             {{ t('common.cancel') }}
           </v-btn>
           <v-btn
+            type="submit"
             color="error"
             variant="flat"
             :loading="deletingAccount"
             :disabled="!canDeleteAccount"
             prepend-icon="mdi-delete-forever-outline"
-            @click="deleteAccount"
           >
             {{ t('profile.deleteAccount.confirmAction') }}
           </v-btn>
-        </v-card-actions>
+          </v-card-actions>
+        </v-form>
       </v-card>
     </v-dialog>
 

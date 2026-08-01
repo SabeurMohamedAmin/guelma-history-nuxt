@@ -7,7 +7,11 @@ import { DUMMY_PASSWORD_HASH, verifyPasswordHash } from '~~/server/utils/passwor
 
 const deleteAccountSchema = z.object({
   currentPassword: z.string().min(1),
-  confirmation: z.string().trim(),
+  confirmPassword: z.string().min(1),
+  confirmation: z.string().trim().min(1),
+}).refine(data => data.currentPassword === data.confirmPassword, {
+  path: ['confirmPassword'],
+  message: 'Passwords do not match.',
 })
 
 /** Permanently delete the signed-in member's account and related data. */
