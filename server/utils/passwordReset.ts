@@ -27,7 +27,7 @@ function hashToken(rawToken: string): string {
  * Invalidates any still-valid tokens first so only the latest link works.
  * Returns the raw token (to embed in the email link).
  */
-export async function createResetToken(userId: number): Promise<string> {
+export async function createResetToken(userId: string): Promise<string> {
   await invalidateActiveTokens(userId)
 
   const rawToken = randomBytes(TOKEN_BYTES).toString('hex')
@@ -43,7 +43,7 @@ export async function createResetToken(userId: number): Promise<string> {
 }
 
 /** Mark all unused tokens for a user as used (so they can't be reused). */
-async function invalidateActiveTokens(userId: number): Promise<void> {
+async function invalidateActiveTokens(userId: string): Promise<void> {
   await db
     .update(passwordResetTokens)
     .set({ usedAt: new Date() })
