@@ -71,13 +71,6 @@
       "when": 1785573097625,
       "tag": "0010_dark_vermin",
       "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1785600000000,
-      "tag": "0011_preserve_data_uuid_keys",
-      "breakpoints": false
     }
   ]
 }
