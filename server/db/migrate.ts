@@ -98,6 +98,51 @@ async function recordApplied(entry: JournalEntry, hash: string): Promise<void> {
   )
 }
 
+/**
+ * The UUID conversion maps integer text deterministically. Running it against a
+ * partially converted database would hash UUID text and break relationships, so
+ * refuse to start unless every converted primary key still has an integer type.
+ */
+async function assertUuidMigrationSourceSchema(): Promise<void> {
+  const expectedTables = [
+    'authors',
+    'categories',
+    'users',
+    'articles',
+    'tags',
+    'article_comments',
+    'article_correction_requests',
+    'article_media',
+    'bookmarks',
+    'comment_votes',
+    'comment_flags',
+    'notification_mutes',
+    'subscribers',
+    'newsletter_article_emails',
+    'contact_messages',
+    'user_oauth_accounts',
+    'password_reset_tokens',
+  ]
+
+  const rows = await sql.unsafe<{ table_name: string, data_type: string }[]>(
+    `SELECT table_name, data_type
+     FROM information_schema.columns
+     WHERE table_schema = 'public' AND column_name = 'id' AND table_name = ANY($1::STRING[])`,
+    [expectedTables],
+  )
+
+  const integerTypes = new Set(['smallint', 'integer', 'bigint'])
+  const byTable = new Map(rows.map(row => [row.table_name, row.data_type]))
+  const invalid = expectedTables.filter(table => !integerTypes.has(byTable.get(table) ?? 'missing'))
+
+  if (invalid.length > 0) {
+    const details = invalid.map(table => `${table}.id=${byTable.get(table) ?? 'missing'}`).join(', ')
+    throw new Error(
+      `UUID migration preflight failed (${details}). Restore an integer-schema backup or baseline 0011 if the database is already fully converted.`,
+    )
+  }
+}
+
 try {
   const baselineTag = readBaselineFlag(process.argv.slice(2))
 
@@ -160,6 +205,10 @@ try {
   }
 
   for (const entry of pending) {
+    if (entry.tag === '0011_preserve_data_uuid_keys') {
+      await assertUuidMigrationSourceSchema()
+    }
+
     const { statements, hash } = readMigration(entry.tag)
     console.log(`Applying ${entry.tag} (${statements.length} statement(s))...`)
 
