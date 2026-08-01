@@ -26,35 +26,39 @@ describe('nextBookmarkState', () => {
 describe('applyBookmarkToggle', () => {
   it('adds an id when saving', () => {
     const result = applyBookmarkToggle(new Set<string>(), 'article-7', true)
-    expect([...result]).toEqual([7])
+    expect([...result]).toEqual(['article-7'])
   })
 
   it('removes an id when unsaving', () => {
     const result = applyBookmarkToggle(new Set(['article-7']), 'article-7', false)
-    expect(result.has(7)).toBe(false)
+    expect(result.has('article-7')).toBe(false)
   })
 
   it('saving the same article twice is a no-op (idempotent)', () => {
-    const once = applyBookmarkToggle(new Set([7]), 7, true)
-    const twice = applyBookmarkToggle(once, 7, true)
-    expect([...twice]).toEqual([7])
+    const once = applyBookmarkToggle(new Set(['article-7']), 'article-7', true)
+    const twice = applyBookmarkToggle(once, 'article-7', true)
+    expect([...twice]).toEqual(['article-7'])
   })
 
   it('removing an absent article is a no-op (idempotent)', () => {
-    const result = applyBookmarkToggle(new Set([1, 2]), 99, false)
-    expect([...result]).toEqual([1, 2])
+    const result = applyBookmarkToggle(new Set(['article-1', 'article-2']), 'article-99', false)
+    expect([...result]).toEqual(['article-1', 'article-2'])
   })
 
   it('returns a new set without mutating the input (reactivity-safe)', () => {
-    const input = new Set([1])
-    const result = applyBookmarkToggle(input, 2, true)
+    const input = new Set(['article-1'])
+    const result = applyBookmarkToggle(input, 'article-2', true)
     expect(result).not.toBe(input)
-    expect([...input]).toEqual([1])
-    expect([...result]).toEqual([1, 2])
+    expect([...input]).toEqual(['article-1'])
+    expect([...result]).toEqual(['article-1', 'article-2'])
   })
 
   it('does not disturb other saved ids', () => {
-    const result = applyBookmarkToggle(new Set([1, 2, 3]), 2, false)
-    expect([...result].sort()).toEqual([1, 3])
+    const result = applyBookmarkToggle(
+      new Set(['article-1', 'article-2', 'article-3']),
+      'article-2',
+      false,
+    )
+    expect([...result].sort()).toEqual(['article-1', 'article-3'])
   })
 })

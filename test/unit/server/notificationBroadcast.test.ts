@@ -44,8 +44,8 @@ beforeEach(() => {
 
 describe('userTopic', () => {
   it('namespaces a room per user id', () => {
-    expect(userTopic('user-12')).toBe('notifications:user:12')
-    expect(userTopic(12)).not.toBe(userTopic('user-13'))
+    expect(userTopic('user-12')).toBe('notifications:user-12')
+    expect(userTopic('user-12')).not.toBe(userTopic('user-13'))
   })
 })
 
@@ -54,7 +54,7 @@ describe('publishNotificationEvent', () => {
     const a = fakePeer()
     const b = fakePeer()
     addNotificationPeer(userTopic('user-7'), a)
-    addNotificationPeer(userTopic(7), b)
+    addNotificationPeer(userTopic('user-7'), b)
 
     publishNotificationEvent('user-7', sampleEvent)
 
@@ -66,10 +66,10 @@ describe('publishNotificationEvent', () => {
   it('isolates rooms: a user only hears their own notifications', () => {
     const me = fakePeer()
     const otherUser = fakePeer()
-    addNotificationPeer(userTopic(7), me)
+    addNotificationPeer(userTopic('user-7'), me)
     addNotificationPeer(userTopic('user-99'), otherUser)
 
-    publishNotificationEvent(7, sampleEvent)
+    publishNotificationEvent('user-7', sampleEvent)
 
     expect(me.send).toHaveBeenCalledOnce()
     expect(otherUser.send).not.toHaveBeenCalled()
@@ -81,10 +81,10 @@ describe('publishNotificationEvent', () => {
 
   it('stops delivering to a peer after it is removed', () => {
     const peer = fakePeer()
-    addNotificationPeer(userTopic(7), peer)
+    addNotificationPeer(userTopic('user-7'), peer)
     removeNotificationPeer(peer)
 
-    publishNotificationEvent(7, sampleEvent)
+    publishNotificationEvent('user-7', sampleEvent)
 
     expect(peer.send).not.toHaveBeenCalled()
   })
@@ -96,16 +96,16 @@ describe('publishNotificationEvent', () => {
       }),
     }
     const healthy = fakePeer()
-    addNotificationPeer(userTopic(7), broken)
-    addNotificationPeer(userTopic(7), healthy)
+    addNotificationPeer(userTopic('user-7'), broken)
+    addNotificationPeer(userTopic('user-7'), healthy)
 
     // A throwing socket must not break the insert that triggered the event.
-    expect(() => publishNotificationEvent(7, sampleEvent)).not.toThrow()
+    expect(() => publishNotificationEvent('user-7', sampleEvent)).not.toThrow()
     expect(healthy.send).toHaveBeenCalledOnce()
 
     // The broken peer was dropped, so a second publish does not reach it again.
     broken.send.mockClear()
-    publishNotificationEvent(7, sampleEvent)
+    publishNotificationEvent('user-7', sampleEvent)
     expect(broken.send).not.toHaveBeenCalled()
   })
 })
