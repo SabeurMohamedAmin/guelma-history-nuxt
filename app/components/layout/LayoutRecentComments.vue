@@ -4,7 +4,7 @@ import { formatDate } from '~/utils/date'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface RecentComment {
-  id: number | string
+  id: string
   author: string
   articleTitle: string
   articleSlug?: string
@@ -19,11 +19,11 @@ const props = withDefaults(defineProps<{
 }>(), {
   loading: false,
   comments: () => [
-    { id: 1, author: 'amin', articleTitle: 'نهج زدادرة حسين سان بوسيديوس في قالمة خلال الحقبة الاستعمارية عام 1906', createdAt: '2025-10-31' },
-    { id: 2, author: 'Elliot Alderson', articleTitle: 'فيلم دعائي فرنسي من عام 1959 حول مدينة قالمة', createdAt: '2024-10-09' },
-    { id: 3, author: 'Elliot Alderson', articleTitle: 'سوق قالمة القديم نبض الحياة اليومية في قلب المدينة', createdAt: '2024-10-09' },
-    { id: 4, author: 'Elliot Alderson', articleTitle: 'بنك الجزائر في قالمة: من صرح مالي استعماري إلى خزينة عمومية', createdAt: '2024-10-09' },
-    { id: 5, author: 'Elliot Alderson', articleTitle: 'فنتازيا قالمة 1904: عندما يمتزج غبار البارود بعبق التاريخ', createdAt: '2024-10-09' },
+    { id: 'demo-comment-1', author: 'amin', articleTitle: 'نهج زدادرة حسين سان بوسيديوس في قالمة خلال الحقبة الاستعمارية عام 1906', createdAt: '2025-10-31' },
+    { id: 'demo-comment-2', author: 'Elliot Alderson', articleTitle: 'فيلم دعائي فرنسي من عام 1959 حول مدينة قالمة', createdAt: '2024-10-09' },
+    { id: 'demo-comment-3', author: 'Elliot Alderson', articleTitle: 'سوق قالمة القديم نبض الحياة اليومية في قلب المدينة', createdAt: '2024-10-09' },
+    { id: 'demo-comment-4', author: 'Elliot Alderson', articleTitle: 'بنك الجزائر في قالمة: من صرح مالي استعماري إلى خزينة عمومية', createdAt: '2024-10-09' },
+    { id: 'demo-comment-5', author: 'Elliot Alderson', articleTitle: 'فنتازيا قالمة 1904: عندما يمتزج غبار البارود بعبق التاريخ', createdAt: '2024-10-09' },
   ],
 })
 
