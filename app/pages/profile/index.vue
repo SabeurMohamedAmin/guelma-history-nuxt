@@ -10,6 +10,7 @@
  * components driven by callbacks.
  */
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 const {
   profile,
   pending,
@@ -133,7 +134,7 @@ async function deleteAccount() {
         confirmation: deleteConfirmation.value.trim(),
       },
     })
-    await navigateTo(useLocalePath()('/'))
+    await navigateTo(localePath('/'))
   }
   catch (error) {
     deleteError.value = extractErrorMessage(error, t('profile.deleteAccount.error'))
