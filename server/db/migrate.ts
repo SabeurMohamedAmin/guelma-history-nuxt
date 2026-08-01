@@ -130,8 +130,53 @@ const UUID_PRIMARY_KEY_TABLES = [
   'notifications',
 ] as const
 
+/** Foreign keys that migration 0011 converts from integer to UUID. */
+const CONVERTED_UUID_RELATION_COLUMNS = [
+  ['categories', 'parent_id'],
+  ['users', 'author_id'],
+  ['articles', 'category_id'],
+  ['articles', 'author_id'],
+  ['articles', 'created_by_user_id'],
+  ['article_comments', 'article_id'],
+  ['article_correction_requests', 'article_id'],
+  ['article_media', 'article_id'],
+  ['article_tags', 'article_id'],
+  ['article_tags', 'tag_id'],
+  ['password_reset_tokens', 'user_id'],
+  ['user_oauth_accounts', 'user_id'],
+  ['comments', 'article_id'],
+  ['comments', 'author_id'],
+  ['comment_votes', 'user_id'],
+  ['comment_flags', 'reporter_id'],
+  ['notification_mutes', 'user_id'],
+  ['notification_mutes', 'article_id'],
+  ['notifications', 'recipient_id'],
+  ['notifications', 'actor_id'],
+  ['notifications', 'article_id'],
+  ['bookmarks', 'user_id'],
+  ['bookmarks', 'article_id'],
+  ['newsletter_article_emails', 'article_id'],
+  ['newsletter_article_emails', 'subscriber_id'],
+] as const
+
+/** Relations that were UUIDs before migration 0011. */
+const EXISTING_UUID_RELATION_COLUMNS = [
+  ['comments', 'parent_id'],
+  ['comment_votes', 'comment_id'],
+  ['comment_flags', 'comment_id'],
+  ['notification_mutes', 'comment_id'],
+  ['notifications', 'comment_id'],
+] as const
+
 /** Every application foreign-key column that references a UUID primary key. */
 const UUID_RELATION_COLUMNS = [
+  ...CONVERTED_UUID_RELATION_COLUMNS,
+  ...EXISTING_UUID_RELATION_COLUMNS,
+] as const
+
+/* Full list, kept explicit above by migration origin for safe preflight checks. */
+/*
+const UUID_RELATION_COLUMNS_LEGACY = [
   ['categories', 'parent_id'],
   ['users', 'author_id'],
   ['articles', 'category_id'],
@@ -163,25 +208,49 @@ const UUID_RELATION_COLUMNS = [
   ['newsletter_article_emails', 'article_id'],
   ['newsletter_article_emails', 'subscriber_id'],
 ] as const
+*/
 
 async function assertUuidMigrationSourceSchema(): Promise<void> {
-  const expectedTables = [...CONVERTED_UUID_PRIMARY_KEY_TABLES]
-
-  const rows = await sql.unsafe<{ table_name: string, data_type: string }[]>(
-    `SELECT table_name, data_type
+  const rows = await sql.unsafe<{
+    table_name: string
+    column_name: string
+    data_type: string
+  }[]>(
+    `SELECT table_name, column_name, data_type
      FROM information_schema.columns
-     WHERE table_schema = 'public' AND column_name = 'id' AND table_name = ANY($1::text[])`,
-    [expectedTables],
+     WHERE table_schema = 'public'`,
   )
 
+  const columns = new Map(
+    rows.map(row => [`${row.table_name}.${row.column_name}`, row.data_type]),
+  )
   const integerTypes = new Set(['smallint', 'integer', 'bigint'])
-  const byTable = new Map(rows.map(row => [row.table_name, row.data_type]))
-  const invalid = expectedTables.filter(table => !integerTypes.has(byTable.get(table) ?? 'missing'))
+  const expectedIntegerColumns = [
+    ...CONVERTED_UUID_PRIMARY_KEY_TABLES.map(table => [table, 'id'] as const),
+    ...CONVERTED_UUID_RELATION_COLUMNS,
+  ]
+  const expectedUuidColumns = [
+    ['comments', 'id'],
+    ['notifications', 'id'],
+    ...EXISTING_UUID_RELATION_COLUMNS,
+  ] as const
 
-  if (invalid.length > 0) {
-    const details = invalid.map(table => `${table}.id=${byTable.get(table) ?? 'missing'}`).join(', ')
+  const invalidIntegers = expectedIntegerColumns.flatMap(([table, column]) => {
+    const key = `${table}.${column}`
+    const type = columns.get(key)
+    return integerTypes.has(type ?? '') ? [] : [`${key}=${type ?? 'missing'}`]
+  })
+  const invalidUuids = expectedUuidColumns.flatMap(([table, column]) => {
+    const key = `${table}.${column}`
+    const type = columns.get(key)
+    return type === 'uuid' ? [] : [`${key}=${type ?? 'missing'}`]
+  })
+
+  if (invalidIntegers.length > 0 || invalidUuids.length > 0) {
     throw new Error(
-      `UUID migration preflight failed (${details}). Restore an integer-schema backup or baseline 0011 if the database is already fully converted.`,
+      'UUID migration preflight failed ('
+      + [...invalidIntegers, ...invalidUuids].join(', ')
+      + '). Restore an integer-schema backup or baseline 0011 if the database is already fully converted.',
     )
   }
 }
