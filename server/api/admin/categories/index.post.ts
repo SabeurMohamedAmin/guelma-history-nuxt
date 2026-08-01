@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     descriptionFr?: string | null
     icon?: string | null
     coverImage?: string | null
-    parentId?: number | null
+    parentId?: string | null
   }>(event)
 
   if (!body?.nameAr?.trim() || !body?.nameFr?.trim() || !body?.slug?.trim()) {

@@ -15,8 +15,8 @@ const updateSubscriberStatusSchema = z.object({
  * newsletter sender and CSV export.
  */
 export default defineEventHandler(async (event) => {
-  const id = Number(getRouterParam(event, 'id'))
-  if (!Number.isInteger(id) || id < 1) {
+  const id = getRouterParam(event, 'id')
+  if (!id || !z.string().uuid().safeParse(id).success) {
     throw createError({ statusCode: 400, message: 'Invalid subscriber ID' })
   }
 
