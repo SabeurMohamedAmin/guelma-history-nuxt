@@ -9,7 +9,7 @@ import { authors } from '~~/server/db/schema'
  */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
-  if (!id || !z.string().uuid().safeParse(id).success) {
+  if (!id || !z.string().regex(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i).safeParse(id).success) {
     throw createError({ statusCode: 400, message: 'Invalid author ID' })
   }
 

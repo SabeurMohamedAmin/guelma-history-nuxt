@@ -43,7 +43,11 @@ export const mediaItemSchema = z.object({
  * end-to-end so they are never coerced or lose precision. `null` (the select
  * was cleared) and an omitted field both mean "no relation".
  */
-const relationId = z.string().uuid().nullable().optional()
+const databaseUuid = z.string().regex(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  'Invalid UUID',
+)
+const relationId = databaseUuid.nullable().optional()
 
 export const createArticleSchema = z.object({
   titleAr: z.string().trim().min(1, 'Arabic title is required').max(255),
@@ -59,7 +63,7 @@ export const createArticleSchema = z.object({
   authorId: relationId,
   publishedAt: z.coerce.date().nullable().optional(),
   readingTime: z.number().int().min(0).optional(),
-  tagIds: z.array(z.string().uuid()).optional(),
+  tagIds: z.array(databaseUuid).optional(),
   media: z.array(mediaItemSchema).optional(),
 })
 
@@ -69,11 +73,11 @@ export const articlesQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
   search: z.string().optional(),
-  categoryId: z.string().uuid().optional(),
+  categoryId: databaseUuid.optional(),
   // Category *slug* filter (the home/article pages pass a slug, not an id).
   category: z.string().optional(),
-  authorId: z.string().uuid().optional(),
-  tagId: z.string().uuid().optional(),
+  authorId: databaseUuid.optional(),
+  tagId: databaseUuid.optional(),
   // featured=true → published articles only (used by hero sections).
   featured: z.coerce.boolean().optional(),
   status: z.enum(['published', 'draft', 'all']).default('all'),

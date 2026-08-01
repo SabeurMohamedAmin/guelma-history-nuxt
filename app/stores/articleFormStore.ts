@@ -112,7 +112,7 @@ function toSlug(value: string): string {
 function toId(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const id = value.trim()
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
     ? id
     : null
 }
