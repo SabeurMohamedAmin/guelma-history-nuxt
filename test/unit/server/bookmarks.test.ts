@@ -25,12 +25,12 @@ describe('nextBookmarkState', () => {
 
 describe('applyBookmarkToggle', () => {
   it('adds an id when saving', () => {
-    const result = applyBookmarkToggle(new Set<number>(), 7, true)
+    const result = applyBookmarkToggle(new Set<string>(), 'article-7', true)
     expect([...result]).toEqual([7])
   })
 
   it('removes an id when unsaving', () => {
-    const result = applyBookmarkToggle(new Set([7]), 7, false)
+    const result = applyBookmarkToggle(new Set(['article-7']), 'article-7', false)
     expect(result.has(7)).toBe(false)
   })
 

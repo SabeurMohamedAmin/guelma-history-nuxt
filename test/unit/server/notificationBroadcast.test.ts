@@ -25,7 +25,7 @@ const sampleEvent: NotificationEvent = {
     id: 'n-1',
     type: 'comment_reply',
     isRead: false,
-    articleId: 10,
+    articleId: 'article-10',
     // The slug builds the deep link (/articles/<slug>).
     articleSlug: 'guelma-history',
     commentId: 'c-1',
@@ -44,8 +44,8 @@ beforeEach(() => {
 
 describe('userTopic', () => {
   it('namespaces a room per user id', () => {
-    expect(userTopic(12)).toBe('notifications:user:12')
-    expect(userTopic(12)).not.toBe(userTopic(13))
+    expect(userTopic('user-12')).toBe('notifications:user:12')
+    expect(userTopic(12)).not.toBe(userTopic('user-13'))
   })
 })
 
@@ -53,10 +53,10 @@ describe('publishNotificationEvent', () => {
   it('sends the JSON-encoded event to every peer in the user room', () => {
     const a = fakePeer()
     const b = fakePeer()
-    addNotificationPeer(userTopic(7), a)
+    addNotificationPeer(userTopic('user-7'), a)
     addNotificationPeer(userTopic(7), b)
 
-    publishNotificationEvent(7, sampleEvent)
+    publishNotificationEvent('user-7', sampleEvent)
 
     expect(a.send).toHaveBeenCalledOnce()
     expect(b.send).toHaveBeenCalledOnce()
@@ -67,7 +67,7 @@ describe('publishNotificationEvent', () => {
     const me = fakePeer()
     const otherUser = fakePeer()
     addNotificationPeer(userTopic(7), me)
-    addNotificationPeer(userTopic(99), otherUser)
+    addNotificationPeer(userTopic('user-99'), otherUser)
 
     publishNotificationEvent(7, sampleEvent)
 
@@ -76,7 +76,7 @@ describe('publishNotificationEvent', () => {
   })
 
   it('is a no-op when the user has no connected tabs', () => {
-    expect(() => publishNotificationEvent(123, sampleEvent)).not.toThrow()
+    expect(() => publishNotificationEvent('user-123', sampleEvent)).not.toThrow()
   })
 
   it('stops delivering to a peer after it is removed', () => {
