@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { databaseUuidSchema } from './database-uuid'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * Zod schemas for article CRUD.

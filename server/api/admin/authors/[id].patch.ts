@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { authors } from '~~/server/db/schema'
-import { databaseUuidSchema } from '~~/server/validators/database-uuid'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * PATCH /api/admin/authors/[id]

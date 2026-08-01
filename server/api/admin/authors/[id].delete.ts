@@ -1,7 +1,7 @@
 import { eq, count } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { authors, articles } from '~~/server/db/schema'
-import { databaseUuidSchema } from '~~/server/validators/database-uuid'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * DELETE /api/admin/authors/[id]

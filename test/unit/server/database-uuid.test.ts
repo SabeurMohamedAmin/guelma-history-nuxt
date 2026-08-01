@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { databaseUuidSchema, isDatabaseUuid } from '~~/server/validators/database-uuid'
+import { databaseUuidSchema, isDatabaseUuid, toDatabaseUuid } from '~~/shared/database-uuid'
 
 describe('database UUID validation', () => {
   it('accepts random UUIDs generated for new rows', () => {
@@ -14,5 +14,12 @@ describe('database UUID validation', () => {
     expect(isDatabaseUuid(42)).toBe(false)
     expect(isDatabaseUuid('42')).toBe(false)
     expect(isDatabaseUuid('not-a-uuid')).toBe(false)
+  })
+
+  it('normalizes form values without coercing invalid IDs', () => {
+    expect(toDatabaseUuid(' 550E8400-E29B-41D4-A716-446655440000 '))
+      .toBe('550e8400-e29b-41d4-a716-446655440000')
+    expect(toDatabaseUuid(42)).toBeNull()
+    expect(toDatabaseUuid('')).toBeNull()
   })
 })

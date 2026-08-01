@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { sanitizeCommentBody } from '~~/server/utils/sanitizeComment'
 import { articleSlugSchema } from './slug'
-import { databaseUuidSchema } from './database-uuid'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * Validation rules for the realtime threaded comment system. Single source of

@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '~~/server/db'
 import { subscribers } from '~~/server/db/schema'
-import { databaseUuidSchema } from '~~/server/validators/database-uuid'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 const updateSubscriberStatusSchema = z.object({
   status: z.enum(['active', 'unsubscribed']),

@@ -4,6 +4,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useFetch, useRouter } from '#app'
 import type { ArticleResponse } from '~~/server/types/article.types'
 import type { ImageVariants } from '~~/shared/types/article'
+import { toDatabaseUuid } from '~~/shared/database-uuid'
 
 interface SelectOption {
   id: string
@@ -106,15 +107,6 @@ function toSlug(value: string): string {
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '')
-}
-
-/** Keep relation IDs as UUID strings from the select through to the API. */
-function toId(value: unknown): string | null {
-  if (typeof value !== 'string') return null
-  const id = value.trim()
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
-    ? id
-    : null
 }
 
 function getErrorMessage(error: unknown, fallback = 'An unexpected error occurred.'): string {
@@ -272,8 +264,8 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     // The response has no flat categoryId/authorId: the selects are bound to the
     // ids carried by the relation objects. Saving still sends categoryId /
     // authorId, see buildPayload().
-    fields.categoryId = toId(article.category?.id)
-    fields.authorId = toId(article.author?.id)
+    fields.categoryId = toDatabaseUuid(article.category?.id)
+    fields.authorId = toDatabaseUuid(article.author?.id)
     fields.publishedAt = toDatetimeLocal(article.publishedAt)
     fields.readingTime = article.readingTime ?? null
     fields.media = (article.media ?? []).map(item => ({
@@ -299,8 +291,8 @@ export const useArticleFormStore = defineStore('articleForm', () => {
       excerptFr: fields.excerptFr.trim() || null,
       coverImage: fields.coverImage.trim() || null,
       coverImageVariants: fields.coverImageVariants,
-      categoryId: toId(fields.categoryId),
-      authorId: toId(fields.authorId),
+      categoryId: toDatabaseUuid(fields.categoryId),
+      authorId: toDatabaseUuid(fields.authorId),
       readingTime: fields.readingTime && fields.readingTime > 0 ? fields.readingTime : undefined,
       publishedAt: toIsoFromDatetimeLocal(fields.publishedAt),
       // Keep only rows that actually have a URL, and persist their order.
