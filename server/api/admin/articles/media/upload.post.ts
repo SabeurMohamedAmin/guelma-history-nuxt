@@ -82,16 +82,16 @@ export default defineEventHandler(async (event) => {
 
   const variantEntries = await Promise.all(
     Object.entries(variantDefinitions).map(async ([name, options]) => {
-    const buffer = await sharp(filePart.data, { failOn: 'error' })
-      .rotate()
-      .resize({
-        width: options.width,
-        height: options.height,
-        fit: options.fit,
-        withoutEnlargement: true,
-      })
-      .webp({ quality: options.quality })
-      .toBuffer()
+      const buffer = await sharp(filePart.data, { failOn: 'error' })
+        .rotate()
+        .resize({
+          width: options.width,
+          height: options.height,
+          fit: options.fit,
+          withoutEnlargement: true,
+        })
+        .webp({ quality: options.quality })
+        .toBuffer()
       const uploaded = await uploadToCloudinary(buffer, 'articles', `${baseId}-${name}`)
       return [name, uploaded] as const
     }),

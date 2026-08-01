@@ -213,7 +213,7 @@ describe('schema coverage', () => {
       'utf8',
     )
     expect(generator).toContain('existsSync(snapshotPath)')
-    expect(generator).toContain("spawnSync(command, ['exec', 'drizzle-kit', 'generate']")
+    expect(generator).toContain('spawnSync(command, [\'exec\', \'drizzle-kit\', \'generate\']')
 
     const packageJson = JSON.parse(
       readFileSync(join(migrationsDir, '..', '..', '..', 'package.json'), 'utf8'),

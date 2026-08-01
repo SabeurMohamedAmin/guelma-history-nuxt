@@ -291,9 +291,7 @@ async function assertUuidMigrationSourceSchema(): Promise<void> {
 
   if (invalidIntegers.length > 0 || invalidUuids.length > 0) {
     throw new Error(
-      'UUID migration preflight failed ('
-      + [...invalidIntegers, ...invalidUuids].join(', ')
-      + '). Restore an integer-schema backup or baseline 0011 if the database is already fully converted.',
+      `UUID migration preflight failed (${[...invalidIntegers, ...invalidUuids].join(', ')}). Restore an integer-schema backup or baseline 0011 if the database is already fully converted.`,
     )
   }
 }
@@ -449,13 +447,12 @@ async function assertUuidMigrationResult(): Promise<void> {
     || invalidConstraints.length > 0
   ) {
     throw new Error(
-      'UUID migration verification failed. Invalid schema: '
-      + [
+      `UUID migration verification failed. Invalid schema: ${[
         ...invalidTypes,
         ...invalidDefaults,
         ...invalidNullability,
         ...invalidConstraints,
-      ].join(', '),
+      ].join(', ')}`,
     )
   }
 }
@@ -480,8 +477,7 @@ try {
 
     if (!baseline) {
       throw new Error(
-        `Unknown baseline "${baselineTag}". Known tags:\n  `
-        + journal.entries.map(entry => entry.tag).join('\n  '),
+        `Unknown baseline "${baselineTag}". Known tags:\n  ${journal.entries.map(entry => entry.tag).join('\n  ')}`,
       )
     }
 
