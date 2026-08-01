@@ -337,6 +337,18 @@ try {
       )
     }
 
+    const uuidMigration = journal.entries.find(
+      entry => entry.tag === '0011_preserve_data_uuid_keys',
+    )
+
+    // Baselining says the migration already exists in the live database. Never
+    // trust that claim for 0011 without checking the actual UUID columns,
+    // defaults and constraints first; otherwise a partial conversion becomes
+    // permanently hidden behind a successful ledger row.
+    if (uuidMigration && baseline.when >= uuidMigration.when && lastApplied < uuidMigration.when) {
+      await assertUuidMigrationResult()
+    }
+
     const alreadyInDatabase = journal.entries.filter(
       entry => entry.when <= baseline.when && entry.when > lastApplied,
     )
@@ -368,8 +380,19 @@ try {
   }
 
   const pending = journal.entries.filter(entry => entry.when > lastApplied)
+  const uuidMigration = journal.entries.find(
+    entry => entry.tag === '0011_preserve_data_uuid_keys',
+  )
 
   if (pending.length === 0) {
+    // An existing ledger row proves only that someone recorded the migration;
+    // audit the live schema on every no-op run so drift or an old partial DDL
+    // application is surfaced immediately.
+    if (uuidMigration && lastApplied >= uuidMigration.when) {
+      await assertUuidMigrationResult()
+      console.log('Verified live UUID schema.')
+    }
+
     console.log('Database is up to date, nothing to apply.')
   }
 
