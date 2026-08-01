@@ -12,6 +12,14 @@ const { t } = useI18n()
 const localePath = useLocalePath()
 const auth = useAuthStore()
 
+// Session cookies can be refreshed between SSR and client startup. Keep the
+// first render deterministic, then show session-dependent controls after Vue
+// has hydrated the server HTML.
+const isHydrated = ref(false)
+onMounted(() => {
+  isHydrated.value = true
+})
+
 // True once an avatar image fails to load, so we fall back to the initials.
 const imageFailed = ref(false)
 
@@ -41,9 +49,24 @@ async function onLogout() {
 </script>
 
 <template>
+  <!-- Stable SSR placeholder: replaced only after hydration completes. -->
+  <v-btn
+    v-if="!isHydrated"
+    icon
+    variant="text"
+    size="small"
+    :aria-label="t('nav.account')"
+    disabled
+  >
+    <v-icon
+      size="24"
+      icon="mdi-account-circle-outline"
+    />
+  </v-btn>
+
   <!-- Logged out: simple login button -->
   <v-btn
-    v-if="!auth.loggedIn"
+    v-else-if="!auth.loggedIn"
     icon
     variant="text"
     size="small"
@@ -57,10 +80,10 @@ async function onLogout() {
   </v-btn>
 
   <!-- Logged in: profile picture with dropdown menu -->
-  <notification-bell v-if="auth.loggedIn" />
+  <notification-bell v-if="isHydrated && auth.loggedIn" />
 
   <v-menu
-    v-if="auth.loggedIn"
+    v-if="isHydrated && auth.loggedIn"
     location="bottom end"
     offset="8"
     transition="slide-y-transition"
