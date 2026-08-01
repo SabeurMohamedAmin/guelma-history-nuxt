@@ -556,7 +556,28 @@ try {
       // changes in this migration. CockroachDB requires each setting change to
       // run alone in an implicit transaction, before sql.begin(). Restore every
       // lock in finally even when the UUID transaction rolls back.
-      const schemaLockedTables = ['article_comments', 'article_tags'] as const
+      const schemaLockedTables = [
+        'article_comments',
+        'article_correction_requests',
+        'article_media',
+        'article_tags',
+        'articles',
+        'authors',
+        'bookmarks',
+        'categories',
+        'comment_flags',
+        'comment_votes',
+        'comments',
+        'contact_messages',
+        'newsletter_article_emails',
+        'notification_mutes',
+        'notifications',
+        'password_reset_tokens',
+        'subscribers',
+        'tags',
+        'user_oauth_accounts',
+        'users',
+      ] as const
       const unlockedTables: string[] = []
 
       try {
