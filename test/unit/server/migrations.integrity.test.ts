@@ -113,6 +113,54 @@ describe('schema coverage', () => {
     }
   })
 
+  it('uses UUIDs for every database relationship id', () => {
+    for (const table of schemaTables) {
+      const tableName = getTableName(table)
+
+      for (const [propertyName, column] of Object.entries(getTableColumns(table))) {
+        // Relationship properties consistently end in `Id`. The plain `id`
+        // primary key is covered separately above. Provider IDs are external
+        // opaque strings and intentionally do not reference our database.
+        if (!propertyName.endsWith('Id') || propertyName === 'providerUserId') continue
+
+        expect(
+          column.columnType,
+          `${tableName}.${column.name} must use PgUUID`,
+        ).toBe('PgUUID')
+      }
+    }
+  })
+
+  it('keeps every UUID relation conversion in the data-preserving migration', () => {
+    const migration = readFileSync(
+      join(migrationsDir, '0011_preserve_data_uuid_keys.sql'),
+      'utf8',
+    )
+
+    for (const table of schemaTables) {
+      const tableName = getTableName(table)
+
+      for (const [propertyName, column] of Object.entries(getTableColumns(table))) {
+        if (!propertyName.endsWith('Id') || propertyName === 'providerUserId') continue
+
+        // comments.parent_id, comment-based relations and notification IDs were
+        // UUIDs before migration 0011. Every relation whose old snapshot says
+        // integer must explicitly be converted before its FK is restored.
+        const oldTable = (JSON.parse(
+          readFileSync(join(migrationsDir, 'meta', '0010_snapshot.json'), 'utf8'),
+        ) as { tables: Record<string, { columns: Record<string, { type: string }> }> })
+          .tables[`public.${tableName}`]
+        const oldType = oldTable?.columns[column.name]?.type
+
+        if (oldType === 'integer' || oldType === 'serial' || oldType === 'bigint') {
+          expect(migration).toContain(
+            `ALTER TABLE ${tableName} ALTER COLUMN ${column.name} SET DATA TYPE UUID`,
+          )
+        }
+      }
+    }
+  })
+
   it('registers the data-preserving UUID conversion after the integer migrations', () => {
     const uuidEntry = journal.entries.find(entry => entry.tag === '0011_preserve_data_uuid_keys')
     expect(uuidEntry).toBeDefined()
