@@ -242,6 +242,17 @@ const UUID_FOREIGN_KEY_DELETE_RULES = new Map<string, string>([
   ['newsletter_article_emails.subscriber_id', 'CASCADE'],
 ])
 
+/** Whether each UUID relationship is nullable in the Drizzle schema. */
+const NULLABLE_UUID_RELATIONS = new Set([
+  'categories.parent_id',
+  'users.author_id',
+  'articles.category_id',
+  'articles.author_id',
+  'comments.parent_id',
+  'notification_mutes.article_id',
+  'notification_mutes.comment_id',
+])
+
 async function assertUuidMigrationSourceSchema(): Promise<void> {
   const rows = await sql.unsafe<{
     table_name: string
@@ -303,8 +314,9 @@ async function assertUuidMigrationResult(): Promise<void> {
     column_name: string
     data_type: string
     column_default: string | null
+    is_nullable: 'YES' | 'NO'
   }[]>(
-    `SELECT table_name, column_name, data_type, column_default
+    `SELECT table_name, column_name, data_type, column_default, is_nullable
      FROM information_schema.columns
      WHERE table_schema = 'public'`,
   )
@@ -327,6 +339,15 @@ async function assertUuidMigrationResult(): Promise<void> {
     return row?.column_default?.toLowerCase().includes('gen_random_uuid')
       ? []
       : [`${table}.id=${row?.column_default ?? 'missing default'}`]
+  })
+  const invalidNullability = UUID_RELATION_COLUMNS.flatMap(([table, column]) => {
+    const key = `${table}.${column}`
+    const actualNullable = columns.get(key)?.is_nullable === 'YES'
+    const expectedNullable = NULLABLE_UUID_RELATIONS.has(key)
+
+    return actualNullable === expectedNullable
+      ? []
+      : [`${key} is ${actualNullable ? 'nullable' : 'required'}, expected ${expectedNullable ? 'nullable' : 'required'}`]
   })
 
   const constraintRows = await sql.unsafe<{
@@ -421,10 +442,20 @@ async function assertUuidMigrationResult(): Promise<void> {
     ...incorrectDeleteRules,
   ]
 
-  if (invalidTypes.length > 0 || invalidDefaults.length > 0 || invalidConstraints.length > 0) {
+  if (
+    invalidTypes.length > 0
+    || invalidDefaults.length > 0
+    || invalidNullability.length > 0
+    || invalidConstraints.length > 0
+  ) {
     throw new Error(
       'UUID migration verification failed. Invalid schema: '
-      + [...invalidTypes, ...invalidDefaults, ...invalidConstraints].join(', '),
+      + [
+        ...invalidTypes,
+        ...invalidDefaults,
+        ...invalidNullability,
+        ...invalidConstraints,
+      ].join(', '),
     )
   }
 }
