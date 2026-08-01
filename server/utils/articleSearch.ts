@@ -96,8 +96,8 @@ export async function searchArticles(params: SearchParams): Promise<SearchRespon
 
   return {
     // `readingTime` is nullable in the DB but always a number on the client, so
-    // it is normalized here rather than cast away. `id` stays the numeric serial
-    // (see the note in shared/types/article.ts).
+    // it is normalized here rather than cast away. Article IDs remain UUID
+    // strings as defined in shared/types/article.ts.
     articles: rows.map((row): ArticleListItem => ({
       ...row,
       readingTime: row.readingTime ?? 0,
