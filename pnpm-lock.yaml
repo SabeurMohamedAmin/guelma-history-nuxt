@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@nuxtjs/cloudinary@2.7.3': d23f0b3962a663605e1ef7eefd7bfaf2e22cb00bda7685b55b9f604b3fcaa26a
-
 importers:
 
   .:
@@ -31,7 +28,7 @@ importers:
         version: 4.0.3(@vue/test-utils@2.4.11(@vue/compiler-dom@3.5.40)(@vue/server-renderer@3.5.40)(vue@3.5.40(typescript@6.0.3)))(crossws@0.4.10(srvx@0.12.4))(esbuild@0.27.7)(happy-dom@20.11.1)(magicast@0.5.3)(rolldown@1.2.0)(rollup@4.62.3)(typescript@6.0.3)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(vitest@4.1.10)
       '@nuxtjs/cloudinary':
         specifier: ^2.7.3
-        version: 2.7.3(patch_hash=d23f0b3962a663605e1ef7eefd7bfaf2e22cb00bda7685b55b9f604b3fcaa26a)(magicast@0.5.3)(typescript@6.0.3)
+        version: 2.7.3(magicast@0.5.3)(typescript@6.0.3)
       '@nuxtjs/i18n':
         specifier: 10.3.0
         version: 10.3.0(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@vue/compiler-dom@3.5.40)(db0@0.3.4(drizzle-orm@0.45.2(postgres@3.4.9)))(esbuild@0.27.7)(eslint@9.39.5(jiti@2.7.0))(ioredis@5.11.1)(magicast@0.5.3)(pinia@3.0.4(typescript@6.0.3)(vue@3.5.40(typescript@6.0.3)))(rolldown@1.2.0)(rollup@4.62.3)(typescript@6.0.3)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))(vue@3.5.40(typescript@6.0.3))
@@ -8223,7 +8220,7 @@ snapshots:
       - vue-tsc
       - yaml
 
-  '@nuxtjs/cloudinary@2.7.3(patch_hash=d23f0b3962a663605e1ef7eefd7bfaf2e22cb00bda7685b55b9f604b3fcaa26a)(magicast@0.5.3)(typescript@6.0.3)':
+  '@nuxtjs/cloudinary@2.7.3(magicast@0.5.3)(typescript@6.0.3)':
     dependencies:
       '@cloudinary-util/types': 1.0.1
       '@cloudinary-util/url-loader': 5.10.6
