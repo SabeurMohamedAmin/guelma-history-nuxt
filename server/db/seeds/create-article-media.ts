@@ -12,8 +12,8 @@ console.log('\u{1F527} Ensuring article_media table exists...')
 
 await seedClient`
   CREATE TABLE IF NOT EXISTS "article_media" (
-    "id" serial PRIMARY KEY NOT NULL,
-    "article_id" integer NOT NULL,
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "article_id" uuid NOT NULL,
     "type" text DEFAULT 'image' NOT NULL,
     "url" text NOT NULL,
     "public_id" text,

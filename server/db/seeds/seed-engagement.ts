@@ -87,16 +87,17 @@ for (const [slug, media] of Object.entries(categoryMedia)) {
 console.log('  \u2192 Updating article view & comment counts...')
 const allArticles = await db.select({ id: articles.id }).from(articles)
 
-function pseudoRandom(seed: number, max: number): number {
-  // Simple deterministic hash so reruns yield the same, stable numbers.
-  const x = Math.sin(seed * 9999) * 10000
-  return Math.floor((x - Math.floor(x)) * max)
+function pseudoRandom(seed: string, max: number): number {
+  // Stable string hash so UUID-backed rows receive repeatable engagement values.
+  let hash = 0
+  for (const character of seed) hash = (hash * 31 + character.charCodeAt(0)) >>> 0
+  return hash % max
 }
 
 let articlesUpdated = 0
 for (const article of allArticles) {
   const viewCount = 50 + pseudoRandom(article.id, 4950) // 50 .. ~5000
-  const commentCount = pseudoRandom(article.id + 7, 80) // 0 .. ~80
+  const commentCount = pseudoRandom(`${article.id}:comments`, 80) // 0 .. ~80
 
   const result = await db
     .update(articles)
