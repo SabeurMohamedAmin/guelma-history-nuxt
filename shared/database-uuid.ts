@@ -8,19 +8,22 @@ import { z } from 'zod'
  */
 export const DATABASE_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+/** UUID that has passed this application's database-id validation boundary. */
+export type DatabaseUuid = string & { readonly __databaseUuid: unique symbol }
+
 export const databaseUuidSchema = z.string().regex(
   DATABASE_UUID_PATTERN,
   'Invalid UUID',
-)
+).transform(value => value.toLowerCase() as DatabaseUuid)
 
-export function isDatabaseUuid(value: unknown): value is string {
+export function isDatabaseUuid(value: unknown): value is DatabaseUuid {
   return typeof value === 'string' && DATABASE_UUID_PATTERN.test(value)
 }
 
 /** Trim and normalize an unknown form value into a database UUID or null. */
-export function toDatabaseUuid(value: unknown): string | null {
+export function toDatabaseUuid(value: unknown): DatabaseUuid | null {
   if (typeof value !== 'string') return null
 
   const id = value.trim()
-  return isDatabaseUuid(id) ? id.toLowerCase() : null
+  return isDatabaseUuid(id) ? id.toLowerCase() as DatabaseUuid : null
 }
