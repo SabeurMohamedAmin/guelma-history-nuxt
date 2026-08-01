@@ -593,7 +593,19 @@
     "passwordChangedLoggedOutOthers": "Votre mot de passe a été changé et les autres appareils ont été déconnectés. Vous restez connecté sur cet appareil.",
     "passwordError": "Échec du changement de mot de passe",
     "emailUpdated": "E-mail mis à jour",
-    "emailError": "Échec du changement d'e-mail"
+    "emailError": "Échec du changement d'e-mail",
+    "deleteAccount": {
+      "title": "Zone de danger",
+      "description": "Supprimez définitivement votre compte et toutes les données qui lui sont associées.",
+      "action": "Supprimer mon compte",
+      "dialogTitle": "Supprimer définitivement le compte ?",
+      "warning": "Cette action est irréversible. Votre profil, vos commentaires, vos favoris et vos notifications seront définitivement supprimés.",
+      "passwordLabel": "Mot de passe actuel",
+      "confirmHint": "Pour confirmer, saisissez exactement votre nom d'utilisateur : {username}",
+      "confirmLabel": "Nom d'utilisateur de confirmation",
+      "confirmAction": "Supprimer définitivement",
+      "error": "Impossible de supprimer le compte. Veuillez réessayer."
+    }
   },
   "theme": {
     "light": "Clair",

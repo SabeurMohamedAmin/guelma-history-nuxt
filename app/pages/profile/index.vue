@@ -25,6 +25,11 @@ const savingName = ref(false)
 const uploadingAvatar = ref(false)
 const passwordDialog = ref(false)
 const emailDialog = ref(false)
+const deleteDialog = ref(false)
+const deletingAccount = ref(false)
+const deletePassword = ref('')
+const deleteConfirmation = ref('')
+const deleteError = ref<string | null>(null)
 const snackbar = ref<{ show: boolean, text: string, color: 'success' | 'error' }>({
   show: false,
   text: '',
@@ -94,6 +99,48 @@ async function onPasswordSubmit(current: string, next: string) {
 async function onEmailSubmit(email: string, current: string) {
   await changeEmail(email, current)
   notify(t('profile.emailUpdated'))
+}
+
+const canDeleteAccount = computed(() =>
+  Boolean(deletePassword.value)
+  && deleteConfirmation.value.trim() === profile.value?.username
+  && !deletingAccount.value,
+)
+
+function openDeleteDialog() {
+  deletePassword.value = ''
+  deleteConfirmation.value = ''
+  deleteError.value = null
+  deleteDialog.value = true
+}
+
+function closeDeleteDialog() {
+  if (deletingAccount.value) return
+  deleteDialog.value = false
+}
+
+async function deleteAccount() {
+  if (!canDeleteAccount.value) return
+
+  deletingAccount.value = true
+  deleteError.value = null
+
+  try {
+    await $fetch('/api/auth/user/profile', {
+      method: 'DELETE',
+      body: {
+        currentPassword: deletePassword.value,
+        confirmation: deleteConfirmation.value.trim(),
+      },
+    })
+    await navigateTo(useLocalePath()('/'))
+  }
+  catch (error) {
+    deleteError.value = extractErrorMessage(error, t('profile.deleteAccount.error'))
+  }
+  finally {
+    deletingAccount.value = false
+  }
 }
 
 definePageMeta({
@@ -289,6 +336,37 @@ definePageMeta({
                 </v-list-item-title>
               </v-list-item>
             </v-list>
+
+            <v-divider class="my-6" />
+
+            <section
+              class="danger-zone rounded-xl pa-4 pa-md-5"
+              aria-labelledby="danger-zone-title"
+            >
+              <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between ga-4">
+                <div>
+                  <h2
+                    id="danger-zone-title"
+                    class="text-subtitle-1 font-weight-bold text-error"
+                  >
+                    {{ t('profile.deleteAccount.title') }}
+                  </h2>
+                  <p class="text-body-2 text-medium-emphasis mb-0">
+                    {{ t('profile.deleteAccount.description') }}
+                  </p>
+                </div>
+
+                <v-btn
+                  color="error"
+                  variant="outlined"
+                  prepend-icon="mdi-delete-alert-outline"
+                  class="flex-shrink-0"
+                  @click="openDeleteDialog"
+                >
+                  {{ t('profile.deleteAccount.action') }}
+                </v-btn>
+              </div>
+            </section>
           </v-card-text>
         </v-card>
 
@@ -310,6 +388,90 @@ definePageMeta({
       :current-email="profile.email"
       :submit="onEmailSubmit"
     />
+
+    <v-dialog
+      v-model="deleteDialog"
+      max-width="520"
+      persistent
+      role="alertdialog"
+      :aria-labelledby="'delete-account-title'"
+      :aria-describedby="'delete-account-description'"
+    >
+      <v-card rounded="xl">
+        <v-card-title
+          id="delete-account-title"
+          class="d-flex align-center ga-3 pa-5 pb-2 text-error"
+        >
+          <v-icon icon="mdi-alert-octagon-outline" />
+          <span>{{ t('profile.deleteAccount.dialogTitle') }}</span>
+        </v-card-title>
+
+        <v-card-text class="px-5">
+          <p
+            id="delete-account-description"
+            class="text-body-2 mb-4"
+          >
+            {{ t('profile.deleteAccount.warning') }}
+          </p>
+
+          <v-alert
+            v-if="deleteError"
+            type="error"
+            variant="tonal"
+            density="compact"
+            class="mb-4"
+            role="alert"
+          >
+            {{ deleteError }}
+          </v-alert>
+
+          <v-text-field
+            v-model="deletePassword"
+            :label="t('profile.deleteAccount.passwordLabel')"
+            type="password"
+            autocomplete="current-password"
+            prepend-inner-icon="mdi-lock-outline"
+            variant="outlined"
+            :disabled="deletingAccount"
+            class="mb-2"
+          />
+
+          <p class="text-body-2 mb-2">
+            {{ t('profile.deleteAccount.confirmHint', { username: profile?.username }) }}
+          </p>
+          <v-text-field
+            v-model="deleteConfirmation"
+            :label="t('profile.deleteAccount.confirmLabel')"
+            autocomplete="off"
+            prepend-inner-icon="mdi-account-check-outline"
+            variant="outlined"
+            :disabled="deletingAccount"
+            @keyup.enter="deleteAccount"
+          />
+        </v-card-text>
+
+        <v-card-actions class="px-5 pb-5 ga-2">
+          <v-spacer />
+          <v-btn
+            variant="text"
+            :disabled="deletingAccount"
+            @click="closeDeleteDialog"
+          >
+            {{ t('common.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            :loading="deletingAccount"
+            :disabled="!canDeleteAccount"
+            prepend-icon="mdi-delete-forever-outline"
+            @click="deleteAccount"
+          >
+            {{ t('profile.deleteAccount.confirmAction') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-snackbar
       v-model="snackbar.show"
@@ -340,6 +502,11 @@ definePageMeta({
 
 .security-list {
   border: 1px solid rgb(var(--v-border-color) / 0.12);
+}
+
+.danger-zone {
+  border: 1px solid rgb(var(--v-theme-error) / 0.35);
+  background: rgb(var(--v-theme-error) / 0.05);
 }
 
 @media (max-width: 959px) {
