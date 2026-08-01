@@ -9,7 +9,14 @@
 // - any path starting with /wp- or /wordpress   (WordPress probes)
 // - any path ending in .php                     (this app serves no PHP)
 // - /.env, /.git and anything under them        (secret/config sniffing)
-const SCANNER_PATH = /^\/(?:wp-|wordpress|\.env|\.git)/i
+const SCANNER_PATH = /^\/(?:wp-|wordpress|\.env(?:\/|$)|\.git(?:\/|$))/i
+
+// Common credential, framework-debugger and AI API discovery probes. These
+// endpoints are not part of this application. Matching complete path segments
+// avoids blocking legitimate application routes with similar names.
+const CREDENTIAL_PROBE_PATH = /^\/(?:config\/\.env|\.aws\/credentials)$/i
+const DEBUG_PROBE_PATH = /^\/_profiler(?:\/|$)/i
+const AI_API_PROBE_PATH = /^\/(?:api\/)?v1\/models\/?$/i
 
 // Any path ending in .php, wherever it sits (/a/b/install.php).
 const PHP_PATH = /\.php$/i
@@ -37,6 +44,9 @@ export default defineEventHandler((event) => {
 
   const hasDoubleSlash = cleanPath !== path
   const isProbe = SCANNER_PATH.test(cleanPath)
+    || CREDENTIAL_PROBE_PATH.test(cleanPath)
+    || DEBUG_PROBE_PATH.test(cleanPath)
+    || AI_API_PROBE_PATH.test(cleanPath)
     || PHP_PATH.test(cleanPath)
     || APPLE_APP_LINK_PATH.test(cleanPath)
 
