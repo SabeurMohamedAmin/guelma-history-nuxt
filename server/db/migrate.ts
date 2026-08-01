@@ -208,6 +208,40 @@ const UUID_FOREIGN_KEY_TARGETS = new Map<string, string>([
   ['newsletter_article_emails.subscriber_id', 'subscribers.id'],
 ])
 
+/** Delete behavior declared by the Drizzle schemas for each UUID relation. */
+const UUID_FOREIGN_KEY_DELETE_RULES = new Map<string, string>([
+  ['categories.parent_id', 'NO ACTION'],
+  ['users.author_id', 'SET NULL'],
+  ['articles.category_id', 'NO ACTION'],
+  ['articles.author_id', 'NO ACTION'],
+  ['articles.created_by_user_id', 'RESTRICT'],
+  ['article_comments.article_id', 'CASCADE'],
+  ['article_correction_requests.article_id', 'CASCADE'],
+  ['article_media.article_id', 'CASCADE'],
+  ['article_tags.article_id', 'CASCADE'],
+  ['article_tags.tag_id', 'CASCADE'],
+  ['password_reset_tokens.user_id', 'CASCADE'],
+  ['user_oauth_accounts.user_id', 'CASCADE'],
+  ['comments.article_id', 'CASCADE'],
+  ['comments.parent_id', 'CASCADE'],
+  ['comments.author_id', 'CASCADE'],
+  ['comment_votes.comment_id', 'CASCADE'],
+  ['comment_votes.user_id', 'CASCADE'],
+  ['comment_flags.comment_id', 'CASCADE'],
+  ['comment_flags.reporter_id', 'CASCADE'],
+  ['notification_mutes.user_id', 'CASCADE'],
+  ['notification_mutes.article_id', 'CASCADE'],
+  ['notification_mutes.comment_id', 'CASCADE'],
+  ['notifications.recipient_id', 'CASCADE'],
+  ['notifications.actor_id', 'CASCADE'],
+  ['notifications.article_id', 'CASCADE'],
+  ['notifications.comment_id', 'CASCADE'],
+  ['bookmarks.user_id', 'CASCADE'],
+  ['bookmarks.article_id', 'CASCADE'],
+  ['newsletter_article_emails.article_id', 'CASCADE'],
+  ['newsletter_article_emails.subscriber_id', 'CASCADE'],
+])
+
 async function assertUuidMigrationSourceSchema(): Promise<void> {
   const rows = await sql.unsafe<{
     table_name: string
@@ -301,13 +335,15 @@ async function assertUuidMigrationResult(): Promise<void> {
     constraint_type: string
     referenced_table_name: string | null
     referenced_column_name: string | null
+    delete_rule: string | null
   }[]>(
     `SELECT
        tc.table_name,
        kcu.column_name,
        tc.constraint_type,
        ccu.table_name AS referenced_table_name,
-       ccu.column_name AS referenced_column_name
+       ccu.column_name AS referenced_column_name,
+       rc.delete_rule
      FROM information_schema.table_constraints AS tc
      JOIN information_schema.key_column_usage AS kcu
        ON tc.constraint_catalog = kcu.constraint_catalog
@@ -318,11 +354,16 @@ async function assertUuidMigrationResult(): Promise<void> {
        ON tc.constraint_catalog = ccu.constraint_catalog
       AND tc.constraint_schema = ccu.constraint_schema
       AND tc.constraint_name = ccu.constraint_name
+     LEFT JOIN information_schema.referential_constraints AS rc
+       ON tc.constraint_catalog = rc.constraint_catalog
+      AND tc.constraint_schema = rc.constraint_schema
+      AND tc.constraint_name = rc.constraint_name
      WHERE tc.table_schema = 'public'
        AND tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY')`,
   )
   const constraintTypes = new Map<string, Set<string>>()
   const foreignKeyTargets = new Map<string, string>()
+  const foreignKeyDeleteRules = new Map<string, string>()
 
   for (const row of constraintRows) {
     const key = `${row.table_name}.${row.column_name}`
@@ -339,6 +380,7 @@ async function assertUuidMigrationResult(): Promise<void> {
         key,
         `${row.referenced_table_name}.${row.referenced_column_name}`,
       )
+      if (row.delete_rule) foreignKeyDeleteRules.set(key, row.delete_rule)
     }
   }
 
@@ -363,11 +405,20 @@ async function assertUuidMigrationResult(): Promise<void> {
         : [`${source} references ${actualTarget ?? 'nothing'}, expected ${expectedTarget}`]
     },
   )
+  const incorrectDeleteRules = [...UUID_FOREIGN_KEY_DELETE_RULES].flatMap(
+    ([source, expectedRule]) => {
+      const actualRule = foreignKeyDeleteRules.get(source)
+      return actualRule === expectedRule
+        ? []
+        : [`${source} uses ON DELETE ${actualRule ?? 'unknown'}, expected ${expectedRule}`]
+    },
+  )
   const invalidConstraints = [
     ...missingPrimaryKeys.map(key => `${key}=missing primary key`),
     ...missingForeignKeys.map(key => `${key}=missing foreign key`),
     ...missingArticleTagPrimaryKey.map(key => `${key}=missing composite primary key`),
     ...incorrectForeignKeyTargets,
+    ...incorrectDeleteRules,
   ]
 
   if (invalidTypes.length > 0 || invalidDefaults.length > 0 || invalidConstraints.length > 0) {
