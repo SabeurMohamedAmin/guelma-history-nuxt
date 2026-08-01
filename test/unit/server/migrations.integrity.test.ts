@@ -2,8 +2,8 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
-import { getTableName, is } from 'drizzle-orm'
-import { PgTable, getTableColumns } from 'drizzle-orm/pg-core'
+import { getTableColumns, getTableName, is } from 'drizzle-orm'
+import { PgTable } from 'drizzle-orm/pg-core'
 import * as schema from '~~/server/db/schema'
 
 /**
