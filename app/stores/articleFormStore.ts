@@ -6,7 +6,7 @@ import type { ArticleResponse } from '~~/server/types/article.types'
 import type { ImageVariants } from '~~/shared/types/article'
 
 interface SelectOption {
-  id: number
+  id: string
   name: string
 }
 
@@ -37,8 +37,8 @@ interface ArticleFormFields {
   bodyFr: string
   coverImage: string
   coverImageVariants: ImageVariants | null
-  categoryId: number | null
-  authorId: number | null
+  categoryId: string | null
+  authorId: string | null
   publishedAt: string | null
   readingTime: number | null
   media: MediaFormItem[]
@@ -108,26 +108,13 @@ function toSlug(value: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-/**
- * Normalize a relation id coming from a <v-select> into a number.
- *
- * The options carry numeric ids, but the component can hand the value back as a
- * digit string. Some PostgreSQL-compatible providers generate IDs larger than
- * the signed int32 range, so accept every positive integer JavaScript can
- * represent safely instead of silently clearing a valid category or author.
- */
-function toId(value: unknown): number | null {
-  const id = Number(value)
-  if (Number.isSafeInteger(id) && id > 0) return id
-
-  // null and '' simply mean the select was cleared. Anything else is a value the
-  // select should never have produced, so make it loud while developing rather
-  // than posting an id the API is bound to reject.
-  if (import.meta.dev && value !== null && value !== undefined && value !== '') {
-    console.warn('[articleForm] not a usable relation id:', value, `(${typeof value})`)
-  }
-
-  return null
+/** Keep relation IDs as UUID strings from the select through to the API. */
+function toId(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const id = value.trim()
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    ? id
+    : null
 }
 
 function getErrorMessage(error: unknown, fallback = 'An unexpected error occurred.'): string {

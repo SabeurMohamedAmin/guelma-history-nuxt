@@ -1,11 +1,11 @@
-import { pgTable, text, serial, integer, timestamp, jsonb } from 'drizzle-orm/pg-core'
+import { pgTable, text, uuid, integer, timestamp, jsonb } from 'drizzle-orm/pg-core'
 import type { ImageVariants } from '../../../shared/types/article'
 import { categories } from './categories'
 import { authors } from './authors'
 import { users } from './users'
 
 export const articles = pgTable('articles', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   titleAr: text('title_ar').notNull(),
   titleFr: text('title_fr').notNull(),
   slug: text('slug').notNull().unique(),
@@ -21,15 +21,15 @@ export const articles = pgTable('articles', {
   // 0 is the main home-page story; 1..3 are the three supporting stories.
   // Null means the article is not curated for the home-page hero.
   homePosition: integer('home_position'),
-  categoryId: integer('category_id').references(() => categories.id),
+  categoryId: uuid('category_id').references(() => categories.id),
   // Editorial byline (display only): whose name appears on the article. May be
   // shared across accounts or set by an admin to any author. NOT an owner.
-  authorId: integer('author_id').references(() => authors.id),
+  authorId: uuid('author_id').references(() => authors.id),
   // Ownership (authorization): the user account that created this article. Drives
   // the "authors edit/delete only their own" rule (admins bypass via role).
   // NOT NULL: every article has a creator. RESTRICT: a user with articles can't
   // be deleted, so articles are never orphaned (unlike the SET NULL byline link).
-  createdByUserId: integer('created_by_user_id')
+  createdByUserId: uuid('created_by_user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'restrict' }),
   publishedAt: timestamp('published_at', { withTimezone: true, mode: 'date' }),

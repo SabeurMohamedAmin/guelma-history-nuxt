@@ -44,7 +44,7 @@ export const mediaItemSchema = z.object({
  * before the numeric checks — same approach as articlesQuerySchema below.
  * `null` (the select was cleared) and an omitted field both mean "no relation".
  */
-const relationId = z.coerce.number().int().positive().nullable().optional()
+const relationId = z.string().uuid().nullable().optional()
 
 export const createArticleSchema = z.object({
   titleAr: z.string().trim().min(1, 'Arabic title is required').max(255),
