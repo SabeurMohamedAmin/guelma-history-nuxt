@@ -28,12 +28,6 @@ export default defineOAuthFacebookEventHandler({
     const providerUserId = String(fbUser.id)
     const user = await findOauthUser('facebook', providerUserId)
 
-    c
-    console.warn('[facebook-login]', {
-      providerUserId,
-      userFound: Boolean(user),
-    })
-
     if (!user) {
       // No linked account -> create nothing here; send the visitor to register.
       return sendRedirect(event, localizedPath(event, '/register?reason=no-account'))

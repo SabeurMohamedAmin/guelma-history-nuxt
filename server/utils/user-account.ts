@@ -135,17 +135,19 @@ export async function findOauthUser(
   provider: Provider,
   providerUserId: string,
 ): Promise<SessionUser | null> {
-  const link = await db.query.userOauthAccounts.findFirst({
-    where: and(
+  const result = await db
+    .select({ user: users })
+    .from(userOauthAccounts)
+    .innerJoin(users, eq(users.id, userOauthAccounts.userId))
+    .where(and(
       eq(userOauthAccounts.provider, provider),
       eq(userOauthAccounts.providerUserId, providerUserId),
-    ),
-    columns: { userId: true },
-  })
-  if (!link) return null
+    ))
+    .limit(1)
 
-  const user = await db.query.users.findFirst({ where: eq(users.id, link.userId) })
-  return user ? toSessionUser(user) : null
+  const match = result[0]
+
+  return match ? toSessionUser(match.user) : null
 }
 
 /**
