@@ -100,7 +100,7 @@ export class ArticleService {
     return row ? this.toResponse(row) : null
   }
 
-  /** Resolve an article's numeric id from its unique slug, or null if missing. */
+  /** Resolve an article's UUID from its unique slug, or null if missing. */
   async resolveIdBySlug(slug: string): Promise<string | null> {
     const row = await db.query.articles.findFirst({
       where: eq(articles.slug, slug),
