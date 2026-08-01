@@ -13,8 +13,11 @@
  * holding the folder timestamp), so `pnpm db:generate` and drizzle-kit stay in
  * sync with whatever this applies.
  *
- * Statements run one at a time, outside a transaction, because CockroachDB
- * auto-commits before every DDL anyway — wrapping them would only mask errors.
+ * Generated migrations run one statement at a time. The hand-written UUID
+ * conversion is the exception: CockroachDB requires a dropped primary key and
+ * its replacement to occur in the same explicit transaction. Running all of
+ * 0011 atomically also guarantees a failure cannot leave half the foreign keys
+ * removed or only some identifiers converted.
  *
  * Baselining an existing database:
  *   pnpm db:migrate --baseline 0004_redundant_longshot
@@ -548,18 +551,42 @@ try {
     const { statements, hash } = readMigration(entry.tag)
     console.log(`Applying ${entry.tag} (${statements.length} statement(s))...`)
 
-    for (const [index, statement] of statements.entries()) {
-      try {
-        await sql.unsafe(statement)
-      }
-      catch (error) {
-        console.error(`\n${entry.tag} failed on statement ${index + 1}:\n${statement}\n`)
-        throw error
-      }
-    }
-
     if (entry.tag === '0011_preserve_data_uuid_keys') {
+      // A schema-locked changefeed table rejects ALTER PRIMARY KEY. CockroachDB
+      // requires this setting change to be the only statement in an implicit
+      // transaction, so it must happen before sql.begin(). Restore the lock in
+      // finally even when the UUID transaction rolls back.
+      await sql.unsafe('ALTER TABLE article_tags SET (schema_locked = false)')
+
+      try {
+        await sql.begin(async (transaction) => {
+          for (const [index, statement] of statements.entries()) {
+            try {
+              await transaction.unsafe(statement)
+            }
+            catch (error) {
+              console.error(`\n${entry.tag} failed on statement ${index + 1}:\n${statement}\n`)
+              throw error
+            }
+          }
+        })
+      }
+      finally {
+        await sql.unsafe('ALTER TABLE article_tags SET (schema_locked = true)')
+      }
+
       await assertUuidMigrationResult()
+    }
+    else {
+      for (const [index, statement] of statements.entries()) {
+        try {
+          await sql.unsafe(statement)
+        }
+        catch (error) {
+          console.error(`\n${entry.tag} failed on statement ${index + 1}:\n${statement}\n`)
+          throw error
+        }
+      }
     }
 
     await recordApplied(entry, hash)
