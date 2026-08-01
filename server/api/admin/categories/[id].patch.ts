@@ -9,16 +9,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Invalid category ID' })
   }
 
-  const body = await readBody<{
-    nameAr?: string
-    nameFr?: string
-    slug?: string
-    descriptionAr?: string | null
-    descriptionFr?: string | null
-    icon?: string | null
-    coverImage?: string | null
-    parentId?: string | null
-  }>(event)
+  const body = z.object({
+    nameAr: z.string().optional(),
+    nameFr: z.string().optional(),
+    slug: z.string().optional(),
+    descriptionAr: z.string().nullable().optional(),
+    descriptionFr: z.string().nullable().optional(),
+    icon: z.string().nullable().optional(),
+    coverImage: z.string().nullable().optional(),
+    parentId: z.string().uuid().nullable().optional(),
+  }).parse(await readBody(event))
 
   const payload: Record<string, unknown> = {}
   if (body.nameAr !== undefined) payload.nameAr = body.nameAr.trim()

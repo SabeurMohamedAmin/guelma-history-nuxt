@@ -1,26 +1,25 @@
+import { z } from 'zod'
 import { db } from '~~/server/db'
 import { categories } from '~~/server/db/schema'
 
-export default defineEventHandler(async (event) => {
-  const body = await readBody<{
-    nameAr?: string
-    nameFr?: string
-    slug?: string
-    descriptionAr?: string | null
-    descriptionFr?: string | null
-    icon?: string | null
-    coverImage?: string | null
-    parentId?: string | null
-  }>(event)
+const createCategorySchema = z.object({
+  nameAr: z.string().trim().min(1),
+  nameFr: z.string().trim().min(1),
+  slug: z.string().trim().min(1),
+  descriptionAr: z.string().nullable().optional(),
+  descriptionFr: z.string().nullable().optional(),
+  icon: z.string().nullable().optional(),
+  coverImage: z.string().nullable().optional(),
+  parentId: z.string().uuid().nullable().optional(),
+})
 
-  if (!body?.nameAr?.trim() || !body?.nameFr?.trim() || !body?.slug?.trim()) {
-    throw createError({ statusCode: 400, message: 'nameAr, nameFr and slug are required' })
-  }
+export default defineEventHandler(async (event) => {
+  const body = createCategorySchema.parse(await readBody(event))
 
   const [created] = await db.insert(categories).values({
-    nameAr: body.nameAr.trim(),
-    nameFr: body.nameFr.trim(),
-    slug: body.slug.trim(),
+    nameAr: body.nameAr,
+    nameFr: body.nameFr,
+    slug: body.slug,
     descriptionAr: body.descriptionAr ?? null,
     descriptionFr: body.descriptionFr ?? null,
     icon: body.icon ?? null,

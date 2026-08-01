@@ -68,15 +68,19 @@ function readBaselineFlag(args: string[]): string | undefined {
   return value
 }
 
-/** A migration file split into the statements Drizzle separates by breakpoint. */
+/** Split generated migrations and hand-written one-command-per-line migrations. */
 function readMigration(tag: string): { statements: string[], hash: string } {
   const file = readFileSync(join(migrationsDir, `${tag}.sql`), 'utf8')
+  const separator = file.includes('--> statement-breakpoint')
+    ? '--> statement-breakpoint'
+    : /;\s*(?=(?:--[^\n]*\n|\s)*[A-Z])/g
 
   return {
     statements: file
-      .split('--> statement-breakpoint')
+      .split(separator)
       .map(statement => statement.trim())
-      .filter(statement => statement.length > 0),
+      .filter(statement => statement.length > 0)
+      .map(statement => statement.endsWith(';') ? statement : `${statement};`),
     // Same hash Drizzle stores, so its own tooling recognises our rows.
     hash: createHash('sha256').update(file).digest('hex'),
   }

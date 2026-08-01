@@ -77,7 +77,7 @@
       "version": "7",
       "when": 1785592800000,
       "tag": "0011_preserve_data_uuid_keys",
-      "breakpoints": false
+      "breakpoints": true
     }
   ]
 }
