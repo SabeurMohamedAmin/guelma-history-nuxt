@@ -127,7 +127,7 @@ async function assertUuidMigrationSourceSchema(): Promise<void> {
   const rows = await sql.unsafe<{ table_name: string, data_type: string }[]>(
     `SELECT table_name, data_type
      FROM information_schema.columns
-     WHERE table_schema = 'public' AND column_name = 'id' AND table_name = ANY($1::STRING[])`,
+     WHERE table_schema = 'public' AND column_name = 'id' AND table_name = ANY($1::text[])`,
     [expectedTables],
   )
 
