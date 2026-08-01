@@ -161,6 +161,41 @@ describe('schema coverage', () => {
     }
   })
 
+  it('restores random UUID defaults for every converted primary key', () => {
+    const migration = readFileSync(
+      join(migrationsDir, '0011_preserve_data_uuid_keys.sql'),
+      'utf8',
+    )
+
+    for (const table of schemaTables) {
+      const id = getTableColumns(table).id
+      if (!id) continue
+
+      const tableName = getTableName(table)
+      const oldSnapshot = JSON.parse(
+        readFileSync(join(migrationsDir, 'meta', '0010_snapshot.json'), 'utf8'),
+      ) as { tables: Record<string, { columns: Record<string, { type: string }> }> }
+      const oldType = oldSnapshot.tables[`public.${tableName}`]?.columns.id?.type
+
+      // comments and notifications already used UUIDs before migration 0011.
+      if (oldType === 'serial' || oldType === 'integer' || oldType === 'bigint') {
+        expect(migration).toContain(
+          `ALTER TABLE ${tableName} ALTER COLUMN id SET DEFAULT gen_random_uuid()`,
+        )
+      }
+    }
+  })
+
+  it('does not install serial defaults on UUID columns', () => {
+    const uuidMigration = readFileSync(
+      join(migrationsDir, '0011_preserve_data_uuid_keys.sql'),
+      'utf8',
+    )
+
+    expect(uuidMigration).not.toMatch(/SET DEFAULT nextval/i)
+    expect(uuidMigration).not.toMatch(/SET DATA TYPE (?:SERIAL|INTEGER|BIGINT)/i)
+  })
+
   it('registers the data-preserving UUID conversion after the integer migrations', () => {
     const uuidEntry = journal.entries.find(entry => entry.tag === '0011_preserve_data_uuid_keys')
     expect(uuidEntry).toBeDefined()
