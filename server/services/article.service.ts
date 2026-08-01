@@ -1,6 +1,6 @@
-import { and, asc, count, desc, eq, ilike, isNotNull, isNull, type SQL } from 'drizzle-orm'
+import { and, asc, count, desc, eq, ilike, inArray, isNotNull, isNull, type SQL } from 'drizzle-orm'
 import { db } from '~~/server/db'
-import { articles, articleTags, articleMedia, categories } from '~~/server/db/schema'
+import { articles, articleTags, articleMedia, authors, categories, tags, users } from '~~/server/db/schema'
 import { slugify } from '~~/server/utils/slugify'
 import { destroyManyFromCloudinary } from '~~/server/utils/cloudinary'
 import { sendPublishedArticleNewsletterAlerts } from '~~/server/utils/newsletter'
@@ -167,6 +167,12 @@ export class ArticleService {
   async create(input: CreateArticleDto, ownerId: string): Promise<ArticleResponse> {
     // Zod throws ZodError on invalid input — endpoints catch it and map to 400.
     const data = validateCreateArticle(input)
+    await this.validateRelationIds({
+      ownerId,
+      categoryId: data.categoryId,
+      authorId: data.authorId,
+      tagIds: data.tagIds,
+    })
 
     const slug = data.slug ?? slugify(data.titleFr)
     // Reading time is estimated from the French body, falling back to Arabic.
@@ -208,6 +214,11 @@ export class ArticleService {
     }
 
     const data = validateUpdateArticle(input)
+    await this.validateRelationIds({
+      categoryId: data.categoryId,
+      authorId: data.authorId,
+      tagIds: data.tagIds,
+    })
     const { tagIds, media, ...fields } = data
 
     // Recompute the reading time when a body changed (FR first, then AR).
@@ -302,6 +313,42 @@ export class ArticleService {
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
+
+  /**
+   * Confirm that well-formed UUIDs also identify real relationship rows.
+   * Zod validates shape; this validates referential meaning before CockroachDB
+   * would otherwise return a low-level foreign-key error.
+   */
+  private async validateRelationIds(input: {
+    ownerId?: string
+    categoryId?: string | null
+    authorId?: string | null
+    tagIds?: string[]
+  }): Promise<void> {
+    const uniqueTagIds = [...new Set(input.tagIds ?? [])]
+    const [owner, category, author, tagRows] = await Promise.all([
+      input.ownerId
+        ? db.query.users.findFirst({ where: eq(users.id, input.ownerId), columns: { id: true } })
+        : Promise.resolve(undefined),
+      input.categoryId
+        ? db.query.categories.findFirst({ where: eq(categories.id, input.categoryId), columns: { id: true } })
+        : Promise.resolve(undefined),
+      input.authorId
+        ? db.query.authors.findFirst({ where: eq(authors.id, input.authorId), columns: { id: true } })
+        : Promise.resolve(undefined),
+      uniqueTagIds.length > 0
+        ? db.select({ id: tags.id }).from(tags).where(inArray(tags.id, uniqueTagIds))
+        : Promise.resolve([]),
+    ])
+
+    if (input.ownerId && !owner) throw createInvalidRelationError('ownerId')
+    if (input.categoryId && !category) throw createInvalidRelationError('categoryId')
+    if (input.authorId && !author) throw createInvalidRelationError('authorId')
+
+    const foundTagIds = new Set(tagRows.map(row => row.id))
+    const missingTagIds = uniqueTagIds.filter(id => !foundTagIds.has(id))
+    if (missingTagIds.length > 0) throw createInvalidRelationError('tagIds')
+  }
 
   /** Build the WHERE clause from optional query filters and an optional owner scope. */
   private buildWhereClause(params: ArticlesQueryParams, ownerId?: string): SQL | undefined {
@@ -460,4 +507,12 @@ export const articleService = new ArticleService()
 // ─── Shared error factory ─────────────────────────────────────────────────────
 function createNotFoundError(identifier: string) {
   return createError({ statusCode: 404, statusMessage: 'Not Found', message: `Article ${identifier} not found.` })
+}
+
+function createInvalidRelationError(field: string) {
+  return createError({
+    statusCode: 400,
+    statusMessage: 'Bad Request',
+    message: `${field} contains an unknown UUID.`,
+  })
 }
