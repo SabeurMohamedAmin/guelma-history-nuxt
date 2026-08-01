@@ -3,13 +3,14 @@ export interface CreateArticleDto {
   titleAr: string
   titleFr: string
   slug?: string
-  excerptAr?: string
-  excerptFr?: string
-  body: string
-  coverImage?: string
-  categoryId?: string
-  authorId?: string
-  publishedAt?: Date
+  excerptAr?: string | null
+  excerptFr?: string | null
+  bodyAr: string
+  bodyFr: string
+  coverImage?: string | null
+  categoryId?: string | null
+  authorId?: string | null
+  publishedAt?: Date | null
   readingTime?: number
   tagIds?: string[]
 }
@@ -28,7 +29,8 @@ export interface ArticleResponse {
   slug: string
   excerptAr: string | null
   excerptFr: string | null
-  body: string
+  bodyAr: string
+  bodyFr: string
   coverImage: string | null
   publishedAt: Date | null
   readingTime: number
