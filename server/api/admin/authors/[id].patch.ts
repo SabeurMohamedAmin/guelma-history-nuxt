@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
-import { z } from 'zod'
 import { db } from '~~/server/db'
 import { authors } from '~~/server/db/schema'
+import { databaseUuidSchema } from '~~/server/validators/database-uuid'
 
 /**
  * PATCH /api/admin/authors/[id]
@@ -9,7 +9,7 @@ import { authors } from '~~/server/db/schema'
  */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
-  if (!id || !z.string().regex(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i).safeParse(id).success) {
+  if (!databaseUuidSchema.safeParse(id).success) {
     throw createError({ statusCode: 400, message: 'Invalid author ID' })
   }
 
