@@ -35,25 +35,9 @@ ALTER TABLE bookmarks DROP CONSTRAINT IF EXISTS bookmarks_article_id_articles_id
 ALTER TABLE newsletter_article_emails DROP CONSTRAINT IF EXISTS newsletter_article_emails_article_id_articles_id_fk;
 ALTER TABLE newsletter_article_emails DROP CONSTRAINT IF EXISTS newsletter_article_emails_subscriber_id_subscribers_id_fk;
 
--- Drop integer primary keys before changing their column types.
-ALTER TABLE authors DROP CONSTRAINT authors_pkey;
-ALTER TABLE categories DROP CONSTRAINT categories_pkey;
-ALTER TABLE users DROP CONSTRAINT users_pkey;
-ALTER TABLE articles DROP CONSTRAINT articles_pkey;
-ALTER TABLE tags DROP CONSTRAINT tags_pkey;
-ALTER TABLE article_comments DROP CONSTRAINT article_comments_pkey;
-ALTER TABLE article_correction_requests DROP CONSTRAINT article_correction_requests_pkey;
-ALTER TABLE article_media DROP CONSTRAINT article_media_pkey;
-ALTER TABLE bookmarks DROP CONSTRAINT bookmarks_pkey;
-ALTER TABLE comment_votes DROP CONSTRAINT comment_votes_pkey;
-ALTER TABLE comment_flags DROP CONSTRAINT comment_flags_pkey;
-ALTER TABLE notification_mutes DROP CONSTRAINT notification_mutes_pkey;
-ALTER TABLE subscribers DROP CONSTRAINT subscribers_pkey;
-ALTER TABLE newsletter_article_emails DROP CONSTRAINT newsletter_article_emails_pkey;
-ALTER TABLE contact_messages DROP CONSTRAINT contact_messages_pkey;
-ALTER TABLE user_oauth_accounts DROP CONSTRAINT user_oauth_accounts_pkey;
-ALTER TABLE password_reset_tokens DROP CONSTRAINT password_reset_tokens_pkey;
-
+-- Keep primary keys attached while changing their column types. CockroachDB
+-- requires every table to have a primary key and rewrites the existing primary
+-- index when ALTER COLUMN changes the key type.
 -- Parent IDs. MD5 is used only as a deterministic mapper, not for security.
 ALTER TABLE authors ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE authors ALTER COLUMN id SET DATA TYPE UUID USING (md5('authors:' || id::STRING)::UUID);
@@ -137,23 +121,6 @@ ALTER TABLE newsletter_article_emails ALTER COLUMN id SET DEFAULT gen_random_uui
 ALTER TABLE contact_messages ALTER COLUMN id SET DEFAULT gen_random_uuid();
 ALTER TABLE user_oauth_accounts ALTER COLUMN id SET DEFAULT gen_random_uuid();
 ALTER TABLE password_reset_tokens ALTER COLUMN id SET DEFAULT gen_random_uuid();
-ALTER TABLE authors ADD CONSTRAINT authors_pkey PRIMARY KEY (id);
-ALTER TABLE categories ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
-ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
-ALTER TABLE articles ADD CONSTRAINT articles_pkey PRIMARY KEY (id);
-ALTER TABLE tags ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
-ALTER TABLE article_comments ADD CONSTRAINT article_comments_pkey PRIMARY KEY (id);
-ALTER TABLE article_correction_requests ADD CONSTRAINT article_correction_requests_pkey PRIMARY KEY (id);
-ALTER TABLE article_media ADD CONSTRAINT article_media_pkey PRIMARY KEY (id);
-ALTER TABLE bookmarks ADD CONSTRAINT bookmarks_pkey PRIMARY KEY (id);
-ALTER TABLE comment_votes ADD CONSTRAINT comment_votes_pkey PRIMARY KEY (id);
-ALTER TABLE comment_flags ADD CONSTRAINT comment_flags_pkey PRIMARY KEY (id);
-ALTER TABLE notification_mutes ADD CONSTRAINT notification_mutes_pkey PRIMARY KEY (id);
-ALTER TABLE subscribers ADD CONSTRAINT subscribers_pkey PRIMARY KEY (id);
-ALTER TABLE newsletter_article_emails ADD CONSTRAINT newsletter_article_emails_pkey PRIMARY KEY (id);
-ALTER TABLE contact_messages ADD CONSTRAINT contact_messages_pkey PRIMARY KEY (id);
-ALTER TABLE user_oauth_accounts ADD CONSTRAINT user_oauth_accounts_pkey PRIMARY KEY (id);
-ALTER TABLE password_reset_tokens ADD CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (id);
 
 -- Restore foreign keys with their original delete behavior.
 ALTER TABLE categories ADD CONSTRAINT categories_parent_id_categories_id_fk FOREIGN KEY (parent_id) REFERENCES categories(id);
