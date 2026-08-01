@@ -60,7 +60,7 @@ export const createArticleSchema = z.object({
   authorId: relationId,
   publishedAt: z.coerce.date().nullable().optional(),
   readingTime: z.number().int().min(0).optional(),
-  tagIds: z.array(z.number().int().positive()).optional(),
+  tagIds: z.array(z.string().uuid()).optional(),
   media: z.array(mediaItemSchema).optional(),
 })
 
@@ -70,11 +70,11 @@ export const articlesQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
   search: z.string().optional(),
-  categoryId: z.coerce.number().int().positive().optional(),
+  categoryId: z.string().uuid().optional(),
   // Category *slug* filter (the home/article pages pass a slug, not an id).
   category: z.string().optional(),
-  authorId: z.coerce.number().int().positive().optional(),
-  tagId: z.coerce.number().int().positive().optional(),
+  authorId: z.string().uuid().optional(),
+  tagId: z.string().uuid().optional(),
   // featured=true → published articles only (used by hero sections).
   featured: z.coerce.boolean().optional(),
   status: z.enum(['published', 'draft', 'all']).default('all'),

@@ -1,5 +1,5 @@
 export interface Category {
-  id: number
+  id: string
   nameAr: string
   nameFr: string
   slug: string
@@ -7,7 +7,7 @@ export interface Category {
   descriptionFr: string | null
   icon: string | null
   coverImage: string | null
-  parentId: number | null
+  parentId: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -19,7 +19,7 @@ export type CategoryTree = Category & {
 
 /** Lightweight category metadata returned alongside a category's article list. */
 export interface CategoryMeta {
-  id: number
+  id: string
   slug: string
   nameAr: string
   nameFr: string
