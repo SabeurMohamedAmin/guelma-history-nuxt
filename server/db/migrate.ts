@@ -103,7 +103,7 @@ async function recordApplied(entry: JournalEntry, hash: string): Promise<void> {
  * partially converted database would hash UUID text and break relationships, so
  * refuse to start unless every converted primary key still has an integer type.
  */
-const UUID_PRIMARY_KEY_TABLES = [
+const CONVERTED_UUID_PRIMARY_KEY_TABLES = [
   'authors',
   'categories',
   'users',
@@ -123,7 +123,14 @@ const UUID_PRIMARY_KEY_TABLES = [
   'password_reset_tokens',
 ] as const
 
-/** Foreign-key columns converted from integers by migration 0011. */
+/** Every table whose single-column primary key is an application UUID. */
+const UUID_PRIMARY_KEY_TABLES = [
+  ...CONVERTED_UUID_PRIMARY_KEY_TABLES,
+  'comments',
+  'notifications',
+] as const
+
+/** Every application foreign-key column that references a UUID primary key. */
 const UUID_RELATION_COLUMNS = [
   ['categories', 'parent_id'],
   ['users', 'author_id'],
@@ -138,14 +145,19 @@ const UUID_RELATION_COLUMNS = [
   ['password_reset_tokens', 'user_id'],
   ['user_oauth_accounts', 'user_id'],
   ['comments', 'article_id'],
+  ['comments', 'parent_id'],
   ['comments', 'author_id'],
+  ['comment_votes', 'comment_id'],
   ['comment_votes', 'user_id'],
+  ['comment_flags', 'comment_id'],
   ['comment_flags', 'reporter_id'],
   ['notification_mutes', 'user_id'],
   ['notification_mutes', 'article_id'],
+  ['notification_mutes', 'comment_id'],
   ['notifications', 'recipient_id'],
   ['notifications', 'actor_id'],
   ['notifications', 'article_id'],
+  ['notifications', 'comment_id'],
   ['bookmarks', 'user_id'],
   ['bookmarks', 'article_id'],
   ['newsletter_article_emails', 'article_id'],
@@ -153,7 +165,7 @@ const UUID_RELATION_COLUMNS = [
 ] as const
 
 async function assertUuidMigrationSourceSchema(): Promise<void> {
-  const expectedTables = [...UUID_PRIMARY_KEY_TABLES]
+  const expectedTables = [...CONVERTED_UUID_PRIMARY_KEY_TABLES]
 
   const rows = await sql.unsafe<{ table_name: string, data_type: string }[]>(
     `SELECT table_name, data_type
