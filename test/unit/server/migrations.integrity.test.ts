@@ -98,10 +98,11 @@ describe('migration files', () => {
   it('runs the UUID conversion atomically and manages the article_tags schema lock', () => {
     const runner = readFileSync(join(migrationsDir, '..', 'migrate.ts'), 'utf8')
 
-    expect(runner).toContain("entry.tag === '0011_preserve_data_uuid_keys'")
+    expect(runner).toContain('entry.tag === \'0011_preserve_data_uuid_keys\'')
     expect(runner).toContain('await sql.begin(async (transaction) =>')
-    expect(runner).toContain("ALTER TABLE article_tags SET (schema_locked = false)")
-    expect(runner).toContain("ALTER TABLE article_tags SET (schema_locked = true)")
+    expect(runner).toContain('SET LOCAL autocommit_before_ddl = false')
+    expect(runner).toContain('ALTER TABLE article_tags SET (schema_locked = false)')
+    expect(runner).toContain('ALTER TABLE article_tags SET (schema_locked = true)')
   })
 })
 

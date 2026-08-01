@@ -560,6 +560,11 @@ try {
 
       try {
         await sql.begin(async (transaction) => {
+          // CockroachDB 25.2+ commits before every DDL statement by default.
+          // Keep this setting local so primary keys can be replaced safely in
+          // one transaction without changing the database-wide default.
+          await transaction.unsafe('SET LOCAL autocommit_before_ddl = false')
+
           for (const [index, statement] of statements.entries()) {
             try {
               await transaction.unsafe(statement)
