@@ -277,329 +277,327 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <div class="d-flex align-center justify-space-between mb-6">
-      <h1 class="text-headline-medium font-weight-bold">
-        {{ t('admin.articles') }}
-      </h1>
-      <v-btn
-        color="primary"
-        :to="localePath(createTo)"
-        prepend-icon="mdi-plus"
-      >
-        {{ t('admin.newArticle') }}
-      </v-btn>
-    </div>
-
-    <!-- Window switch: My articles / All articles as route links. -->
-    <v-tabs
+  <div class="d-flex align-center justify-space-between mb-6">
+    <h1 class="text-headline-medium font-weight-bold">
+      {{ t('admin.articles') }}
+    </h1>
+    <v-btn
       color="primary"
-      class="mb-4"
+      :to="localePath(createTo)"
+      prepend-icon="mdi-plus"
     >
-      <v-tab
-        :to="localePath(mineTo)"
-        exact
-      >
-        {{ t('common.myArticles') }}
-      </v-tab>
-      <v-tab
-        :to="localePath(allTo)"
-        exact
-      >
-        {{ t('common.allArticles') }}
-      </v-tab>
-    </v-tabs>
+      {{ t('admin.newArticle') }}
+    </v-btn>
+  </div>
 
-    <v-alert
-      v-if="error"
-      type="error"
-      variant="tonal"
-      density="compact"
-      class="mb-4"
+  <!-- Window switch: My articles / All articles as route links. -->
+  <v-tabs
+    color="primary"
+    class="mb-4"
+  >
+    <v-tab
+      :to="localePath(mineTo)"
+      exact
     >
-      {{ error }}
-    </v-alert>
+      {{ t('common.myArticles') }}
+    </v-tab>
+    <v-tab
+      :to="localePath(allTo)"
+      exact
+    >
+      {{ t('common.allArticles') }}
+    </v-tab>
+  </v-tabs>
 
-    <v-card
-      rounded="lg"
-      class="mb-4"
-    >
-      <v-card-text>
-        <v-row
-          density="comfortable"
-          align="start"
+  <v-alert
+    v-if="error"
+    type="error"
+    variant="tonal"
+    density="compact"
+    class="mb-4"
+  >
+    {{ error }}
+  </v-alert>
+
+  <v-card
+    rounded="lg"
+    class="mb-4"
+  >
+    <v-card-text>
+      <v-row
+        density="comfortable"
+        align="start"
+      >
+        <v-col
+          cols="12"
+          sm="8"
+          :md="showStatusFilter ? 4 : 5"
         >
-          <v-col
-            cols="12"
-            sm="8"
-            :md="showStatusFilter ? 4 : 5"
-          >
-            <v-text-field
-              v-model="filters.search"
-              :label="t('common.search')"
-              :hint="t('articles.searchHint', { min: SEARCH_MIN_CHARS })"
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              density="comfortable"
-              clearable
-              hide-details="auto"
-              @update:model-value="debouncedSearchSync"
-            />
-          </v-col>
-
-          <v-col
-            v-if="showStatusFilter"
-            cols="6"
-            sm="4"
-            md="2"
-          >
-            <v-select
-              v-model="filters.status"
-              :label="t('common.status')"
-              :items="statusOptions"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              @update:model-value="onFilterChange"
-            />
-          </v-col>
-
-          <v-col
-            cols="6"
-            sm="5"
-            md="3"
-          >
-            <v-select
-              v-model="filters.category"
-              :label="t('nav.categories')"
-              :items="categoryOptions"
-              variant="outlined"
-              density="comfortable"
-              clearable
-              hide-details
-              @update:model-value="onFilterChange"
-            />
-          </v-col>
-
-          <v-col
-            cols="9"
-            sm="5"
-            md="2"
-          >
-            <v-select
-              v-model="filters.sortBy"
-              :label="t('articles.sortBy')"
-              :items="sortByOptions"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              @update:model-value="onFilterChange"
-            />
-          </v-col>
-
-          <v-col
-            cols="3"
-            sm="2"
-            md="1"
-            class="d-flex justify-end align-start"
-          >
-            <v-btn
-              class="border"
-              variant="plain"
-              rounded="lg"
-              size="default"
-              :icon="filters.sortOrder === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"
-              :title="t('articles.toggleOrder')"
-              @click="filters.sortOrder = filters.sortOrder === 'asc' ? 'desc' : 'asc'; onFilterChange()"
-            />
-          </v-col>
-        </v-row>
-
-        <div class="d-flex flex-wrap align-center ga-2 mt-3">
-          <v-chip
-            v-for="chip in activeChips"
-            :key="chip.key"
-            closable
-            size="small"
-            color="primary"
-            variant="tonal"
-            @click:close="removeChip(chip.key)"
-          >
-            {{ chip.label }}
-          </v-chip>
-
-          <v-btn
-            variant="text"
-            size="small"
-            color="medium-emphasis"
-            prepend-icon="mdi-filter-off"
-            @click="clearFilters"
-          >
-            {{ t('articles.clearFilters') }}
-          </v-btn>
-        </div>
-      </v-card-text>
-    </v-card>
-
-    <v-card rounded="lg">
-      <v-data-table
-        :headers="tableHeaders"
-        :items="articles"
-        :loading="loading"
-        hide-default-footer
-      >
-        <template #[`item.coverImage`]="{ item }">
-          <v-img
-            v-if="item.coverImage"
-            :src="item.coverImage"
-            :alt="item.titleFr"
-            width="64"
-            height="40"
-            cover
-            class="rounded my-1"
-          />
-          <v-avatar
-            v-else
-            size="40"
-            rounded="lg"
-            color="grey-lighten-3"
-          >
-            <v-icon
-              size="small"
-              color="grey"
-            >
-              mdi-image-off-outline
-            </v-icon>
-          </v-avatar>
-        </template>
-
-        <template #[`item.category`]="{ item }">
-          <v-chip
-            v-if="item.category"
-            size="x-small"
-            color="primary"
-            variant="tonal"
-          >
-            {{ item.category.nameAr }}
-          </v-chip>
-          <span
-            v-else
-            class="text-medium-emphasis"
-          >—</span>
-        </template>
-
-        <template #[`item.publishedAt`]="{ item }">
-          <span v-if="item.publishedAt">{{ new Date(item.publishedAt).toLocaleDateString() }}</span>
-          <v-chip
-            v-else
-            size="x-small"
-            variant="tonal"
-          >
-            {{ t('admin.draft') }}
-          </v-chip>
-        </template>
-
-        <template #[`item.homePosition`]="{ item }">
-          <v-select
-            :model-value="item.homePosition"
-            :items="homePositionOptions"
-            density="compact"
+          <v-text-field
+            v-model="filters.search"
+            :label="t('common.search')"
+            :hint="t('articles.searchHint', { min: SEARCH_MIN_CHARS })"
+            prepend-inner-icon="mdi-magnify"
             variant="outlined"
-            hide-details
-            :disabled="!item.publishedAt"
-            @update:model-value="updateHomePosition(item, $event)"
+            density="comfortable"
+            clearable
+            hide-details="auto"
+            @update:model-value="debouncedSearchSync"
           />
-        </template>
+        </v-col>
 
-        <template #[`item.actions`]="{ item }">
-          <template v-if="editable">
-            <v-btn
-              icon="mdi-open-in-new"
-              variant="text"
-              size="small"
-              :title="t('article.viewArticle')"
-              :aria-label="t('article.viewArticle')"
-              :href="localePath(`${publicBasePath}/${item.slug}`)"
-              target="_blank"
-              rel="noopener"
-            />
-            <v-btn
-              icon="mdi-pencil"
-              variant="text"
-              size="small"
-              :to="{ path: localePath(`${editBasePath}/${item.slug}`), query: route.query }"
-            />
-            <v-btn
-              icon="mdi-delete"
-              variant="text"
-              size="small"
-              color="error"
-              @click="promptDelete(item.slug)"
-            />
-          </template>
+        <v-col
+          v-if="showStatusFilter"
+          cols="6"
+          sm="4"
+          md="2"
+        >
+          <v-select
+            v-model="filters.status"
+            :label="t('common.status')"
+            :items="statusOptions"
+            variant="outlined"
+            density="comfortable"
+            hide-details
+            @update:model-value="onFilterChange"
+          />
+        </v-col>
+
+        <v-col
+          cols="6"
+          sm="5"
+          md="3"
+        >
+          <v-select
+            v-model="filters.category"
+            :label="t('nav.categories')"
+            :items="categoryOptions"
+            variant="outlined"
+            density="comfortable"
+            clearable
+            hide-details
+            @update:model-value="onFilterChange"
+          />
+        </v-col>
+
+        <v-col
+          cols="9"
+          sm="5"
+          md="2"
+        >
+          <v-select
+            v-model="filters.sortBy"
+            :label="t('articles.sortBy')"
+            :items="sortByOptions"
+            variant="outlined"
+            density="comfortable"
+            hide-details
+            @update:model-value="onFilterChange"
+          />
+        </v-col>
+
+        <v-col
+          cols="3"
+          sm="2"
+          md="1"
+          class="d-flex justify-end align-start"
+        >
           <v-btn
-            v-else
+            class="border"
+            variant="plain"
+            rounded="lg"
+            size="default"
+            :icon="filters.sortOrder === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'"
+            :title="t('articles.toggleOrder')"
+            @click="filters.sortOrder = filters.sortOrder === 'asc' ? 'desc' : 'asc'; onFilterChange()"
+          />
+        </v-col>
+      </v-row>
+
+      <div class="d-flex flex-wrap align-center ga-2 mt-3">
+        <v-chip
+          v-for="chip in activeChips"
+          :key="chip.key"
+          closable
+          size="small"
+          color="primary"
+          variant="tonal"
+          @click:close="removeChip(chip.key)"
+        >
+          {{ chip.label }}
+        </v-chip>
+
+        <v-btn
+          variant="text"
+          size="small"
+          color="medium-emphasis"
+          prepend-icon="mdi-filter-off"
+          @click="clearFilters"
+        >
+          {{ t('articles.clearFilters') }}
+        </v-btn>
+      </div>
+    </v-card-text>
+  </v-card>
+
+  <v-card rounded="lg">
+    <v-data-table
+      :headers="tableHeaders"
+      :items="articles"
+      :loading="loading"
+      hide-default-footer
+    >
+      <template #[`item.coverImage`]="{ item }">
+        <v-img
+          v-if="item.coverImage"
+          :src="item.coverImage"
+          :alt="item.titleFr"
+          width="64"
+          height="40"
+          cover
+          class="rounded my-1"
+        />
+        <v-avatar
+          v-else
+          size="40"
+          rounded="lg"
+          color="grey-lighten-3"
+        >
+          <v-icon
+            size="small"
+            color="grey"
+          >
+            mdi-image-off-outline
+          </v-icon>
+        </v-avatar>
+      </template>
+
+      <template #[`item.category`]="{ item }">
+        <v-chip
+          v-if="item.category"
+          size="x-small"
+          color="primary"
+          variant="tonal"
+        >
+          {{ item.category.nameAr }}
+        </v-chip>
+        <span
+          v-else
+          class="text-medium-emphasis"
+        >—</span>
+      </template>
+
+      <template #[`item.publishedAt`]="{ item }">
+        <span v-if="item.publishedAt">{{ new Date(item.publishedAt).toLocaleDateString() }}</span>
+        <v-chip
+          v-else
+          size="x-small"
+          variant="tonal"
+        >
+          {{ t('admin.draft') }}
+        </v-chip>
+      </template>
+
+      <template #[`item.homePosition`]="{ item }">
+        <v-select
+          :model-value="item.homePosition"
+          :items="homePositionOptions"
+          density="compact"
+          variant="outlined"
+          hide-details
+          :disabled="!item.publishedAt"
+          @update:model-value="updateHomePosition(item, $event)"
+        />
+      </template>
+
+      <template #[`item.actions`]="{ item }">
+        <template v-if="editable">
+          <v-btn
             icon="mdi-open-in-new"
             variant="text"
             size="small"
+            :title="t('article.viewArticle')"
+            :aria-label="t('article.viewArticle')"
             :href="localePath(`${publicBasePath}/${item.slug}`)"
             target="_blank"
             rel="noopener"
           />
-        </template>
-
-        <template #no-data>
-          <div class="text-center text-medium-emphasis py-8">
-            {{ t('common.noResults') }}
-          </div>
-        </template>
-      </v-data-table>
-    </v-card>
-
-    <div class="d-flex justify-center mt-4">
-      <v-pagination
-        v-model="filters.page"
-        :length="pageCount"
-        density="compact"
-        @update:model-value="syncUrl"
-      />
-    </div>
-
-    <v-dialog
-      v-if="editable"
-      v-model="deleteDialog"
-      max-width="400"
-    >
-      <v-card rounded="lg">
-        <v-card-title class="text-headline-small pt-4">
-          {{ t('admin.confirmDelete') }}
-        </v-card-title>
-        <v-card-text>{{ t('admin.confirmDeleteText') }}</v-card-text>
-        <v-card-actions class="pb-4 px-4">
-          <v-spacer />
           <v-btn
+            icon="mdi-pencil"
             variant="text"
-            @click="deleteDialog = false"
-          >
-            {{ t('common.cancel') }}
-          </v-btn>
+            size="small"
+            :to="{ path: localePath(`${editBasePath}/${item.slug}`), query: route.query }"
+          />
           <v-btn
+            icon="mdi-delete"
+            variant="text"
+            size="small"
             color="error"
-            :loading="loading"
-            @click="onDeleteConfirm"
-          >
-            {{ t('common.delete') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+            @click="promptDelete(item.slug)"
+          />
+        </template>
+        <v-btn
+          v-else
+          icon="mdi-open-in-new"
+          variant="text"
+          size="small"
+          :href="localePath(`${publicBasePath}/${item.slug}`)"
+          target="_blank"
+          rel="noopener"
+        />
+      </template>
 
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      timeout="3000"
-    >
-      {{ snackbar.text }}
-    </v-snackbar>
+      <template #no-data>
+        <div class="text-center text-medium-emphasis py-8">
+          {{ t('common.noResults') }}
+        </div>
+      </template>
+    </v-data-table>
+  </v-card>
+
+  <div class="d-flex justify-center mt-4">
+    <v-pagination
+      v-model="filters.page"
+      :length="pageCount"
+      density="compact"
+      @update:model-value="syncUrl"
+    />
   </div>
+
+  <v-dialog
+    v-if="editable"
+    v-model="deleteDialog"
+    max-width="400"
+  >
+    <v-card rounded="lg">
+      <v-card-title class="text-headline-small pt-4">
+        {{ t('admin.confirmDelete') }}
+      </v-card-title>
+      <v-card-text>{{ t('admin.confirmDeleteText') }}</v-card-text>
+      <v-card-actions class="pb-4 px-4">
+        <v-spacer />
+        <v-btn
+          variant="text"
+          @click="deleteDialog = false"
+        >
+          {{ t('common.cancel') }}
+        </v-btn>
+        <v-btn
+          color="error"
+          :loading="loading"
+          @click="onDeleteConfirm"
+        >
+          {{ t('common.delete') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-snackbar
+    v-model="snackbar.show"
+    :color="snackbar.color"
+    timeout="3000"
+  >
+    {{ snackbar.text }}
+  </v-snackbar>
 </template>
