@@ -34,9 +34,9 @@ type NotificationRow = typeof notifications.$inferSelect
 /** The minimal shape of the just-created comment the emitter needs. */
 interface CreatedCommentInput {
   id: string
-  articleId: number
+  articleId: string
   parentId: string | null
-  authorId: number
+  authorId: string
 }
 
 /**
@@ -47,9 +47,9 @@ interface CreatedCommentInput {
  *     "thread activity" for a reply somewhere in their article.
  */
 function notificationType(args: {
-  recipientId: number
-  articleOwnerId: number
-  parentCommentAuthorId: number | null
+  recipientId: string
+  articleOwnerId: string
+  parentCommentAuthorId: string | null
   isReply: boolean
 }): NotificationType {
   if (args.parentCommentAuthorId !== null && args.recipientId === args.parentCommentAuthorId) {
@@ -71,10 +71,10 @@ function notificationType(args: {
  *   - scope 'comment' for this comment : they muted this comment thread.
  */
 async function dropMutedRecipients(
-  recipientIds: number[],
-  articleId: number,
+  recipientIds: string[],
+  articleId: string,
   commentId: string,
-): Promise<number[]> {
+): Promise<string[]> {
   if (recipientIds.length === 0) return []
 
   // Read every mute these recipients hold, then let the pure rule (R5) decide
@@ -113,7 +113,7 @@ export async function emitCommentNotifications(created: CreatedCommentInput): Pr
     const articleOwnerId = article.createdByUserId
 
     // The author of the comment being replied to (only for replies).
-    let parentCommentAuthorId: number | null = null
+    let parentCommentAuthorId: string | null = null
     if (created.parentId !== null) {
       const parent = await db.query.comments.findFirst({
         where: eq(comments.id, created.parentId),
@@ -178,18 +178,18 @@ export interface SerializedNotification {
   id: string
   type: NotificationType
   isRead: boolean
-  articleId: number
+  articleId: string
   // The article slug, used to build the deep link (/articles/<slug>). Routes use
   // the slug, not the numeric id. Null only if the article relation was not
   // loaded for this payload.
   articleSlug: string | null
   commentId: string
   createdAt: string
-  actor: { id: number, username: string, displayName: string | null } | null
+  actor: { id: string, username: string, displayName: string | null } | null
 }
 
 type NotificationWithRelations = NotificationRow & {
-  actor?: { id: number, username: string, displayName: string | null } | null
+  actor?: { id: string, username: string, displayName: string | null } | null
   article?: { slug: string } | null
 }
 
@@ -237,7 +237,7 @@ function decodeCursor(cursor: string): { createdAt: Date, id: string } | null {
  * in that order, so each page advances and never repeats a row.
  */
 export async function listNotifications(
-  userId: number,
+  userId: string,
   options: { limit: number, cursor?: string },
 ): Promise<SerializedNotification[]> {
   // "Older than the cursor" in (createdAt DESC, id DESC) order means:
@@ -270,7 +270,7 @@ export async function listNotifications(
 }
 
 /** Count one user's unread notifications, for the bell badge. */
-export async function countUnread(userId: number): Promise<number> {
+export async function countUnread(userId: string): Promise<number> {
   const [row] = await db
     .select({ count: sql<number>`count(*)` })
     .from(notifications)
@@ -283,7 +283,7 @@ export async function countUnread(userId: number): Promise<number> {
  * Mark one notification as read. Scoped to the owner so a user can only mark
  * their own. Idempotent: re-marking keeps the original read time.
  */
-export async function markRead(userId: number, notificationId: string): Promise<void> {
+export async function markRead(userId: string, notificationId: string): Promise<void> {
   await db
     .update(notifications)
     .set({ readAt: new Date() })
@@ -295,7 +295,7 @@ export async function markRead(userId: number, notificationId: string): Promise<
 }
 
 /** Mark every unread notification for a user as read. */
-export async function markAllRead(userId: number): Promise<void> {
+export async function markAllRead(userId: string): Promise<void> {
   await db
     .update(notifications)
     .set({ readAt: new Date() })
@@ -303,7 +303,7 @@ export async function markAllRead(userId: number): Promise<void> {
 }
 
 /** Delete one notification, scoped to the owner. */
-export async function deleteNotification(userId: number, notificationId: string): Promise<void> {
+export async function deleteNotification(userId: string, notificationId: string): Promise<void> {
   await db
     .delete(notifications)
     .where(and(
@@ -317,15 +317,15 @@ export async function deleteNotification(userId: number, notificationId: string)
 // ---------------------------------------------------------------------------
 
 export interface SerializedMute {
-  id: number
+  id: string
   scope: CreateMutePayload['scope']
-  articleId: number | null
+  articleId: string | null
   commentId: string | null
   createdAt: string
 }
 
 /** List one user's mutes (so the UI can show what is muted). */
-export async function listMutes(userId: number): Promise<SerializedMute[]> {
+export async function listMutes(userId: string): Promise<SerializedMute[]> {
   const rows = await db.query.notificationMutes.findMany({
     where: eq(notificationMutes.userId, userId),
     orderBy: [desc(notificationMutes.createdAt)],
@@ -345,7 +345,7 @@ export async function listMutes(userId: number): Promise<SerializedMute[]> {
  * is present for the scope). `onConflictDoNothing` makes muting the same thing
  * twice a no-op instead of an error, matching the unique index on the table.
  */
-export async function muteTarget(userId: number, payload: CreateMutePayload): Promise<void> {
+export async function muteTarget(userId: string, payload: CreateMutePayload): Promise<void> {
   await db
     .insert(notificationMutes)
     .values({
@@ -358,7 +358,7 @@ export async function muteTarget(userId: number, payload: CreateMutePayload): Pr
 }
 
 /** Remove a mute by id, scoped to the owner so a user can only unmute their own. */
-export async function unmuteTarget(userId: number, muteId: number): Promise<void> {
+export async function unmuteTarget(userId: string, muteId: string): Promise<void> {
   await db
     .delete(notificationMutes)
     .where(and(eq(notificationMutes.id, muteId), eq(notificationMutes.userId, userId)))
