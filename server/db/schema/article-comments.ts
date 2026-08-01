@@ -1,9 +1,9 @@
-import { pgTable, serial, integer, text, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core'
 import { articles } from './articles'
 
 export const articleComments = pgTable('article_comments', {
-  id: serial('id').primaryKey(),
-  articleId: integer('article_id').notNull().references(() => articles.id, { onDelete: 'cascade' }),
+  id: uuid('id').primaryKey().defaultRandom(),
+  articleId: uuid('article_id').notNull().references(() => articles.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   email: text('email'),
   message: text('message').notNull(),

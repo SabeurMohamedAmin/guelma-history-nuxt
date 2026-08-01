@@ -44,7 +44,7 @@ export const comments = pgTable('comments', {
   // not a guessable, enumerable counter: it does not leak how many comments
   // exist and cannot be walked by incrementing the value in a URL/deep link.
   id: uuid('id').primaryKey().defaultRandom(),
-  articleId: integer('article_id')
+  articleId: uuid('article_id')
     .notNull()
     .references(() => articles.id, { onDelete: 'cascade' }),
   // The comment this one replies to. NULL = top-level. Self-reference; deleting
@@ -55,7 +55,7 @@ export const comments = pgTable('comments', {
   // it, falls back to `any`, and every db.query relation loses its types.
   parentId: uuid('parent_id').references((): AnyPgColumn => comments.id, { onDelete: 'cascade' }),
   // The account that wrote the comment. Guests cannot post, so this is required.
-  authorId: integer('author_id')
+  authorId: uuid('author_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   // Raw, untrusted text exactly as typed. NEVER rendered as HTML: the client
