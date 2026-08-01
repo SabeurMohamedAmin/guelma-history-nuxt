@@ -78,7 +78,7 @@ export function useAdminArticles() {
   }
 
   function setHomePosition(slug: string, position: number | null) {
-    return run(() => $fetch(`/api/admin/articles/${slug}/home-position`, {
+    return run(() => $fetch<{ homePosition: number | null }>(`/api/admin/articles/${slug}/home-position`, {
       method: 'PATCH',
       body: { position },
     }))

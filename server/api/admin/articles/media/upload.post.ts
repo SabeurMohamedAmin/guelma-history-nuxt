@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'No file provided.' })
   }
 
+  const fileData = filePart.data
   const type = filePart.type?.toLowerCase() ?? ''
   if (!ALLOWED_PREFIXES.some(prefix => type.startsWith(prefix))) {
     throw createError({
@@ -40,11 +41,11 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (filePart.data.length === 0) {
+  if (fileData.length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Uploaded file is empty.' })
   }
 
-  if (filePart.data.length > MAX_UPLOAD_BYTES) {
+  if (fileData.length > MAX_UPLOAD_BYTES) {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'File is too large.' })
   }
 
@@ -52,7 +53,7 @@ export default defineEventHandler(async (event) => {
   // variants that match their UI containers. The uploaded source stays
   // untouched for focus mode, zooming, copying, and downloading.
   if (!type.startsWith('image/')) {
-    const uploaded = await uploadToCloudinary(filePart.data)
+    const uploaded = await uploadToCloudinary(fileData)
     return {
       url: uploaded.url,
       type: 'video' as const,
@@ -80,34 +81,42 @@ export default defineEventHandler(async (event) => {
     main: { width: 1280, height: 800, quality: 82, fit: 'fill' },
   }
 
-  const variantEntries = await Promise.all(
-    Object.entries(variantDefinitions).map(async ([name, options]) => {
-      const buffer = await sharp(filePart.data, { failOn: 'error' })
-        .rotate()
-        .resize({
-          width: options.width,
-          height: options.height,
-          fit: options.fit,
-          withoutEnlargement: true,
-        })
-        .webp({ quality: options.quality })
-        .toBuffer()
-      const uploaded = await uploadToCloudinary(buffer, 'articles', `${baseId}-${name}`)
-      return [name, uploaded] as const
-    }),
-  )
+  async function uploadVariant(name: DisplayVariantName): Promise<string> {
+    const options = variantDefinitions[name]
+    const buffer = await sharp(fileData, { failOn: 'error' })
+      .rotate()
+      .resize({
+        width: options.width,
+        height: options.height,
+        fit: options.fit,
+        withoutEnlargement: true,
+      })
+      .webp({ quality: options.quality })
+      .toBuffer()
+    const uploaded = await uploadToCloudinary(buffer, 'articles', `${baseId}-${name}`)
+
+    return uploaded.url
+  }
+
+  const [thumbnail, slider, main] = await Promise.all([
+    uploadVariant('thumbnail'),
+    uploadVariant('slider'),
+    uploadVariant('main'),
+  ])
 
   // Do not resize, crop, or re-encode the source. This preserves its original
   // dimensions, format, metadata, and quality for full-resolution actions.
   const originalUpload = await uploadToCloudinary(
-    filePart.data,
+    fileData,
     'articles',
     `${baseId}-original`,
   )
-  const allEntries = [...variantEntries, ['original', originalUpload] as const]
-  const variants = Object.fromEntries(
-    allEntries.map(([name, result]) => [name, result.url]),
-  ) as ImageVariants
+  const variants: ImageVariants = {
+    thumbnail,
+    slider,
+    main,
+    original: originalUpload.url,
+  }
 
   return {
     url: variants.main,

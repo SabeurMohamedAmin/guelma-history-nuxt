@@ -16,10 +16,11 @@ const updateSubscriberStatusSchema = z.object({
  * newsletter sender and CSV export.
  */
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id')
-  if (!databaseUuidSchema.safeParse(id).success) {
+  const parsedId = databaseUuidSchema.safeParse(getRouterParam(event, 'id'))
+  if (!parsedId.success) {
     throw createError({ statusCode: 400, message: 'Invalid subscriber ID' })
   }
+  const id = parsedId.data
 
   const { status } = updateSubscriberStatusSchema.parse(await readBody(event))
   const now = new Date()

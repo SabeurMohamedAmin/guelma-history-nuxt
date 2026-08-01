@@ -1,0 +1,2 @@
+patchedDependencies:
+  '@nuxtjs/cloudinary@2.7.3': patches/@nuxtjs__cloudinary@2.7.3.patch

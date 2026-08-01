@@ -9,10 +9,11 @@ import { databaseUuidSchema } from '~~/shared/database-uuid'
  * never orphan content or hit a foreign-key error.
  */
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id')
-  if (!databaseUuidSchema.safeParse(id).success) {
+  const parsedId = databaseUuidSchema.safeParse(getRouterParam(event, 'id'))
+  if (!parsedId.success) {
     throw createError({ statusCode: 400, message: 'Invalid author ID' })
   }
+  const id = parsedId.data
 
   const [articleCount] = await db
     .select({ total: count() })

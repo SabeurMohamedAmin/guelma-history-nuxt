@@ -8,10 +8,11 @@ import { databaseUuidSchema } from '~~/shared/database-uuid'
  * Partial update. Only the fields present in the body are changed.
  */
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id')
-  if (!databaseUuidSchema.safeParse(id).success) {
+  const parsedId = databaseUuidSchema.safeParse(getRouterParam(event, 'id'))
+  if (!parsedId.success) {
     throw createError({ statusCode: 400, message: 'Invalid author ID' })
   }
+  const id = parsedId.data
 
   const body = await readBody<{
     nameAr?: string

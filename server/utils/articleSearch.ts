@@ -18,6 +18,8 @@ const articleListColumns = {
   excerptAr: articles.excerptAr,
   excerptFr: articles.excerptFr,
   coverImage: articles.coverImage,
+  coverImageVariants: articles.coverImageVariants,
+  homePosition: articles.homePosition,
   publishedAt: articles.publishedAt,
   readingTime: articles.readingTime,
   viewCount: articles.viewCount,
