@@ -104,7 +104,7 @@ const ownerRows = await db
 const ownerPool = ownerRows.length > 0 ? ownerRows.map(row => row.id) : [admin.id]
 
 /** Pick an owner for the article at `index`, cycling through the owner pool. */
-function ownerFor(index: number): number {
+function ownerFor(index: number): string {
   return ownerPool[index % ownerPool.length]!
 }
 
@@ -413,7 +413,7 @@ const authorRows = await db.select({ id: authors.id, slug: authors.slug }).from(
 const authorIdBySlug = new Map(authorRows.map(row => [row.slug, row.id]))
 
 /** Translate a 1-based seed position into the real database id. */
-function realId(position: number, slugs: string[], idBySlug: Map<string, number>, kind: string): number {
+function realId(position: number, slugs: string[], idBySlug: Map<string, string>, kind: string): string {
   const slug = slugs[position - 1]
   const id = slug === undefined ? undefined : idBySlug.get(slug)
   if (id === undefined) {
