@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { getTableName, is } from 'drizzle-orm'
-import { PgTable } from 'drizzle-orm/pg-core'
+import { PgTable, getTableColumns } from 'drizzle-orm/pg-core'
 import * as schema from '~~/server/db/schema'
 
 /**
@@ -39,9 +39,8 @@ const allSql = sqlFileNames
   .join('\n')
 
 /** Table names as they exist in Postgres, read straight from the schema exports. */
-const tableNames = Object.values(schema)
-  .filter(value => is(value, PgTable))
-  .map(table => getTableName(table))
+const schemaTables = Object.values(schema).filter(value => is(value, PgTable))
+const tableNames = schemaTables.map(table => getTableName(table))
 
 /** Collapse whitespace so formatting alone never hides two identical migrations. */
 function normalise(sql: string): string {
@@ -100,5 +99,25 @@ describe('migration files', () => {
 describe('schema coverage', () => {
   it.each(tableNames)('creates the "%s" table in a migration', (tableName) => {
     expect(allSql).toMatch(new RegExp(`CREATE TABLE (IF NOT EXISTS )?"${tableName}"`))
+  })
+
+  it('uses UUIDs for every single-column id primary key', () => {
+    for (const table of schemaTables) {
+      const id = getTableColumns(table).id
+      if (!id) continue
+
+      expect(id.dataType, `${getTableName(table)}.id must be a UUID string`).toBe('string')
+      expect(id.columnType, `${getTableName(table)}.id must use PgUUID`).toBe('PgUUID')
+      expect(id.primary, `${getTableName(table)}.id must remain the primary key`).toBe(true)
+      expect(id.hasDefault, `${getTableName(table)}.id must generate UUIDs by default`).toBe(true)
+    }
+  })
+
+  it('registers the data-preserving UUID conversion after the integer migrations', () => {
+    const uuidEntry = journal.entries.find(entry => entry.tag === '0011_preserve_data_uuid_keys')
+    expect(uuidEntry).toBeDefined()
+    expect(uuidEntry?.idx).toBe(11)
+    expect(allSql).toContain('SET DATA TYPE UUID')
+    expect(allSql).toContain('SET DEFAULT gen_random_uuid()')
   })
 })
