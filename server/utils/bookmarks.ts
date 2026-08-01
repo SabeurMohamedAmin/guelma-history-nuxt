@@ -27,7 +27,7 @@ import { requireRole } from '~~/server/utils/auth'
 
 /** A reading-list entry: the saved article plus when it was saved. */
 export interface BookmarkListItem {
-  id: number
+  id: string
   slug: string
   titleAr: string
   titleFr: string
@@ -38,7 +38,7 @@ export interface BookmarkListItem {
 }
 
 /** Resolve an article's public slug to its internal id, or throw 404. */
-async function findArticleIdBySlug(articleSlug: string): Promise<number> {
+async function findArticleIdBySlug(articleSlug: string): Promise<string> {
   const article = await db.query.articles.findFirst({
     where: eq(articles.slug, articleSlug),
     columns: { id: true },
