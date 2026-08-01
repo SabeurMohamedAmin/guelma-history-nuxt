@@ -46,7 +46,7 @@ beforeEach(() => {
 
 describe('userTopic', () => {
   it('namespaces a room per user id', () => {
-    expect(userTopic(userA)).toBe(`notifications:${userA}`)
+    expect(userTopic(userA)).toBe(`notifications:user:${userA}`)
     expect(userTopic(userA)).not.toBe(userTopic(userB))
   })
 })
@@ -56,7 +56,7 @@ describe('publishNotificationEvent', () => {
     const a = fakePeer()
     const b = fakePeer()
     addNotificationPeer(userTopic(userA), a)
-    addNotificationPeer(userTopic('user-7'), b)
+    addNotificationPeer(userTopic(userA), b)
 
     publishNotificationEvent(userA, sampleEvent)
 

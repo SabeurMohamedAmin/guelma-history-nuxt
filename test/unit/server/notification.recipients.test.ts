@@ -49,7 +49,7 @@ describe('resolveCommentNotificationRecipients', () => {
       parentCommentAuthorId: parentAuthorId,
     })
 
-    expect(recipients).toEqual(['user-1'])
+    expect(recipients).toEqual([ownerId])
   })
 
   it('R4: de-duplicates when the article owner is also the parent comment owner', () => {
@@ -59,7 +59,7 @@ describe('resolveCommentNotificationRecipients', () => {
       parentCommentAuthorId: ownerId,
     })
 
-    expect(recipients).toEqual(['user-1'])
+    expect(recipients).toEqual([ownerId])
   })
 
   it('R4: the article owner replying to their own thread notifies only the parent owner', () => {

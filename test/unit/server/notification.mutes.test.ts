@@ -24,7 +24,7 @@ describe('filterMutedRecipients', () => {
 
   it('drops a recipient who muted everything (\'all\')', () => {
     const mutes: MuteRecord[] = [{ userId: userB, scope: 'all', articleId: null, commentId: null }]
-    expect(filterMutedRecipients(['user-1', 'user-2', 'user-3'], mutes, target)).toEqual([userA, userC])
+    expect(filterMutedRecipients([userA, userB, userC], mutes, target)).toEqual([userA, userC])
   })
 
   it('drops a recipient who muted THIS article', () => {
@@ -34,17 +34,17 @@ describe('filterMutedRecipients', () => {
 
   it('keeps a recipient who muted a DIFFERENT article', () => {
     const mutes: MuteRecord[] = [{ userId: userA, scope: 'article', articleId: articleB, commentId: null }]
-    expect(filterMutedRecipients(['user-1', 'user-2'], mutes, target)).toEqual([userA, userB])
+    expect(filterMutedRecipients([userA, userB], mutes, target)).toEqual([userA, userB])
   })
 
   it('drops a recipient who muted THIS comment thread', () => {
     const mutes: MuteRecord[] = [{ userId: userB, scope: 'comment', articleId: null, commentId: commentA }]
-    expect(filterMutedRecipients(['user-1', 'user-2'], mutes, target)).toEqual([userA])
+    expect(filterMutedRecipients([userA, userB], mutes, target)).toEqual([userA])
   })
 
   it('keeps a recipient who muted a DIFFERENT comment thread', () => {
     const mutes: MuteRecord[] = [{ userId: userB, scope: 'comment', articleId: null, commentId: commentB }]
-    expect(filterMutedRecipients(['user-1', 'user-2'], mutes, target)).toEqual(['user-1', 'user-2'])
+    expect(filterMutedRecipients([userA, userB], mutes, target)).toEqual([userA, userB])
   })
 
   it('drops a recipient with multiple mutes when any one matches', () => {
@@ -52,6 +52,6 @@ describe('filterMutedRecipients', () => {
       { userId: userA, scope: 'article', articleId: articleB, commentId: null },
       { userId: userA, scope: 'comment', articleId: null, commentId: commentA },
     ]
-    expect(filterMutedRecipients(['user-1', 'user-2'], mutes, target)).toEqual(['user-2'])
+    expect(filterMutedRecipients([userA, userB], mutes, target)).toEqual([userB])
   })
 })

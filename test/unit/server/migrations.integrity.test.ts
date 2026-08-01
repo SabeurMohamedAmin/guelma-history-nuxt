@@ -119,9 +119,13 @@ describe('schema coverage', () => {
 
       for (const [propertyName, column] of Object.entries(getTableColumns(table))) {
         // Relationship properties consistently end in `Id`. The plain `id`
-        // primary key is covered separately above. Provider IDs are external
-        // opaque strings and intentionally do not reference our database.
-        if (!propertyName.endsWith('Id') || propertyName === 'providerUserId') continue
+        // primary key is covered separately above. Provider and Cloudinary
+        // public IDs are external opaque strings, not database relationships.
+        if (
+          !propertyName.endsWith('Id')
+          || propertyName === 'providerUserId'
+          || propertyName === 'publicId'
+        ) continue
 
         expect(
           column.columnType,
@@ -141,7 +145,11 @@ describe('schema coverage', () => {
       const tableName = getTableName(table)
 
       for (const [propertyName, column] of Object.entries(getTableColumns(table))) {
-        if (!propertyName.endsWith('Id') || propertyName === 'providerUserId') continue
+        if (
+          !propertyName.endsWith('Id')
+          || propertyName === 'providerUserId'
+          || propertyName === 'publicId'
+        ) continue
 
         // comments.parent_id, comment-based relations and notification IDs were
         // UUIDs before migration 0011. Every relation whose old snapshot says
