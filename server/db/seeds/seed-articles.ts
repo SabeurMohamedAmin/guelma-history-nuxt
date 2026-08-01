@@ -10,10 +10,8 @@ import { createSeedImageVariants } from './_image-variants'
  * past and notable figures of Guelma (قالمة) in north-eastern Algeria.
  *
  * Bilingual fields (AR primary / FR secondary) mirror the schema and the base
- * seed. Category & author IDs reference rows created by `seed.ts`:
- *   categories: 1 sites-historiques, 2 histoire-militaire,
- *               3 culture-patrimoine, 4 personnalites, 5 evenements
- *   authors:    1 Ahmed Ben Mohamed, 2 Fatima Zohra Boualam, 3 Youssef Khalidi
+ * seed. Local category/author fixture references are resolved by stable slug to
+ * generated UUIDs before any article is inserted.
  *
  * Run after migrations + the base seed:
  *   pnpm db:migrate && pnpm db:seed && pnpm db:seed:articles
@@ -289,12 +287,9 @@ if (removed.length > 0) {
   console.log(`  \u2192 Removed ${removed.length} existing article(s) with matching slugs`)
 }
 
-// --- Resolve real DB ids for the hardcoded seed references ---
-// The articleData above references categories/authors by SEED POSITION
-// (categoryId 1-5, authorId 1-3, matching the insert order in seed.ts).
-// Real primary keys are DB-generated — CockroachDB uses unique_rowid(),
-// not 1, 2, 3… — so we translate each position to the actual id through
-// the row's stable slug.
+// --- Resolve UUIDs for the local fixture references ---
+// Small position numbers exist only inside this fixture. Stable slugs translate
+// them to generated database UUIDs before values reach the articles table.
 const categorySlugByPosition = [
   'sites-historiques', // 1
   'histoire-militaire', // 2
@@ -314,8 +309,8 @@ const categoryIdBySlug = new Map(categoryRows.map(row => [row.slug, row.id]))
 const authorRows = await db.select({ id: authors.id, slug: authors.slug }).from(authors)
 const authorIdBySlug = new Map(authorRows.map(row => [row.slug, row.id]))
 
-/** Translate a 1-based seed position into the real database id. */
-function realId(position: number, slugs: string[], idBySlug: Map<string, string>, kind: string): string {
+/** Translate a local 1-based fixture reference into a database UUID. */
+function resolveUuid(position: number, slugs: string[], idBySlug: Map<string, string>, kind: string): string {
   const slug = slugs[position - 1]
   const id = slug === undefined ? undefined : idBySlug.get(slug)
   if (id === undefined) {
@@ -330,8 +325,8 @@ const inserted = await db
   .values(articleData.map((article, index) => ({
     ...article,
     coverImageVariants: createSeedImageVariants(article.slug),
-    categoryId: realId(article.categoryId, categorySlugByPosition, categoryIdBySlug, 'category'),
-    authorId: realId(article.authorId, authorSlugByPosition, authorIdBySlug, 'author'),
+    categoryId: resolveUuid(article.categoryId, categorySlugByPosition, categoryIdBySlug, 'category'),
+    authorId: resolveUuid(article.authorId, authorSlugByPosition, authorIdBySlug, 'author'),
     createdByUserId: ownerFor(index),
   })))
   .returning({
