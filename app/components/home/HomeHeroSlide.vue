@@ -57,6 +57,8 @@ function getArticleLink(slug: string): string {
   >
     <v-row
       v-if="featuredArticle"
+      no-gutters
+      gap="8"
       class="align-stretch"
     >
       <!-- Featured Article (Right on Desktop, Top on Mobile) -->
@@ -64,7 +66,7 @@ function getArticleLink(slug: string): string {
         cols="12"
         md="7"
         order-md="2"
-        class="mb-6 mb-md-0 d-flex"
+        class="mb-4 mb-md-0 d-flex"
       >
         <NuxtLink
           :to="getArticleLink(featuredArticle.slug)"
@@ -72,7 +74,7 @@ function getArticleLink(slug: string): string {
         >
           <v-card
             class="featured-card overflow-hidden h-100 d-flex flex-column"
-            rounded="lg"
+            rounded="xl"
             variant="flat"
           >
             <div class="featured-image-wrapper position-relative d-flex justify-end">
@@ -125,7 +127,7 @@ function getArticleLink(slug: string): string {
               </div>
             </div>
 
-            <div class="featured-content pa-6 pa-md-8 flex-grow-1 d-flex flex-column justify-center">
+            <div class="featured-content pa-2 pa-md-4 flex-grow-1 d-flex flex-column justify-center">
               <div class="d-flex align-center ga-2 text-caption text-disabled mb-3">
                 <v-icon
                   size="small"
@@ -139,7 +141,7 @@ function getArticleLink(slug: string): string {
                 </template>
               </div>
 
-              <h1 class="text-headline-medium text-md-h3 font-weight-bold mb-3 text-break">
+              <h1 class="text-title-large text-md-headline-small font-weight-bold mb-2 text-break">
                 {{ getTitle(featuredArticle) }}
               </h1>
 
@@ -156,18 +158,18 @@ function getArticleLink(slug: string): string {
         cols="12"
         md="5"
         order-md="1"
-        class="d-flex"
+        class="d-flex "
       >
         <div class="articles-list h-100 w-100 d-flex flex-column">
           <NuxtLink
             v-for="article in additionalArticles"
             :key="article.id"
             :to="getArticleLink(article.slug)"
-            class="text-decoration-none d-flex article-link"
+            class="text-decoration-none  d-flex article-link"
           >
             <v-card
               class="article-card h-100 w-100"
-              rounded="lg"
+              rounded="xl"
               variant="flat"
             >
               <v-row
@@ -198,9 +200,9 @@ function getArticleLink(slug: string): string {
                   cols="8"
                   class="d-flex"
                 >
-                  <section class="d-flex flex-column justify-start ga-0 px-4 py-2 w-100">
+                  <section class="d-flex flex-column justify-start ga-0 pa-2 w-100">
                     <!-- Date -->
-                    <div class="d-flex align-center ga-2 text-caption text-disabled">
+                    <div class="d-flex align-center text-caption text-disabled">
                       <v-icon
                         size="x-small"
                         icon="mdi-calendar"
@@ -208,12 +210,12 @@ function getArticleLink(slug: string): string {
                       <span>{{ formatDate(article.publishedAt) }}</span>
                     </div>
                     <!-- Title -->
-                    <h3 class="text-headline-small font-weight-medium my-2 text-break article-title">
+                    <h3 class="text-title-medium text-lg-headline-small font-weight-medium my-2 text-break article-title">
                       {{ getTitle(article) }}
                     </h3>
 
                     <!-- Excerpt -->
-                    <p class="text-body-1 text-disabled article-excerpt my-2">
+                    <p class="text-body-medium text-lg-title-small text-disabled article-excerpt flex-grow-0 ">
                       {{ getExcerpt(article) }}
                     </p>
                     <v-chip
@@ -302,7 +304,7 @@ function getArticleLink(slug: string): string {
 
 /* Articles List Styles */
 .articles-list {
-  gap: 16px;
+   gap: 8px;
 }
 
 .article-link {
@@ -343,7 +345,7 @@ function getArticleLink(slug: string): string {
 .article-title {
   /* Fluid size: scales with viewport so it never overflows the card,
      while keeping the title readable. Caps at the original text-headline-small size. */
-  font-size: clamp(0.95rem, 2.6vw, 1.5rem);
+/*  font-size: clamp(0.95rem, 2.6vw, 1.5rem);*/
   line-height: 1.35;
   display: -webkit-box;
   line-clamp: 2;
@@ -353,10 +355,10 @@ function getArticleLink(slug: string): string {
 }
 
 .article-excerpt {
-  font-size: clamp(0.8rem, 1.9vw, 1rem);
+  /*font-size: clamp(0.8rem, 1.9vw, 1rem);*/
   display: -webkit-box;
-  line-clamp: 2;
-  -webkit-line-clamp: 2;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.45;
@@ -388,11 +390,11 @@ function getArticleLink(slug: string): string {
 
 @media (max-width: 600px) {
   .article-link {
-    min-height: 120px;
+    min-height: 132px;
   }
 
   .thumbnail-wrapper {
-    min-height: 120px;
+    min-height: 132px;
   }
 
   /* Keep all details visible but compact so nothing overflows the card. */

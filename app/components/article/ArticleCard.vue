@@ -72,7 +72,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
     class="article-card"
     :class="`article-card--${cardVariant}`"
     flat
-    rounded="lg"
+    rounded="xl"
   >
     <!-- HORIZONTAL (compact row) -->
     <template v-if="cardVariant === 'horizontal'">

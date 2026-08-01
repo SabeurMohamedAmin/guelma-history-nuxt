@@ -57,7 +57,7 @@ function goNext(): void {
 <template>
   <section
     v-if="hasArticles || loading"
-    class="top-read mb-6"
+    class="top-read mb-6 border rounded-xl pa-1 pt-4 bg-surface"
     :aria-label="t('sidebar.topRead')"
   >
     <!-- Header: title + prev/next controls -->
@@ -78,7 +78,7 @@ function goNext(): void {
         {{ t('sidebar.topRead') }}
       </h2>
 
-      <div class="d-flex align-center ga-2">
+      <div class="d-flex align-center ga-2 px-1">
         <v-btn
           icon
           variant="tonal"
