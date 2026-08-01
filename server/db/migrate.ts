@@ -261,10 +261,53 @@ async function assertUuidMigrationResult(): Promise<void> {
       : [`${table}.id=${row?.column_default ?? 'missing default'}`]
   })
 
-  if (invalidTypes.length > 0 || invalidDefaults.length > 0) {
+  const constraintRows = await sql.unsafe<{
+    table_name: string
+    column_name: string
+    constraint_type: string
+  }[]>(
+    `SELECT tc.table_name, kcu.column_name, tc.constraint_type
+     FROM information_schema.table_constraints AS tc
+     JOIN information_schema.key_column_usage AS kcu
+       ON tc.constraint_catalog = kcu.constraint_catalog
+      AND tc.constraint_schema = kcu.constraint_schema
+      AND tc.constraint_name = kcu.constraint_name
+      AND tc.table_name = kcu.table_name
+     WHERE tc.table_schema = 'public'
+       AND tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY')`,
+  )
+  const constraintTypes = new Map<string, Set<string>>()
+
+  for (const row of constraintRows) {
+    const key = `${row.table_name}.${row.column_name}`
+    const types = constraintTypes.get(key) ?? new Set<string>()
+    types.add(row.constraint_type)
+    constraintTypes.set(key, types)
+  }
+
+  const missingPrimaryKeys = UUID_PRIMARY_KEY_TABLES.flatMap((table) => {
+    const key = `${table}.id`
+    return constraintTypes.get(key)?.has('PRIMARY KEY') ? [] : [key]
+  })
+  const missingForeignKeys = UUID_RELATION_COLUMNS.flatMap(([table, column]) => {
+    const key = `${table}.${column}`
+    return constraintTypes.get(key)?.has('FOREIGN KEY') ? [] : [key]
+  })
+  const articleTagPrimaryKeyColumns = ['article_id', 'tag_id']
+  const missingArticleTagPrimaryKey = articleTagPrimaryKeyColumns.flatMap((column) => {
+    const key = `article_tags.${column}`
+    return constraintTypes.get(key)?.has('PRIMARY KEY') ? [] : [key]
+  })
+  const invalidConstraints = [
+    ...missingPrimaryKeys.map(key => `${key}=missing primary key`),
+    ...missingForeignKeys.map(key => `${key}=missing foreign key`),
+    ...missingArticleTagPrimaryKey.map(key => `${key}=missing composite primary key`),
+  ]
+
+  if (invalidTypes.length > 0 || invalidDefaults.length > 0 || invalidConstraints.length > 0) {
     throw new Error(
-      'UUID migration verification failed. Invalid columns: '
-      + [...invalidTypes, ...invalidDefaults].join(', '),
+      'UUID migration verification failed. Invalid schema: '
+      + [...invalidTypes, ...invalidDefaults, ...invalidConstraints].join(', '),
     )
   }
 }
