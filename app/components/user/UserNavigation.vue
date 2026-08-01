@@ -311,7 +311,7 @@ function toggleTheme() {
     :class="{ drw: isScrolled }"
   >
     <template #prepend>
-      <div class="d-flex align-center justify-space-between pa-4">
+      <div class="d-flex align-center justify-space-between px-2">
         <layout-brand-logo />
         <v-btn
           icon="mdi-close"
@@ -390,25 +390,8 @@ function toggleTheme() {
   margin: 0 6px !important;
 }
 
-#user-nav-drawer {
-  backdrop-filter: blur(20px) brightness(.5) !important;
-  background-color: rgb(var(--v-theme-surface) / .2) !important;
-}
-
 #user-nav-drawer > * {
   width: 99%;
-}
-
-.app-header {
-  background-color: rgb(var(--v-theme-surface) / 0.90) !important;
-  backdrop-filter: blur(10px) brightness(0.75);
-  -webkit-backdrop-filter: blur(10px) brightness(0.75);
-  border-bottom: 1px solid rgb(var(--v-border-color) / 0.10) !important;
-  transition:
-    top 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-    inset-inline 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-    border-radius 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .app-header--floating {
@@ -482,5 +465,130 @@ function toggleTheme() {
     min-width: 50px !important;
   }
 
+}
+
+/* ── App bar: glass background + border ─────────────────────────── */
+.app-header {
+  border-bottom: 1px solid rgb(var(--v-border-color) / 0.10) !important;
+  transition:
+    top            0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    inset-inline   0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius  0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow     0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* ── App bar: floating pill when page is scrolled ───────────────── */
+.app-header--floating {
+  top: 5px !important;
+  inset-inline: 5px !important;
+  width: auto !important;
+  margin: 0 !important;
+  border: 2px solid rgb(var(--v-border-color) / 0.20) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 2px 8px  rgb(0 0 0 / 0.08),
+    0 8px 24px rgb(0 0 0 / 0.10) !important;
+}
+
+/* ── Mobile / Desktop visibility (CSS-only, no hydration flash) ── */
+.app-header__mobile {
+  display: none;
+  padding-inline: 8px;
+}
+
+.app-header__desktop {
+  display: flex;
+}
+
+@media (max-width: 920px) {
+  .app-header__mobile  { display: flex; }
+  .app-header__desktop { display: none; }
+}
+
+/* ── Mobile layout helpers ──────────────────────────────────────── */
+.app-header__side {
+  min-width: 75px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.app-header__actions {
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+[dir="rtl"] .app-header__actions {
+  justify-content: flex-start;
+}
+
+.app-header__mobile-logo {
+  max-width: 100%;
+}
+
+/* ── Button text normalisation ──────────────────────────────────── */
+.app-header__btn-text {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.app-header__nav-btn {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.app-header__nav-btn.v-btn--active {
+  color: rgb(var(--v-theme-primary));
+  background-color: rgb(var(--v-theme-primary) / 0.10);
+  font-weight: 600;
+}
+
+/* ── Dropdown list shadow + border ──────────────────────────────── */
+.app-dropdown {
+  border: 1px solid rgb(var(--v-border-color) / 0.12);
+  box-shadow:
+    0 4px 6px  rgb(0 0 0 / 0.06),
+    0 12px 24px rgb(0 0 0 / 0.10) !important;
+}
+
+/* ── Glass background: fallback first, glass on @supports ── */
+/* ── Header and Drawer ── */
+.app-header,
+#user-nav-drawer {
+  background-color: rgb(var(--v-theme-surface) / 0.94);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .app-header,
+  #user-nav-drawer {
+    /* Define the filter ONCE as a custom property — Lightning CSS
+       does not inline or strip var() references, so both prefixed
+       and unprefixed lines survive the build. */
+    --glass-filter: blur(20px) brightness(0.7);
+
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+
+    background-color: rgb(var(--v-theme-surface) / 0.4);
+  }
+}
+
+/* ── Light mode: saturate keeps colors alive ── */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .v-theme--light .app-header,
+  .v-theme--light #user-nav-drawer {
+    --glass-filter: blur(20px) saturate(180%);
+    background-color: rgb(var(--v-theme-surface) / 0.7);
+  }
+}
+
+/* ── Dark mode: brightness dims the backdrop ── */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .v-theme--dark .app-header,
+  .v-theme--dark #user-nav-drawer {
+    --glass-filter: blur(20px) brightness(0.7);
+    background-color: rgb(var(--v-theme-surface) / 0.5);
+  }
 }
 </style>
