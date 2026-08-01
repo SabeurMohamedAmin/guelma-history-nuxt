@@ -1,4 +1,3 @@
-```vue
 <script setup lang="ts">
 import type { ArticleResponse, PaginatedResponse } from '~~/server/types/article.types'
 
@@ -133,7 +132,7 @@ const homePositionOptions = [
 ]
 
 /* -------------------------------------------------------------------------- */
-/* Derived UI state                                                           */
+/* Derived state                                                              */
 /* -------------------------------------------------------------------------- */
 
 const pageCount = computed(() => {
@@ -149,7 +148,9 @@ const hasActiveFilters = computed(() => {
 })
 
 const resultStart = computed(() => {
-  if (total.value === 0) return 0
+  if (total.value === 0) {
+    return 0
+  }
 
   return (filters.page - 1) * PER_PAGE + 1
 })
@@ -159,9 +160,13 @@ const resultEnd = computed(() => {
 })
 
 const selectedArticle = computed(() => {
-  if (!deletingSlug.value) return null
+  if (!deletingSlug.value) {
+    return null
+  }
 
-  return articles.value.find(article => article.slug === deletingSlug.value) ?? null
+  return articles.value.find(
+    article => article.slug === deletingSlug.value,
+  ) ?? null
 })
 
 const tableHeaders = computed(() => [
@@ -169,31 +174,29 @@ const tableHeaders = computed(() => [
     title: t('article.coverImage'),
     key: 'coverImage',
     sortable: false,
-    width: 88,
+    width: 80,
   },
   {
     title: t('article.titleAr'),
     key: 'titleAr',
     sortable: false,
-    minWidth: 220,
   },
   {
     title: t('article.titleFr'),
     key: 'titleFr',
     sortable: false,
-    minWidth: 220,
   },
   {
     title: t('nav.categories'),
     key: 'category',
     sortable: false,
-    minWidth: 140,
+    width: 150,
   },
   {
     title: t('article.publishedAt'),
     key: 'publishedAt',
     sortable: false,
-    minWidth: 130,
+    width: 150,
   },
   ...(props.setHomePosition
     ? [{
@@ -204,11 +207,11 @@ const tableHeaders = computed(() => [
       }]
     : []),
   {
-    title: t('common.actions'),
+    title: '',
     key: 'actions',
     sortable: false,
     align: 'end' as const,
-    width: props.editable ? 144 : 64,
+    width: props.editable ? 96 : 52,
   },
 ])
 
@@ -294,6 +297,10 @@ function onFilterChange() {
   syncUrl()
 }
 
+function onPageChange() {
+  syncUrl()
+}
+
 function toggleSortOrder() {
   filters.sortOrder = filters.sortOrder === 'asc'
     ? 'desc'
@@ -337,8 +344,8 @@ async function loadArticles() {
   const result = await props.fetcher({
     page: filters.page,
     limit: PER_PAGE,
-    search: filters.search.length >= SEARCH_MIN_CHARS
-      ? filters.search
+    search: filters.search.trim().length >= SEARCH_MIN_CHARS
+      ? filters.search.trim()
       : undefined,
     category: filters.category || undefined,
     status: props.showStatusFilter
@@ -373,7 +380,9 @@ function promptDelete(slug: string) {
 }
 
 function closeDeleteDialog() {
-  if (deleting.value) return
+  if (deleting.value) {
+    return
+  }
 
   deleteDialog.value = false
   deletingSlug.value = null
@@ -394,13 +403,14 @@ async function onDeleteConfirm() {
     await props.deleteArticle(deletingSlug.value)
 
     notify(t('admin.articleDeleted'))
-    closeDeleteDialog()
 
-    /*
-     * Avoid leaving the user on an empty page after deleting the
-     * last article on that page.
-     */
-    if (articles.value.length === 1 && filters.page > 1) {
+    const shouldGoToPreviousPage
+      = articles.value.length === 1 && filters.page > 1
+
+    deleteDialog.value = false
+    deletingSlug.value = null
+
+    if (shouldGoToPreviousPage) {
       filters.page -= 1
       syncUrl()
       return
@@ -417,14 +427,16 @@ async function onDeleteConfirm() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Home placement                                                             */
+/* Home page placement                                                        */
 /* -------------------------------------------------------------------------- */
 
 async function updateHomePosition(
   article: ArticleResponse,
   position: number | null,
 ) {
-  if (!props.setHomePosition) return
+  if (!props.setHomePosition) {
+    return
+  }
 
   updatingHomeSlug.value = article.slug
 
@@ -509,15 +521,15 @@ onMounted(() => {
         color="primary"
         prepend-icon="mdi-plus"
         rounded="lg"
-        class="flex-grow-0"
       >
         {{ t('admin.newArticle') }}
       </v-btn>
     </header>
 
-    <!-- Section navigation -->
+    <!-- Article views -->
     <v-card
-      variant="outlined"
+      variant="flat"
+      :ripple="false"
       rounded="lg"
       class="mb-5 overflow-hidden"
     >
@@ -550,28 +562,25 @@ onMounted(() => {
       type="error"
       variant="tonal"
       rounded="lg"
-      closable
       class="mb-5"
     >
-      <template #title>
-        {{ t('common.error') }}
-      </template>
-
       {{ error }}
     </v-alert>
 
     <!-- Filters -->
     <v-card
-      variant="outlined"
+      variant="flat"
+      :ripple="false"
       rounded="lg"
       class="mb-5"
     >
-      <v-card-item class="pb-2">
+      <v-card-item>
         <template #prepend>
           <v-avatar
             color="primary"
             variant="tonal"
             size="36"
+            rounded="lg"
           >
             <v-icon
               icon="mdi-tune-variant"
@@ -604,23 +613,22 @@ onMounted(() => {
         </template>
       </v-card-item>
 
-      <v-card-text>
+      <v-card-text class="pt-2">
         <v-row>
           <!-- Search -->
           <v-col
             cols="12"
-            :md="showStatusFilter ? 4 : 5"
+            lg="4"
           >
             <v-text-field
               v-model="filters.search"
               :label="t('common.search')"
-              :placeholder="t('common.search')"
               :hint="t('articles.searchHint', { min: SEARCH_MIN_CHARS })"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               density="comfortable"
               clearable
-              persistent-hint
+              hide-details="auto"
               autocomplete="off"
               @update:model-value="debouncedSearchSync"
             />
@@ -631,7 +639,7 @@ onMounted(() => {
             v-if="showStatusFilter"
             cols="12"
             sm="6"
-            md="2"
+            lg="2"
           >
             <v-select
               v-model="filters.status"
@@ -649,7 +657,7 @@ onMounted(() => {
           <v-col
             cols="12"
             sm="6"
-            md="3"
+            :lg="showStatusFilter ? 3 : 4"
           >
             <v-select
               v-model="filters.category"
@@ -668,7 +676,7 @@ onMounted(() => {
           <v-col
             cols="9"
             sm="10"
-            md="8"
+            :lg="showStatusFilter ? 2 : 3"
           >
             <v-select
               v-model="filters.sortBy"
@@ -686,8 +694,7 @@ onMounted(() => {
           <v-col
             cols="3"
             sm="2"
-            md="1"
-            class="d-flex align-start"
+            lg="1"
           >
             <v-btn
               :icon="filters.sortOrder === 'asc'
@@ -696,8 +703,8 @@ onMounted(() => {
               :title="t('articles.toggleOrder')"
               :aria-label="t('articles.toggleOrder')"
               variant="outlined"
-              size="default"
               rounded="lg"
+              height="48"
               block
               @click="toggleSortOrder"
             />
@@ -707,10 +714,9 @@ onMounted(() => {
         <!-- Active filters -->
         <div
           v-if="activeChips.length"
-          class="d-flex flex-wrap align-center ga-2 mt-2"
-          aria-label="Active filters"
+          class="d-flex flex-wrap align-center ga-2 mt-3"
         >
-          <span class="text-caption text-medium-emphasis me-1">
+          <span class="text-caption text-medium-emphasis">
             {{ t('articles.filters') }}:
           </span>
 
@@ -729,35 +735,80 @@ onMounted(() => {
       </v-card-text>
     </v-card>
 
-    <!-- Articles -->
-    <v-card
-      variant="outlined"
-      rounded="lg"
-      class="overflow-hidden"
+    <!-- Articles list -->
+    <section
+      class="articles-section"
+      aria-labelledby="articles-list-title"
     >
-      <!-- Table toolbar -->
-      <v-card-item class="border-b">
-        <v-card-title class="text-subtitle-1 font-weight-bold">
-          {{ t('admin.articles') }}
-        </v-card-title>
+      <v-card
+        variant="flat"
+        :ripple="false"
+        rounded="lg"
+        class="overflow-hidden py-2 mb-5"
+      >
+        <!-- List header -->
+        <v-card-item class="py-4">
+          <template #prepend>
+            <v-avatar
+              color="primary"
+              variant="tonal"
+              size="38"
+              rounded="lg"
+            >
+              <v-icon
+                icon="mdi-file-document-multiple-outline"
+                size="20"
+              />
+            </v-avatar>
+          </template>
 
-        <v-card-subtitle v-if="total">
-          {{ resultStart }}–{{ resultEnd }} / {{ total }}
-        </v-card-subtitle>
+          <v-card-title
+            id="articles-list-title"
+            class="text-subtitle-1 font-weight-bold"
+          >
+            {{ t('admin.articles') }}
+          </v-card-title>
 
-        <template #append>
-          <v-progress-circular
-            v-if="loading"
-            indeterminate
-            color="primary"
-            size="22"
-            width="2"
-            aria-label="Loading articles"
-          />
-        </template>
-      </v-card-item>
+          <v-card-subtitle>
+            <template v-if="total">
+              {{ resultStart }}–{{ resultEnd }} / {{ total }}
+            </template>
 
-      <div class="table-wrapper">
+            <template v-else-if="!loading">
+              {{ t('common.noResults') }}
+            </template>
+          </v-card-subtitle>
+
+          <template #append>
+            <div class="d-flex align-center ga-2">
+              <v-chip
+                v-if="activeChips.length"
+                color="primary"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-filter-outline"
+              >
+                {{ activeChips.length }}
+              </v-chip>
+
+              <v-progress-circular
+                v-if="loading"
+                indeterminate
+                color="primary"
+                size="20"
+                width="2"
+                aria-label="Loading articles"
+              />
+            </div>
+          </template>
+        </v-card-item>
+
+        <v-divider />
+
+        <!--
+          Vuetify's data table manages its own horizontal overflow.
+          Do not add another overflow-x wrapper around this component.
+        -->
         <v-data-table
           :headers="tableHeaders"
           :items="articles"
@@ -765,7 +816,7 @@ onMounted(() => {
           item-value="slug"
           hide-default-footer
           hover
-          class="articles-table"
+          class="articles-table "
         >
           <!-- Cover -->
           <template #[`item.coverImage`]="{ item }">
@@ -773,16 +824,16 @@ onMounted(() => {
               v-if="item.coverImage"
               :src="item.coverImage"
               :alt="item.titleFr || item.titleAr"
-              width="72"
-              height="48"
+              width="64"
+              height="44"
               cover
               rounded="lg"
-              class="my-2 bg-surface-variant"
+              class="bg-surface-variant"
             />
 
             <v-avatar
               v-else
-              size="48"
+              size="44"
               rounded="lg"
               color="surface-variant"
               class="my-2"
@@ -801,18 +852,14 @@ onMounted(() => {
               class="article-title"
               dir="rtl"
             >
-              <span class="text-body-2 font-weight-medium">
-                {{ item.titleAr }}
-              </span>
+              {{ item.titleAr }}
             </div>
           </template>
 
           <!-- French title -->
           <template #[`item.titleFr`]="{ item }">
             <div class="article-title">
-              <span class="text-body-2 font-weight-medium">
-                {{ item.titleFr }}
-              </span>
+              {{ item.titleFr }}
             </div>
           </template>
 
@@ -820,54 +867,54 @@ onMounted(() => {
           <template #[`item.category`]="{ item }">
             <v-chip
               v-if="item.category"
-              size="small"
               color="primary"
               variant="tonal"
+              size="small"
             >
-              {{ locale === 'fr'
-                ? item.category.nameFr
-                : item.category.nameAr
+              {{
+                locale === 'fr'
+                  ? item.category.nameFr
+                  : item.category.nameAr
               }}
             </v-chip>
 
             <span
               v-else
               class="text-medium-emphasis"
-              aria-label="No category"
             >
               —
             </span>
           </template>
 
-          <!-- Publication status/date -->
+          <!-- Published -->
           <template #[`item.publishedAt`]="{ item }">
             <div
               v-if="item.publishedAt"
-              class="d-flex align-center ga-2"
+              class="d-flex align-center ga-2 text-no-wrap"
             >
               <v-icon
                 icon="mdi-check-circle-outline"
                 color="success"
-                size="18"
+                size="17"
               />
 
-              <span class="text-body-2 text-no-wrap">
+              <span class="text-body-2">
                 {{ formatDate(item.publishedAt) }}
               </span>
             </div>
 
             <v-chip
               v-else
-              size="small"
               color="warning"
               variant="tonal"
+              size="small"
               prepend-icon="mdi-file-edit-outline"
             >
               {{ t('admin.draft') }}
             </v-chip>
           </template>
 
-          <!-- Home page position -->
+          <!-- Home position -->
           <template #[`item.homePosition`]="{ item }">
             <v-select
               :model-value="item.homePosition"
@@ -878,13 +925,15 @@ onMounted(() => {
               variant="outlined"
               hide-details
               aria-label="Home page position"
+              class="home-position-select"
               @update:model-value="updateHomePosition(item, $event)"
             />
           </template>
 
           <!-- Actions -->
           <template #[`item.actions`]="{ item }">
-            <div class="d-flex align-center justify-end ga-1">
+            <div class="d-flex align-center justify-end">
+              <!-- Public article -->
               <v-tooltip :text="t('article.viewArticle')">
                 <template #activator="{ props: tooltipProps }">
                   <v-btn
@@ -900,82 +949,89 @@ onMounted(() => {
                 </template>
               </v-tooltip>
 
-              <template v-if="editable">
-                <v-tooltip :text="t('common.edit')">
-                  <template #activator="{ props: tooltipProps }">
-                    <v-btn
-                      v-bind="tooltipProps"
-                      :to="{
-                        path: localePath(`${editBasePath}/${item.slug}`),
-                        query: route.query,
-                      }"
-                      :aria-label="`${t('common.edit')}: ${item.titleFr || item.titleAr}`"
-                      icon="mdi-pencil-outline"
-                      variant="text"
-                      size="small"
-                    />
-                  </template>
-                </v-tooltip>
+              <!-- Edit / Delete -->
+              <v-menu v-if="editable">
+                <template #activator="{ props: menuProps }">
+                  <v-btn
+                    v-bind="menuProps"
+                    icon="mdi-dots-vertical"
+                    variant="text"
+                    size="small"
+                    :aria-label="t('common.actions')"
+                  />
+                </template>
 
-                <v-tooltip :text="t('common.delete')">
-                  <template #activator="{ props: tooltipProps }">
-                    <v-btn
-                      v-bind="tooltipProps"
-                      :aria-label="`${t('common.delete')}: ${item.titleFr || item.titleAr}`"
-                      icon="mdi-delete-outline"
-                      variant="text"
-                      size="small"
-                      color="error"
-                      @click="promptDelete(item.slug)"
-                    />
-                  </template>
-                </v-tooltip>
-              </template>
+                <v-list
+                  density="compact"
+                  min-width="180"
+                  rounded="lg"
+                >
+                  <v-list-item
+                    :to="{
+                      path: localePath(`${editBasePath}/${item.slug}`),
+                      query: route.query,
+                    }"
+                    prepend-icon="mdi-pencil-outline"
+                    :title="t('common.edit')"
+                  />
+
+                  <v-divider class="my-1" />
+
+                  <v-list-item
+                    prepend-icon="mdi-delete-outline"
+                    :title="t('common.delete')"
+                    base-color="error"
+                    @click="promptDelete(item.slug)"
+                  />
+                </v-list>
+              </v-menu>
             </div>
           </template>
 
           <!-- Loading -->
           <template #loading>
-            <div class="pa-6">
+            <div class="pa-4">
               <v-skeleton-loader
                 v-for="index in 5"
                 :key="index"
                 type="list-item-avatar-two-line"
-                class="mb-1"
               />
             </div>
           </template>
 
           <!-- Empty state -->
           <template #no-data>
-            <div class="d-flex flex-column align-center justify-center text-center px-4 py-12">
+            <div class="empty-state">
               <v-avatar
-                size="64"
                 color="primary"
                 variant="tonal"
+                size="64"
                 class="mb-4"
               >
                 <v-icon
-                  icon="mdi-file-document-outline"
+                  icon="mdi-file-document-search-outline"
                   size="30"
                 />
               </v-avatar>
 
-              <h2 class="text-h6 font-weight-medium mb-1">
+              <h3 class="text-h6 font-weight-bold mb-1">
                 {{ t('common.noResults') }}
-              </h2>
+              </h3>
 
               <p class="text-body-2 text-medium-emphasis mb-5">
-                {{ hasActiveFilters
-                  ? t('articles.clearFilters')
-                  : t('admin.articles')
-                }}
+                <template v-if="hasActiveFilters">
+                  No articles match the current filters.
+                </template>
+
+                <template v-else>
+                  There are no articles to display yet.
+                </template>
               </p>
 
               <v-btn
                 v-if="hasActiveFilters"
-                variant="tonal"
                 color="primary"
+                variant="tonal"
                 prepend-icon="mdi-filter-off-outline"
                 @click="clearFilters"
               >
@@ -993,28 +1049,29 @@ onMounted(() => {
             </div>
           </template>
         </v-data-table>
-      </div>
-    </v-card>
 
-    <!-- Pagination -->
-    <nav
-      v-if="pageCount > 1"
-      class="d-flex flex-column flex-sm-row align-center justify-space-between ga-3 mt-5"
-      aria-label="Article pagination"
-    >
-      <span class="text-body-2 text-medium-emphasis">
-        {{ resultStart }}–{{ resultEnd }} / {{ total }}
-      </span>
+        <!-- Pagination -->
+        <template v-if="pageCount > 1">
+          <v-divider />
 
-      <v-pagination
-        v-model="filters.page"
-        :length="pageCount"
-        :total-visible="7"
-        density="comfortable"
-        rounded="circle"
-        @update:model-value="syncUrl"
-      />
-    </nav>
+          <div class="pagination-bar d-flex align-center justify-space-between ga-4 px-4 py-3">
+            <span class="text-caption text-medium-emphasis text-no-wrap">
+              {{ resultStart }}–{{ resultEnd }} / {{ total }}
+            </span>
+
+            <v-pagination
+              v-model="filters.page"
+              :length="pageCount"
+              :total-visible="5"
+              density="compact"
+              rounded="circle"
+              aria-label="Article pagination"
+              @update:model-value="onPageChange"
+            />
+          </div>
+        </template>
+      </v-card>
+    </section>
 
     <!-- Delete confirmation -->
     <v-dialog
@@ -1041,26 +1098,64 @@ onMounted(() => {
           <v-card-title class="text-h6 font-weight-bold">
             {{ t('admin.confirmDelete') }}
           </v-card-title>
+
+          <v-card-subtitle>
+            {{ t('admin.confirmDeleteText') }}
+          </v-card-subtitle>
         </v-card-item>
 
-        <v-card-text class="px-5 pt-4">
-          <p class="text-body-2 text-medium-emphasis mb-3">
-            {{ t('admin.confirmDeleteText') }}
-          </p>
-
+        <v-card-text
+          v-if="selectedArticle"
+          class="px-5 pt-4"
+        >
           <v-sheet
-            v-if="selectedArticle"
             color="surface-variant"
             rounded="lg"
-            class="pa-3"
+            class="d-flex align-center ga-3 pa-3"
           >
-            <div class="text-body-2 font-weight-medium">
-              {{ selectedArticle.titleFr || selectedArticle.titleAr }}
+            <v-img
+              v-if="selectedArticle.coverImage"
+              :src="selectedArticle.coverImage"
+              :alt="selectedArticle.titleFr || selectedArticle.titleAr"
+              width="56"
+              height="42"
+              cover
+              rounded="lg"
+              class="flex-grow-0"
+            />
+
+            <v-avatar
+              v-else
+              size="42"
+              rounded="lg"
+              color="surface"
+            >
+              <v-icon
+                icon="mdi-file-document-outline"
+                size="20"
+              />
+            </v-avatar>
+
+            <div class="min-width-0">
+              <div class="text-body-2 font-weight-medium text-truncate">
+                {{ selectedArticle.titleFr || selectedArticle.titleAr }}
+              </div>
+
+              <div
+                v-if="selectedArticle.category"
+                class="text-caption text-medium-emphasis mt-1"
+              >
+                {{
+                  locale === 'fr'
+                    ? selectedArticle.category.nameFr
+                    : selectedArticle.category.nameAr
+                }}
+              </div>
             </div>
           </v-sheet>
         </v-card-text>
 
-        <v-card-actions class="px-5 pb-5">
+        <v-card-actions class="px-5 pb-5 pt-4">
           <v-spacer />
 
           <v-btn
@@ -1119,28 +1214,60 @@ onMounted(() => {
 <style scoped>
 .articles-page {
   width: 100%;
+  min-width: 0;
+}
+
+.articles-section {
+  width: 100%;
+  min-width: 0;
 }
 
 /*
- * Keep long titles readable without allowing them to make
- * the dashboard table excessively wide.
+ * Do not add overflow-x here.
+ * Vuetify's data table already owns the table scroll container.
+ */
+.articles-table {
+  width: 100%;
+}
+
+/*
+ * Allow long titles to wrap instead of making the whole
+ * table unnecessarily wide.
  */
 .article-title {
-  min-width: 0;
-  max-width: 24rem;
+  min-width: 9rem;
+  max-width: 20rem;
   line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
-/*
- * Horizontal scrolling is preferable to squeezing table columns
- * until their content becomes unreadable on smaller screens.
- */
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
+.home-position-select {
+  min-width: 145px;
 }
 
-.articles-table {
-  min-width: 920px;
+.empty-state {
+  display: flex;
+  min-height: 280px;
+  padding: 48px 24px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.pagination-bar {
+  min-height: 60px;
+}
+
+.min-width-0 {
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .pagination-bar {
+    flex-direction: column;
+    justify-content: center;
+  }
 }
 </style>
