@@ -17,7 +17,7 @@
     "test:coverage": "vitest --coverage",
     "test:unit": "vitest --project unit",
     "test:nuxt": "vitest --project nuxt",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "tsx server/db/generate.ts",
     "db:migrate": "tsx server/db/migrate.ts",
     "db:migrate:kit": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

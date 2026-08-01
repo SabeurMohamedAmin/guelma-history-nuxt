@@ -21,9 +21,11 @@ when `0011` is baselined and whenever the database is already up to date, so a
 ledger row cannot hide a partial conversion or later schema drift.
 
 The latest committed Drizzle snapshot predates this hand-written conversion.
-Before running `pnpm db:generate` again, generate and commit a UUID-aware
+Before generating another migration, generate and commit a UUID-aware
 `meta/0011_snapshot.json`; otherwise Drizzle compares against the old integer
-schema and attempts to generate the UUID conversion a second time.
+schema and attempts to generate the UUID conversion a second time. The
+`pnpm db:generate` script checks this requirement and exits before invoking
+Drizzle Kit while the snapshot is missing.
 
 ## 0001_add_author_slug (hand-written)
 
