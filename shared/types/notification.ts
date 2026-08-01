@@ -33,7 +33,7 @@ export interface NotificationItem {
   articleId: string
   /**
    * The article slug, used to build the deep link (/articles/<slug>). Routes
-   * use the slug, not the numeric id. Null only if it was not loaded.
+   * use the slug, not the internal UUID. Null only if it was not loaded.
    */
   articleSlug: string | null
   /** The comment that triggered it, for the `?comment=<uuid>` deep link. */
