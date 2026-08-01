@@ -40,7 +40,7 @@ async function findAdminOrThrow(adminId: string) {
 }
 
 /** Read the full profile for the given admin. */
-export async function getAdminProfile(adminId: number): Promise<AdminProfile> {
+export async function getAdminProfile(adminId: string): Promise<AdminProfile> {
   const admin = await findAdminOrThrow(adminId)
   return {
     id: admin.id,
@@ -54,7 +54,7 @@ export async function getAdminProfile(adminId: number): Promise<AdminProfile> {
   }
 }
 
-export async function getAdminAvatar(adminId: number): Promise<AdminAvatarImage> {
+export async function getAdminAvatar(adminId: string): Promise<AdminAvatarImage> {
   const admin = await findAdminOrThrow(adminId)
 
   if (!admin.avatarData || !admin.avatarMimeType) {
@@ -69,7 +69,7 @@ export async function getAdminAvatar(adminId: number): Promise<AdminAvatarImage>
 }
 
 /** Update the editable display name. */
-export async function updateAdminDisplayName(adminId: number, displayName: string): Promise<AdminProfile> {
+export async function updateAdminDisplayName(adminId: string, displayName: string): Promise<AdminProfile> {
   const trimmed = displayName.trim()
   if (!trimmed) {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Display name cannot be empty.' })
@@ -79,8 +79,8 @@ export async function updateAdminDisplayName(adminId: number, displayName: strin
   return getAdminProfile(adminId)
 }
 
-/** Persist a newly uploaded avatar image directly in the admins table. */
-export async function updateAvatar(adminId: number, data: Buffer, mimeType: string): Promise<AdminProfile> {
+/** Persist a newly uploaded avatar image directly in the users table. */
+export async function updateAvatar(adminId: string, data: Buffer, mimeType: string): Promise<AdminProfile> {
   await db
     .update(users)
     .set({
@@ -99,7 +99,7 @@ export async function updateAvatar(adminId: number, data: Buffer, mimeType: stri
  * and records the change time for the "last password change" display.
  */
 export async function changeAdminPassword(
-  adminId: number,
+  adminId: string,
   currentPassword: string,
   newPassword: string,
 ): Promise<void> {
@@ -134,7 +134,7 @@ export async function changeAdminPassword(
  * email; here it updates directly after re-authentication.
  */
 export async function changeAdminEmail(
-  adminId: number,
+  adminId: string,
   newEmail: string,
   currentPassword: string,
 ): Promise<AdminProfile> {
