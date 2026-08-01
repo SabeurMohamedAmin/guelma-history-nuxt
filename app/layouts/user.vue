@@ -1,20 +1,15 @@
 <script setup lang="ts">
-/**
- * User layout.
- *
- * Self-contained shell for signed-in users, independent of the default layout
- * (same pattern as the admin and author layouts). It renders its own
- * <UserNavigation> navbar, which mirrors the default header but shows the
- * user's profile avatar instead of the login icon.
- */
+const uiStore = useUiStore()
 </script>
 
 <template>
   <v-app>
-    <user-navigation />
-    <layout-app-search />
-    <layout-back-to-top />
+    <layout-app-header show-user-menu />
+
+    <LazyLayoutAppSearch :hydrate-when="uiStore.searchOpen" />
+    <LazyLayoutBackToTop hydrate-on-idle />
     <user-complete-profile-notice />
+
     <v-main>
       <v-container
         fluid
@@ -23,6 +18,7 @@
         <slot></slot>
       </v-container>
     </v-main>
-    <layout-app-footer />
+
+    <LazyLayoutAppFooter hydrate-on-visible />
   </v-app>
 </template>

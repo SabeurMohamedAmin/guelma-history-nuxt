@@ -13,6 +13,12 @@
  */
 import { useTheme } from 'vuetify'
 
+withDefaults(defineProps<{
+  showUserMenu?: boolean
+}>(), {
+  showUserMenu: false,
+})
+
 const { t, locale } = useI18n()
 
 const localePath = useLocalePath()
@@ -143,8 +149,9 @@ watch(
           />
         </v-btn>
 
-        <!-- GUEST: login icon -->
+        <layout-user-menu v-if="showUserMenu" />
         <v-btn
+          v-else
           icon
           variant="text"
           size="small"
@@ -339,8 +346,9 @@ watch(
 
       <layout-locale-switcher class="ms-1 me-1" />
 
-      <!-- GUEST: login icon -->
+      <layout-user-menu v-if="showUserMenu" />
       <v-btn
+        v-else
         icon
         variant="text"
         size="small"
@@ -426,8 +434,8 @@ watch(
     <template #append>
       <v-divider />
       <div class="pa-3 d-flex flex-column ga-2">
-        <!-- GUEST: login button -->
         <v-btn
+          v-if="!showUserMenu"
           :to="loginPath"
           color="primary"
           variant="flat"
