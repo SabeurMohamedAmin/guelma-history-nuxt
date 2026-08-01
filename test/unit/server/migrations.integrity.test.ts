@@ -120,4 +120,15 @@ describe('schema coverage', () => {
     expect(allSql).toContain('SET DATA TYPE UUID')
     expect(allSql).toContain('SET DEFAULT gen_random_uuid()')
   })
+
+  it('does not treat the pre-UUID snapshot as current generator state', () => {
+    const latestEntry = journal.entries.at(-1)
+    expect(latestEntry?.tag).toBe('0011_preserve_data_uuid_keys')
+
+    const latestSnapshot = join(migrationsDir, 'meta', `${String(latestEntry?.idx).padStart(4, '0')}_snapshot.json`)
+    expect(
+      () => readFileSync(latestSnapshot, 'utf8'),
+      'Generate and commit a UUID-aware 0011 snapshot before running db:generate again.',
+    ).not.toThrow()
+  })
 })
