@@ -17,6 +17,7 @@ ALTER TABLE users DROP CONSTRAINT IF EXISTS users_author_id_authors_id_fk;
 ALTER TABLE password_reset_tokens DROP CONSTRAINT IF EXISTS password_reset_tokens_user_id_users_id_fk;
 ALTER TABLE user_oauth_accounts DROP CONSTRAINT IF EXISTS user_oauth_accounts_user_id_users_id_fk;
 ALTER TABLE comments DROP CONSTRAINT IF EXISTS comments_article_id_articles_id_fk;
+ALTER TABLE comments DROP CONSTRAINT IF EXISTS comments_parent_id_comments_id_fk;
 ALTER TABLE comments DROP CONSTRAINT IF EXISTS comments_author_id_users_id_fk;
 ALTER TABLE comment_votes DROP CONSTRAINT IF EXISTS comment_votes_comment_id_comments_id_fk;
 ALTER TABLE comment_votes DROP CONSTRAINT IF EXISTS comment_votes_user_id_users_id_fk;
@@ -28,6 +29,7 @@ ALTER TABLE notification_mutes DROP CONSTRAINT IF EXISTS notification_mutes_arti
 ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_recipient_id_users_id_fk;
 ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_actor_id_users_id_fk;
 ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_article_id_articles_id_fk;
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_comment_id_comments_id_fk;
 ALTER TABLE bookmarks DROP CONSTRAINT IF EXISTS bookmarks_user_id_users_id_fk;
 ALTER TABLE bookmarks DROP CONSTRAINT IF EXISTS bookmarks_article_id_articles_id_fk;
 ALTER TABLE newsletter_article_emails DROP CONSTRAINT IF EXISTS newsletter_article_emails_article_id_articles_id_fk;
@@ -168,6 +170,7 @@ ALTER TABLE article_tags ADD CONSTRAINT article_tags_article_id_tag_id_pk PRIMAR
 ALTER TABLE password_reset_tokens ADD CONSTRAINT password_reset_tokens_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE user_oauth_accounts ADD CONSTRAINT user_oauth_accounts_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE comments ADD CONSTRAINT comments_article_id_articles_id_fk FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE;
+ALTER TABLE comments ADD CONSTRAINT comments_parent_id_comments_id_fk FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE;
 ALTER TABLE comments ADD CONSTRAINT comments_author_id_users_id_fk FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE comment_votes ADD CONSTRAINT comment_votes_comment_id_comments_id_fk FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE;
 ALTER TABLE comment_votes ADD CONSTRAINT comment_votes_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
@@ -179,6 +182,7 @@ ALTER TABLE notification_mutes ADD CONSTRAINT notification_mutes_comment_id_comm
 ALTER TABLE notifications ADD CONSTRAINT notifications_recipient_id_users_id_fk FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE notifications ADD CONSTRAINT notifications_actor_id_users_id_fk FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE notifications ADD CONSTRAINT notifications_article_id_articles_id_fk FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE;
+ALTER TABLE notifications ADD CONSTRAINT notifications_comment_id_comments_id_fk FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE;
 ALTER TABLE bookmarks ADD CONSTRAINT bookmarks_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE bookmarks ADD CONSTRAINT bookmarks_article_id_articles_id_fk FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE;
 ALTER TABLE newsletter_article_emails ADD CONSTRAINT newsletter_article_emails_article_id_articles_id_fk FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE;
