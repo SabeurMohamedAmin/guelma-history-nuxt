@@ -10,8 +10,8 @@ import { requireRole } from '~~/server/utils/auth'
  *
  * The API boundary references articles by their PUBLIC SLUG (stable, readable,
  * URL-friendly) — never by the internal database id. Each function resolves
- * the slug to the internal id once, up front, and 404s when the article is
- * gone; the numeric id never leaves this layer.
+ * the slug to the internal UUID once, up front, and 404s when the article is
+ * gone; the UUID never leaves this layer.
  *
  * Every function resolves the acting user from the session via
  * `requireRole(event, 'user')` (401 when there is no session) — the user id is
@@ -37,7 +37,7 @@ export interface BookmarkListItem {
   savedAt: Date
 }
 
-/** Resolve an article's public slug to its internal id, or throw 404. */
+/** Resolve an article's public slug to its internal UUID, or throw 404. */
 async function findArticleIdBySlug(articleSlug: string): Promise<string> {
   const article = await db.query.articles.findFirst({
     where: eq(articles.slug, articleSlug),

@@ -148,7 +148,7 @@ export async function emitCommentNotifications(created: CreatedCommentInput): Pr
       .returning()
 
     // Look up the article slug once so the realtime payload can deep-link to
-    // /articles/<slug> (routes use the slug, not the numeric id).
+    // /articles/<slug> (routes use the slug, not the internal UUID).
     const articleForLink = await db.query.articles.findFirst({
       where: eq(articles.id, created.articleId),
       columns: { slug: true },
@@ -180,7 +180,7 @@ export interface SerializedNotification {
   isRead: boolean
   articleId: string
   // The article slug, used to build the deep link (/articles/<slug>). Routes use
-  // the slug, not the numeric id. Null only if the article relation was not
+  // the slug, not the internal UUID. Null only if the article relation was not
   // loaded for this payload.
   articleSlug: string | null
   commentId: string
@@ -261,7 +261,7 @@ export async function listNotifications(
     with: {
       actor: { columns: { id: true, username: true, displayName: true } },
       // The slug builds the deep link (/articles/<slug>), since routes use the
-      // slug rather than the numeric id.
+      // slug rather than the internal UUID.
       article: { columns: { slug: true } },
     },
   })
