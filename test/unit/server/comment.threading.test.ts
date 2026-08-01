@@ -7,46 +7,53 @@ import { buildCommentPath, parseAncestorIds } from '~~/server/utils/comments'
  * with a single `path LIKE 'id/%'` query, so they are worth pinning down
  * independently of the database.
  *
- * Comment ids are uuid STRINGS in production. Short strings ('a', 'b', ...)
- * are used here for readability; the helpers only rely on ids never
- * containing '/', which holds for uuids.
+ * Fixtures use canonical UUID strings so tests exercise the production path
+ * representation instead of teaching callers to use ad-hoc identifiers.
  */
+
+const rootId = '20000000-0000-4000-8000-000000000001'
+const childId = '20000000-0000-4000-8000-000000000002'
+const grandchildId = '20000000-0000-4000-8000-000000000003'
+const fourthId = '20000000-0000-4000-8000-000000000004'
 
 describe('buildCommentPath', () => {
   it('uses just the id for a root comment (no parent path)', () => {
-    expect(buildCommentPath('', 'a')).toBe('a')
+    expect(buildCommentPath('', rootId)).toBe(rootId)
   })
 
   it('appends the id to a parent path for a reply', () => {
-    expect(buildCommentPath('a', 'b')).toBe('a/b')
+    expect(buildCommentPath(rootId, childId)).toBe(`${rootId}/${childId}`)
   })
 
   it('keeps appending for deeper nesting', () => {
-    expect(buildCommentPath('a/b', 'c')).toBe('a/b/c')
-    expect(buildCommentPath('a/b/c', 'd')).toBe('a/b/c/d')
+    const childPath = `${rootId}/${childId}`
+    const grandchildPath = `${childPath}/${grandchildId}`
+    expect(buildCommentPath(childPath, grandchildId)).toBe(grandchildPath)
+    expect(buildCommentPath(grandchildPath, fourthId)).toBe(`${grandchildPath}/${fourthId}`)
   })
 })
 
 describe('parseAncestorIds', () => {
   it('returns an empty list for a root comment', () => {
-    expect(parseAncestorIds('a', 'a')).toEqual([])
+    expect(parseAncestorIds(rootId, rootId)).toEqual([])
   })
 
   it('returns ancestors root-first, excluding the comment itself', () => {
-    expect(parseAncestorIds('a/b/c', 'c')).toEqual(['a', 'b'])
+    expect(parseAncestorIds(`${rootId}/${childId}/${grandchildId}`, grandchildId))
+      .toEqual([rootId, childId])
   })
 
   it('handles a single-parent reply', () => {
-    expect(parseAncestorIds('a/b', 'b')).toEqual(['a'])
+    expect(parseAncestorIds(`${rootId}/${childId}`, childId)).toEqual([rootId])
   })
 
   it('round-trips with buildCommentPath', () => {
-    const path = buildCommentPath(buildCommentPath('a', 'b'), 'c')
-    expect(path).toBe('a/b/c')
-    expect(parseAncestorIds(path, 'c')).toEqual(['a', 'b'])
+    const path = buildCommentPath(buildCommentPath(rootId, childId), grandchildId)
+    expect(path).toBe(`${rootId}/${childId}/${grandchildId}`)
+    expect(parseAncestorIds(path, grandchildId)).toEqual([rootId, childId])
   })
 
   it('drops empty path segments defensively', () => {
-    expect(parseAncestorIds('a//c', 'c')).toEqual(['a'])
+    expect(parseAncestorIds(`${rootId}//${grandchildId}`, grandchildId)).toEqual([rootId])
   })
 })
