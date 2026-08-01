@@ -21,6 +21,7 @@ definePageMeta({
 // UI state
 const saving = ref(false)
 const errorMessage = ref<string | null>(null)
+const fieldErrors = reactive<Partial<Record<'username' | 'password', string>>>({})
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
@@ -38,9 +39,18 @@ const avatarInitial = computed(() =>
 
 // Validation rules mirror the server-side schema so the user gets instant
 // feedback before submitting.
-const usernameTooShort = computed(() =>
-  form.username.length > 0 && form.username.trim().length < 3,
-)
+const usernameError = computed(() => {
+  const username = form.username.trim()
+
+  if (!username) return fieldErrors.username ?? ''
+  if (username.length < 3) return t('auth.usernameMinLength')
+  if (username.length > 30) return 'Username must be at most 30 characters'
+  if (!/^[a-z0-9_.]+$/i.test(username)) {
+    return 'Username may only contain letters, numbers, dot and underscore'
+  }
+
+  return fieldErrors.username ?? ''
+})
 
 const passwordTooShort = computed(() =>
   form.password.length > 0 && form.password.length < 8,
@@ -52,16 +62,29 @@ const passwordMismatch = computed(() =>
 
 const canSubmit = computed(() =>
   form.username.trim().length >= 3
+  && form.username.trim().length <= 30
+  && /^[a-z0-9_.]+$/i.test(form.username.trim())
   && form.password.length >= 8
+  && form.password.length <= 200
   && !passwordMismatch.value
   && !saving.value,
 )
+
+watch(() => form.username, () => {
+  fieldErrors.username = undefined
+})
+
+watch(() => form.password, () => {
+  fieldErrors.password = undefined
+})
 
 async function onSubmit() {
   if (!canSubmit.value) return
 
   saving.value = true
   errorMessage.value = null
+  fieldErrors.username = undefined
+  fieldErrors.password = undefined
 
   try {
     await $fetch('/api/auth/user/complete-profile', {
@@ -78,7 +101,10 @@ async function onSubmit() {
     router.push(localePath('/'))
   }
   catch (error) {
-    errorMessage.value = getErrorMessage(error, t('auth.completeError'))
+    const response = getErrorResponse(error)
+    errorMessage.value = response?.message ?? t('auth.completeError')
+    fieldErrors.username = response?.errors?.username
+    fieldErrors.password = response?.errors?.password
   }
   finally {
     saving.value = false
@@ -93,13 +119,15 @@ async function onLogout() {
   router.push(localePath('/'))
 }
 
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error && typeof error === 'object' && 'data' in error) {
-    const data = (error as { data?: { message?: string } }).data
-    if (data?.message) return data.message
-  }
+interface CompleteProfileErrorResponse {
+  message?: string
+  errors?: Partial<Record<'username' | 'password', string>>
+}
 
-  return fallback
+function getErrorResponse(error: unknown): CompleteProfileErrorResponse | null {
+  if (!error || typeof error !== 'object' || !('data' in error)) return null
+
+  return (error as { data?: CompleteProfileErrorResponse }).data ?? null
 }
 </script>
 
@@ -146,8 +174,8 @@ function getErrorMessage(error: unknown, fallback: string): string {
         variant="outlined"
         autocomplete="username"
         class="mb-2"
-        :error="usernameTooShort"
-        :error-messages="usernameTooShort ? t('auth.usernameMinLength') : ''"
+        :error="Boolean(usernameError)"
+        :error-messages="usernameError"
       />
 
       <!-- Password -->
@@ -160,8 +188,8 @@ function getErrorMessage(error: unknown, fallback: string): string {
         variant="outlined"
         autocomplete="new-password"
         class="mb-2"
-        :error="passwordTooShort"
-        :error-messages="passwordTooShort ? t('auth.passwordHint') : ''"
+        :error="passwordTooShort || Boolean(fieldErrors.password)"
+        :error-messages="fieldErrors.password || (passwordTooShort ? t('auth.passwordHint') : '')"
         :hint="t('auth.passwordHint')"
         persistent-hint
         @click:append-inner="showPassword = !showPassword"

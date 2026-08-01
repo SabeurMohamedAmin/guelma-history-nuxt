@@ -16,8 +16,26 @@ import { eq } from 'drizzle-orm'
  */
 export default defineEventHandler(async (event) => {
   const session = await requireRole(event, 'user')
-  const input = completeProfileSchema.parse(await readBody(event))
+  const result = completeProfileSchema.safeParse(await readBody(event))
 
+  if (!result.success) {
+    const errors: Partial<Record<'username' | 'password', string>> = {}
+
+    for (const issue of result.error.issues) {
+      const field = issue.path[0]
+      if ((field === 'username' || field === 'password') && !errors[field]) {
+        errors[field] = issue.message
+      }
+    }
+
+    setResponseStatus(event, 422, 'Unprocessable Entity')
+    return {
+      message: 'Please correct the highlighted fields.',
+      errors,
+    }
+  }
+
+  const input = result.data
   const account = await db.query.users.findFirst({
     where: eq(users.id, session.id),
     columns: { profileCompleted: true },
