@@ -109,21 +109,16 @@ function toSlug(value: string): string {
 }
 
 /**
- * Largest value a `serial` (int4) primary key can hold. Categories, authors and
- * articles all use serial ids, so anything above this is not a real id.
- */
-const MAX_SERIAL_ID = 2_147_483_647
-
-/**
  * Normalize a relation id coming from a <v-select> into a number.
  *
  * The options carry numeric ids, but the component can hand the value back as a
- * digit string, while the API expects a number. Values outside 1..MAX_SERIAL_ID
- * (null, '', 0, NaN, a generated key) mean "no relation".
+ * digit string. Some PostgreSQL-compatible providers generate IDs larger than
+ * the signed int32 range, so accept every positive integer JavaScript can
+ * represent safely instead of silently clearing a valid category or author.
  */
 function toId(value: unknown): number | null {
   const id = Number(value)
-  if (Number.isSafeInteger(id) && id > 0 && id <= MAX_SERIAL_ID) return id
+  if (Number.isSafeInteger(id) && id > 0) return id
 
   // null and '' simply mean the select was cleared. Anything else is a value the
   // select should never have produced, so make it loud while developing rather
