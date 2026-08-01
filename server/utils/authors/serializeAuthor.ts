@@ -14,7 +14,7 @@ export type Locale = 'ar' | 'fr'
  * everything internal (timestamps, the raw bilingual columns, ids of accounts).
  */
 export interface PublicAuthor {
-  id: number
+  id: string
   slug: string
   name: string
   bio: string | null

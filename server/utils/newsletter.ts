@@ -253,9 +253,8 @@ export async function sendPublishedArticleNewsletterAlerts(article: PublishedArt
 }
 
 function createUnsubscribeToken(subscriberId: string): string {
-  const id = String(subscriberId)
-  const signature = signUnsubscribePayload(id)
-  return `${id}.${signature}`
+  const signature = signUnsubscribePayload(subscriberId)
+  return `${subscriberId}.${signature}`
 }
 
 function verifyUnsubscribeToken(rawToken: string): string | null {
