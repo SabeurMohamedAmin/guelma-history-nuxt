@@ -14,7 +14,7 @@ import { createPasswordHash, verifyPasswordHash } from './password'
  */
 
 export interface UserProfile {
-  id: number
+  id: string
   username: string
   email: string
   displayName: string | null
@@ -33,7 +33,7 @@ export interface UserAvatarImage {
 const MIN_PASSWORD_LENGTH = 8
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-async function findUserOrThrow(userId: number) {
+async function findUserOrThrow(userId: string) {
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) })
   if (!user) {
     throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found.' })

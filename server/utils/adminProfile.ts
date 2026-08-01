@@ -12,7 +12,7 @@ import { createPasswordHash, verifyPasswordHash } from './password'
  */
 
 export interface AdminProfile {
-  id: number
+  id: string
   username: string
   email: string
   displayName: string | null
@@ -31,7 +31,7 @@ export interface AdminAvatarImage {
 const MIN_PASSWORD_LENGTH = 8
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-async function findAdminOrThrow(adminId: number) {
+async function findAdminOrThrow(adminId: string) {
   const admin = await db.query.users.findFirst({ where: eq(users.id, adminId) })
   if (!admin) {
     throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Admin not found.' })

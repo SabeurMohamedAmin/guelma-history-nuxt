@@ -30,7 +30,7 @@ export interface ContactInput {
 }
 
 export interface VerifiedContactMessage {
-  id: number
+  id: string
   name: string
   email: string
   message: string
@@ -46,7 +46,7 @@ function hashToken(rawToken: string): string {
  * Persist a new (pending) contact message and issue a verification token.
  * Returns the raw token to embed in the verification email link.
  */
-export async function createPendingMessage(input: ContactInput): Promise<{ id: number, rawToken: string }> {
+export async function createPendingMessage(input: ContactInput): Promise<{ id: string, rawToken: string }> {
   const rawToken = randomBytes(TOKEN_BYTES).toString('hex')
   const tokenExpiresAt = new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000)
 
@@ -109,7 +109,7 @@ function parseAttachments(value: string | null): ContactAttachment[] {
 }
 
 /** Mark a verified message as delivered to the owner. */
-export async function markMessageDelivered(id: number): Promise<void> {
+export async function markMessageDelivered(id: string): Promise<void> {
   await db
     .update(contactMessages)
     .set({ status: 'delivered', updatedAt: new Date() })
