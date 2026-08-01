@@ -174,42 +174,6 @@ const UUID_RELATION_COLUMNS = [
   ...EXISTING_UUID_RELATION_COLUMNS,
 ] as const
 
-/* Full list, kept explicit above by migration origin for safe preflight checks. */
-/*
-const UUID_RELATION_COLUMNS_LEGACY = [
-  ['categories', 'parent_id'],
-  ['users', 'author_id'],
-  ['articles', 'category_id'],
-  ['articles', 'author_id'],
-  ['articles', 'created_by_user_id'],
-  ['article_comments', 'article_id'],
-  ['article_correction_requests', 'article_id'],
-  ['article_media', 'article_id'],
-  ['article_tags', 'article_id'],
-  ['article_tags', 'tag_id'],
-  ['password_reset_tokens', 'user_id'],
-  ['user_oauth_accounts', 'user_id'],
-  ['comments', 'article_id'],
-  ['comments', 'parent_id'],
-  ['comments', 'author_id'],
-  ['comment_votes', 'comment_id'],
-  ['comment_votes', 'user_id'],
-  ['comment_flags', 'comment_id'],
-  ['comment_flags', 'reporter_id'],
-  ['notification_mutes', 'user_id'],
-  ['notification_mutes', 'article_id'],
-  ['notification_mutes', 'comment_id'],
-  ['notifications', 'recipient_id'],
-  ['notifications', 'actor_id'],
-  ['notifications', 'article_id'],
-  ['notifications', 'comment_id'],
-  ['bookmarks', 'user_id'],
-  ['bookmarks', 'article_id'],
-  ['newsletter_article_emails', 'article_id'],
-  ['newsletter_article_emails', 'subscriber_id'],
-] as const
-*/
-
 async function assertUuidMigrationSourceSchema(): Promise<void> {
   const rows = await sql.unsafe<{
     table_name: string
