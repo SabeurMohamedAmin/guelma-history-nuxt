@@ -1,20 +1,11 @@
-import { z } from 'zod'
 import { db } from '~~/server/db'
 import { categories } from '~~/server/db/schema'
-
-const createCategorySchema = z.object({
-  nameAr: z.string().trim().min(1),
-  nameFr: z.string().trim().min(1),
-  slug: z.string().trim().min(1),
-  descriptionAr: z.string().nullable().optional(),
-  descriptionFr: z.string().nullable().optional(),
-  icon: z.string().nullable().optional(),
-  coverImage: z.string().nullable().optional(),
-  parentId: z.string().uuid().nullable().optional(),
-})
+import { createCategorySchema } from '~~/server/validators/category.validator'
+import { validateCategoryParent } from '~~/server/utils/categories'
 
 export default defineEventHandler(async (event) => {
   const body = createCategorySchema.parse(await readBody(event))
+  await validateCategoryParent(undefined, body.parentId)
 
   const [created] = await db.insert(categories).values({
     nameAr: body.nameAr,
