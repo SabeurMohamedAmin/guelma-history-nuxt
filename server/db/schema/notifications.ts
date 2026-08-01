@@ -1,4 +1,4 @@
-import { pgTable, uuid, integer, text, timestamp, index } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, index } from 'drizzle-orm/pg-core'
 import { articles } from './articles'
 import { comments } from './comments'
 import { users } from './users'
@@ -35,11 +35,11 @@ export const notifications = pgTable('notifications', {
   // a guessable, enumerable counter and cannot be walked from a URL.
   id: uuid('id').primaryKey().defaultRandom(),
   // The user who sees this notification.
-  recipientId: integer('recipient_id')
+  recipientId: uuid('recipient_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   // The user whose action caused it (drives "X commented on your article").
-  actorId: integer('actor_id')
+  actorId: uuid('actor_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   // What happened, so the client can pick the right message:
@@ -51,7 +51,7 @@ export const notifications = pgTable('notifications', {
     enum: ['article_comment', 'comment_reply', 'article_thread_activity'],
   }).notNull(),
   // Deep-link target: the article the discussion belongs to.
-  articleId: integer('article_id')
+  articleId: uuid('article_id')
     .notNull()
     .references(() => articles.id, { onDelete: 'cascade' }),
   // The comment that triggered this notification, for the `?comment=` deep link.

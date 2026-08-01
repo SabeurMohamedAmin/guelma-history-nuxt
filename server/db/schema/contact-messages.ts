@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, text, uuid, timestamp } from 'drizzle-orm/pg-core'
 
 /**
  * Contact form submissions.
@@ -13,7 +13,7 @@ import { pgTable, text, serial, timestamp } from 'drizzle-orm/pg-core'
  * (`tokenExpiresAt`).
  */
 export const contactMessages = pgTable('contact_messages', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   email: text('email').notNull(),
   message: text('message').notNull(),
