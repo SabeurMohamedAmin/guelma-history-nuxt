@@ -103,26 +103,57 @@ async function recordApplied(entry: JournalEntry, hash: string): Promise<void> {
  * partially converted database would hash UUID text and break relationships, so
  * refuse to start unless every converted primary key still has an integer type.
  */
+const UUID_PRIMARY_KEY_TABLES = [
+  'authors',
+  'categories',
+  'users',
+  'articles',
+  'tags',
+  'article_comments',
+  'article_correction_requests',
+  'article_media',
+  'bookmarks',
+  'comment_votes',
+  'comment_flags',
+  'notification_mutes',
+  'subscribers',
+  'newsletter_article_emails',
+  'contact_messages',
+  'user_oauth_accounts',
+  'password_reset_tokens',
+] as const
+
+/** Foreign-key columns converted from integers by migration 0011. */
+const UUID_RELATION_COLUMNS = [
+  ['categories', 'parent_id'],
+  ['users', 'author_id'],
+  ['articles', 'category_id'],
+  ['articles', 'author_id'],
+  ['articles', 'created_by_user_id'],
+  ['article_comments', 'article_id'],
+  ['article_correction_requests', 'article_id'],
+  ['article_media', 'article_id'],
+  ['article_tags', 'article_id'],
+  ['article_tags', 'tag_id'],
+  ['password_reset_tokens', 'user_id'],
+  ['user_oauth_accounts', 'user_id'],
+  ['comments', 'article_id'],
+  ['comments', 'author_id'],
+  ['comment_votes', 'user_id'],
+  ['comment_flags', 'reporter_id'],
+  ['notification_mutes', 'user_id'],
+  ['notification_mutes', 'article_id'],
+  ['notifications', 'recipient_id'],
+  ['notifications', 'actor_id'],
+  ['notifications', 'article_id'],
+  ['bookmarks', 'user_id'],
+  ['bookmarks', 'article_id'],
+  ['newsletter_article_emails', 'article_id'],
+  ['newsletter_article_emails', 'subscriber_id'],
+] as const
+
 async function assertUuidMigrationSourceSchema(): Promise<void> {
-  const expectedTables = [
-    'authors',
-    'categories',
-    'users',
-    'articles',
-    'tags',
-    'article_comments',
-    'article_correction_requests',
-    'article_media',
-    'bookmarks',
-    'comment_votes',
-    'comment_flags',
-    'notification_mutes',
-    'subscribers',
-    'newsletter_article_emails',
-    'contact_messages',
-    'user_oauth_accounts',
-    'password_reset_tokens',
-  ]
+  const expectedTables = [...UUID_PRIMARY_KEY_TABLES]
 
   const rows = await sql.unsafe<{ table_name: string, data_type: string }[]>(
     `SELECT table_name, data_type
@@ -139,6 +170,56 @@ async function assertUuidMigrationSourceSchema(): Promise<void> {
     const details = invalid.map(table => `${table}.id=${byTable.get(table) ?? 'missing'}`).join(', ')
     throw new Error(
       `UUID migration preflight failed (${details}). Restore an integer-schema backup or baseline 0011 if the database is already fully converted.`,
+    )
+  }
+}
+
+/**
+ * Verify the live schema before recording migration 0011 in Drizzle's ledger.
+ * A failed DDL statement can leave CockroachDB partially converted because DDL
+ * auto-commits, so checking only that the SQL finished is not enough.
+ */
+async function assertUuidMigrationResult(): Promise<void> {
+  const expected = [
+    ...UUID_PRIMARY_KEY_TABLES.map(table => [table, 'id'] as const),
+    ...UUID_RELATION_COLUMNS,
+  ]
+
+  const rows = await sql.unsafe<{
+    table_name: string
+    column_name: string
+    data_type: string
+    column_default: string | null
+  }[]>(
+    `SELECT table_name, column_name, data_type, column_default
+     FROM information_schema.columns
+     WHERE table_schema = 'public'`,
+  )
+
+  const columns = new Map(
+    rows.map(row => [`${row.table_name}.${row.column_name}`, row]),
+  )
+  const invalidTypes: string[] = []
+
+  for (const [table, column] of expected) {
+    const key = `${table}.${column}`
+    const row = columns.get(key)
+    if (row?.data_type !== 'uuid') {
+      invalidTypes.push(`${key}=${row?.data_type ?? 'missing'}`)
+    }
+  }
+
+  const invalidDefaults = UUID_PRIMARY_KEY_TABLES.flatMap((table) => {
+    const row = columns.get(`${table}.id`)
+    return row?.column_default?.toLowerCase().includes('gen_random_uuid')
+      ? []
+      : [`${table}.id=${row?.column_default ?? 'missing default'}`]
+  })
+
+  if (invalidTypes.length > 0 || invalidDefaults.length > 0) {
+    throw new Error(
+      'UUID migration verification failed. Invalid columns: '
+      + [...invalidTypes, ...invalidDefaults].join(', '),
     )
   }
 }
@@ -220,6 +301,10 @@ try {
         console.error(`\n${entry.tag} failed on statement ${index + 1}:\n${statement}\n`)
         throw error
       }
+    }
+
+    if (entry.tag === '0011_preserve_data_uuid_keys') {
+      await assertUuidMigrationResult()
     }
 
     await recordApplied(entry, hash)
