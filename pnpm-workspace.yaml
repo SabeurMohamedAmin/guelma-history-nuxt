@@ -1,5 +1,0 @@
-packages:
-  - '.'
-
-overrides:
-  '@cloudinary-util/url-loader': 5.10.5
