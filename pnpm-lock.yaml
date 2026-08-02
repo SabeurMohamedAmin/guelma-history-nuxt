@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@cloudinary-util/url-loader': 5.10.5
+
 importers:
 
   .:
@@ -329,14 +332,14 @@ packages:
   '@cloudinary-util/types@1.0.1':
     resolution: {integrity: sha512-aj/m3Sn5RSYKk6dAZJcjerKfVNrcCyL6v6pcDl4aNpQ3zSWMOvnIrzCidE9paaw1r+ZWonjNnhkA0anLdwRRfA==}
 
-  '@cloudinary-util/types@1.5.11':
-    resolution: {integrity: sha512-b3slV/oFV/3SZO1aiw9+UgYEmK3Ft/Ts03euek5v217Y39mhj6zXWGGJ/OVxQFBzp/zK3RE5+5mzZf/rXY4/Lw==}
+  '@cloudinary-util/types@1.5.10':
+    resolution: {integrity: sha512-n5lrm7SdAXhgWEbkSJKHZGnaoO9G/g4WYS6HYnq/k4nLj79sYfQZOoKjyR8hF2iyLRdLkT+qlk68RNFFv5tKew==}
 
-  '@cloudinary-util/url-loader@5.10.6':
-    resolution: {integrity: sha512-xd7lG5eOlRx/MPWZTGB8xvIWxpruXMJlDyJHL+WSBqjq7sk87e9le2cOLxzXhDmUwaSewnbh8QOJ/r/CvGQOZQ==}
+  '@cloudinary-util/url-loader@5.10.5':
+    resolution: {integrity: sha512-HqngrSNCRVQVoMF3S2WxqzMXCS5pQflGMlGbPh7LJ240zl0OTIObDFyaUfVwF+x9d/+fb2lKR3nPCkpwd8MQ8w==}
 
-  '@cloudinary-util/util@4.0.0':
-    resolution: {integrity: sha512-S4xcou/3A7l5o+bcKlw2VHBNgwups7/0lbVDT/cO5YmtrcEYXgj6LGmwnjvpTm/x571VPVN8x5jWdT3rLZiKJQ==}
+  '@cloudinary-util/util@3.3.2':
+    resolution: {integrity: sha512-Cc0iFxzfl7fcOXuznpeZFGYC885Of/vDgccRDnhTe/8Rf8YKv2PjLtezyo0VgmdA/CpeZy29NCXAsf6liokbwg==}
 
   '@cloudinary/transformation-builder-sdk@1.21.2':
     resolution: {integrity: sha512-ehOgKUaP+Nvuf7B0TosmB8iilL0kdiVjzjl8tIK06cjvsNnwSJI3xP9nEJmKkvqNxwwFwvYXT+mxUTqnSv9JOA==}
@@ -6585,16 +6588,16 @@ snapshots:
 
   '@cloudinary-util/types@1.0.1': {}
 
-  '@cloudinary-util/types@1.5.11': {}
+  '@cloudinary-util/types@1.5.10': {}
 
-  '@cloudinary-util/url-loader@5.10.6':
+  '@cloudinary-util/url-loader@5.10.5':
     dependencies:
-      '@cloudinary-util/types': 1.5.11
-      '@cloudinary-util/util': 4.0.0
+      '@cloudinary-util/types': 1.5.10
+      '@cloudinary-util/util': 3.3.2
       '@cloudinary/url-gen': 1.15.0
       zod: 3.25.76
 
-  '@cloudinary-util/util@4.0.0': {}
+  '@cloudinary-util/util@3.3.2': {}
 
   '@cloudinary/transformation-builder-sdk@1.21.2':
     dependencies:
@@ -8223,7 +8226,7 @@ snapshots:
   '@nuxtjs/cloudinary@2.7.3(magicast@0.5.3)(typescript@5.9.3)':
     dependencies:
       '@cloudinary-util/types': 1.0.1
-      '@cloudinary-util/url-loader': 5.10.6
+      '@cloudinary-util/url-loader': 5.10.5
       '@nuxt/kit': 3.21.10(magicast@0.5.3)
       '@unpic/vue': 0.0.42(typescript@5.9.3)
       defu: 6.1.7
