@@ -164,8 +164,8 @@ async function resetDatabase(sql: postgres.Sql): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  if (!['export', 'restore', 'rebuild'].includes(command || '')) {
-    throw new Error('Usage: pnpm db:uuid:rebuild <export|restore|rebuild> [backup-file]')
+  if (!['export', 'restore', 'rebuild', 'resume'].includes(command || '')) {
+    throw new Error('Usage: pnpm db:uuid:rebuild <export|restore|rebuild|resume> [backup-file]')
   }
 
   let sql = postgres(connectionString!, { prepare: false, max: 1 })
@@ -177,7 +177,11 @@ async function main(): Promise<void> {
       throw new Error('Rebuild deletes all public tables. Re-run with CONFIRM_DATABASE_REBUILD=yes.')
     }
 
-    await exportBackup(sql)
+    // Resume uses the existing backup after an interrupted rebuild. Exporting
+    // here would overwrite it with rows from the partial/empty database.
+    if (command === 'rebuild') await exportBackup(sql)
+    else await readFile(backupPath, 'utf8')
+
     await resetDatabase(sql)
     await sql.end()
 
