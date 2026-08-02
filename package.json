@@ -39,7 +39,7 @@
     "@nuxt/icon": "2.2.2",
     "@nuxt/image": "2.0.0",
     "@nuxt/test-utils": "4.0.3",
-    "@nuxtjs/cloudinary": "^2.7.3",
+    "@nuxtjs/cloudinary": "^4.0.0",
     "@nuxtjs/i18n": "10.3.0",
     "@pinia/nuxt": "0.11.3",
     "@vueuse/nuxt": "14.3.0",
