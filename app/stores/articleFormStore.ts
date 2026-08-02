@@ -121,6 +121,7 @@ function isNotFoundError(error: unknown): boolean {
 
 export const useArticleFormStore = defineStore('articleForm', () => {
   const router = useRouter()
+  const localePath = useLocalePath()
 
   /**
    * Flow configuration. The same store/form powers both the admin and author
@@ -402,7 +403,7 @@ export const useArticleFormStore = defineStore('articleForm', () => {
         })
       }
 
-      await router.push(config.value.listPath)
+      await router.push(localePath(config.value.listPath))
     }
     catch (error: unknown) {
       serverError.value = getErrorMessage(error)
