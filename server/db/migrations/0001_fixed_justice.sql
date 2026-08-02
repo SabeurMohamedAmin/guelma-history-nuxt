@@ -8,7 +8,7 @@ CREATE TABLE "comment_flags" (
 );
 --> statement-breakpoint
 CREATE TABLE "comment_votes" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"comment_id" uuid NOT NULL,
 	"user_id" uuid NOT NULL,
 	"value" smallint NOT NULL,
