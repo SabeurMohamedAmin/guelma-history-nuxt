@@ -15,7 +15,7 @@ const search = ref('')
 const statusFilter = ref<'all' | 'active' | 'pending' | 'unsubscribed'>('all')
 const deleteDialog = ref(false)
 const deleting = ref(false)
-const updatingStatusId = ref<number | null>(null)
+const updatingStatusId = ref<string | null>(null)
 const toDelete = ref<AdminSubscriber | null>(null)
 const snackbar = ref<{ show: boolean, text: string, color: string }>({ show: false, text: '', color: 'success' })
 

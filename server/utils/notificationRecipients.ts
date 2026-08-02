@@ -15,14 +15,14 @@
 /** The facts the rules need about one comment/reply event. */
 export interface CommentNotificationContext {
   /** The user who wrote the comment/reply (never notified about their own action). */
-  actorId: number
+  actorId: string
   /** The user who owns the article (articles.createdByUserId), the discussion home. */
-  articleOwnerId: number
+  articleOwnerId: string
   /**
    * The author of the comment being replied to, or null for a top-level
    * comment (which replies to nobody).
    */
-  parentCommentAuthorId: number | null
+  parentCommentAuthorId: string | null
 }
 
 /**
@@ -40,7 +40,7 @@ export interface CommentNotificationContext {
  */
 export function resolveCommentNotificationRecipients(
   context: CommentNotificationContext,
-): number[] {
+): string[] {
   const { actorId, articleOwnerId, parentCommentAuthorId } = context
 
   // Candidates from the rules. The article owner is always a candidate (R1/R3).

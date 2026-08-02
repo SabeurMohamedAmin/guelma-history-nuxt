@@ -4,8 +4,8 @@ const localePath = useLocalePath()
 
 const props = defineProps<{
   article: {
-    // `articles.id` is a serial primary key, so it arrives as a number.
-    id: number
+    // Database identifiers are UUID strings throughout article payloads.
+    id: string
     titleAr: string
     titleFr: string
     slug: string

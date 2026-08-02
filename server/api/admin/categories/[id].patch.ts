@@ -1,23 +1,18 @@
 import { eq } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { categories } from '~~/server/db/schema'
+import { categoryIdSchema, updateCategorySchema } from '~~/server/validators/category.validator'
+import { validateCategoryParent } from '~~/server/utils/categories'
 
 export default defineEventHandler(async (event) => {
-  const id = Number(getRouterParam(event, 'id'))
-  if (!Number.isInteger(id) || id < 1) {
+  const id = getRouterParam(event, 'id')
+  if (!categoryIdSchema.safeParse(id).success) {
     throw createError({ statusCode: 400, message: 'Invalid category ID' })
   }
 
-  const body = await readBody<{
-    nameAr?: string
-    nameFr?: string
-    slug?: string
-    descriptionAr?: string | null
-    descriptionFr?: string | null
-    icon?: string | null
-    coverImage?: string | null
-    parentId?: number | null
-  }>(event)
+  const parsedId = categoryIdSchema.parse(id)
+  const body = updateCategorySchema.parse(await readBody(event))
+  await validateCategoryParent(parsedId, body.parentId)
 
   const payload: Record<string, unknown> = {}
   if (body.nameAr !== undefined) payload.nameAr = body.nameAr.trim()
@@ -29,7 +24,7 @@ export default defineEventHandler(async (event) => {
   if (body.coverImage !== undefined) payload.coverImage = body.coverImage
   if (body.parentId !== undefined) payload.parentId = body.parentId
 
-  const [updated] = await db.update(categories).set({ ...payload, updatedAt: new Date() }).where(eq(categories.id, id)).returning()
+  const [updated] = await db.update(categories).set({ ...payload, updatedAt: new Date() }).where(eq(categories.id, parsedId)).returning()
 
   if (!updated) {
     throw createError({ statusCode: 404, message: 'Category not found' })

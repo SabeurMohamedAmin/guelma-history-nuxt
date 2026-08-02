@@ -15,7 +15,7 @@ import { DUMMY_PASSWORD_HASH, verifyPasswordHash } from './password'
  */
 
 export interface SessionUser {
-  id: number
+  id: string
   username: string
   email: string
   displayName: string | null
@@ -84,7 +84,7 @@ function findUserByIdentifier(identifier: string) {
 }
 
 /** Find an account by id. */
-function findUserById(id: number) {
+function findUserById(id: string) {
   return db.query.users.findFirst({ where: eq(users.id, id) })
 }
 
@@ -248,7 +248,7 @@ export async function requireCompleteUser(event: H3Event, minRole: Role = 'user'
  *
  * Returns the acting session-safe user on success so callers can reuse it.
  */
-export async function requireArticleOwner(event: H3Event, articleId: number): Promise<SessionUser> {
+export async function requireArticleOwner(event: H3Event, articleId: string): Promise<SessionUser> {
   // Must at least be an author (admins inherit). Also runs the session/role checks.
   const user = await requireRole(event, 'author')
 
@@ -299,7 +299,7 @@ function isSessionStale(loggedInAt: unknown, passwordChangedAt: Date | null): bo
  * `passwordChangedAt`: call this after a self password change to keep the
  * acting user logged in while `requireRole` invalidates all other sessions.
  */
-export async function refreshUserSession(event: H3Event, userId: number): Promise<SessionUser> {
+export async function refreshUserSession(event: H3Event, userId: string): Promise<SessionUser> {
   const account = await findUserById(userId)
   if (!account) {
     throw notFound('User not found.')

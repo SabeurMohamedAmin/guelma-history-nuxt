@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * Zod schemas for article CRUD.
@@ -39,12 +40,11 @@ export const mediaItemSchema = z.object({
 /**
  * A relation foreign key (category, author).
  *
- * The admin/author form fills these from a <v-select>, which can hand the id
- * back as a digit string ("3") instead of a number, so the value is coerced
- * before the numeric checks — same approach as articlesQuerySchema below.
- * `null` (the select was cleared) and an omitted field both mean "no relation".
+ * The admin/author form fills these from a <v-select>. UUIDs remain strings
+ * end-to-end so they are never coerced or lose precision. `null` (the select
+ * was cleared) and an omitted field both mean "no relation".
  */
-const relationId = z.coerce.number().int().positive().nullable().optional()
+const relationId = databaseUuidSchema.nullable().optional()
 
 export const createArticleSchema = z.object({
   titleAr: z.string().trim().min(1, 'Arabic title is required').max(255),
@@ -60,7 +60,7 @@ export const createArticleSchema = z.object({
   authorId: relationId,
   publishedAt: z.coerce.date().nullable().optional(),
   readingTime: z.number().int().min(0).optional(),
-  tagIds: z.array(z.number().int().positive()).optional(),
+  tagIds: z.array(databaseUuidSchema).optional(),
   media: z.array(mediaItemSchema).optional(),
 })
 
@@ -70,11 +70,11 @@ export const articlesQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
   search: z.string().optional(),
-  categoryId: z.coerce.number().int().positive().optional(),
+  categoryId: databaseUuidSchema.optional(),
   // Category *slug* filter (the home/article pages pass a slug, not an id).
   category: z.string().optional(),
-  authorId: z.coerce.number().int().positive().optional(),
-  tagId: z.coerce.number().int().positive().optional(),
+  authorId: databaseUuidSchema.optional(),
+  tagId: databaseUuidSchema.optional(),
   // featured=true → published articles only (used by hero sections).
   featured: z.coerce.boolean().optional(),
   status: z.enum(['published', 'draft', 'all']).default('all'),

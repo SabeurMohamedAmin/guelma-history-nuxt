@@ -19,16 +19,18 @@ function fakePeer() {
   return { send: vi.fn((_data: string) => {}) }
 }
 
+const userA = '40000000-0000-4000-8000-000000000001'
+const userB = '40000000-0000-4000-8000-000000000002'
 const sampleEvent: NotificationEvent = {
   type: 'created',
   notification: {
-    id: 'n-1',
+    id: '41000000-0000-4000-8000-000000000001',
     type: 'comment_reply',
     isRead: false,
-    articleId: 10,
+    articleId: '42000000-0000-4000-8000-000000000001',
     // The slug builds the deep link (/articles/<slug>).
     articleSlug: 'guelma-history',
-    commentId: 'c-1',
+    commentId: '43000000-0000-4000-8000-000000000001',
     createdAt: '2026-01-01T00:00:00.000Z',
     actor: null,
   },
@@ -44,8 +46,8 @@ beforeEach(() => {
 
 describe('userTopic', () => {
   it('namespaces a room per user id', () => {
-    expect(userTopic(12)).toBe('notifications:user:12')
-    expect(userTopic(12)).not.toBe(userTopic(13))
+    expect(userTopic(userA)).toBe(`notifications:user:${userA}`)
+    expect(userTopic(userA)).not.toBe(userTopic(userB))
   })
 })
 
@@ -53,10 +55,10 @@ describe('publishNotificationEvent', () => {
   it('sends the JSON-encoded event to every peer in the user room', () => {
     const a = fakePeer()
     const b = fakePeer()
-    addNotificationPeer(userTopic(7), a)
-    addNotificationPeer(userTopic(7), b)
+    addNotificationPeer(userTopic(userA), a)
+    addNotificationPeer(userTopic(userA), b)
 
-    publishNotificationEvent(7, sampleEvent)
+    publishNotificationEvent(userA, sampleEvent)
 
     expect(a.send).toHaveBeenCalledOnce()
     expect(b.send).toHaveBeenCalledOnce()
@@ -66,25 +68,25 @@ describe('publishNotificationEvent', () => {
   it('isolates rooms: a user only hears their own notifications', () => {
     const me = fakePeer()
     const otherUser = fakePeer()
-    addNotificationPeer(userTopic(7), me)
-    addNotificationPeer(userTopic(99), otherUser)
+    addNotificationPeer(userTopic('user-7'), me)
+    addNotificationPeer(userTopic(userB), otherUser)
 
-    publishNotificationEvent(7, sampleEvent)
+    publishNotificationEvent('user-7', sampleEvent)
 
     expect(me.send).toHaveBeenCalledOnce()
     expect(otherUser.send).not.toHaveBeenCalled()
   })
 
   it('is a no-op when the user has no connected tabs', () => {
-    expect(() => publishNotificationEvent(123, sampleEvent)).not.toThrow()
+    expect(() => publishNotificationEvent('40000000-0000-4000-8000-000000000099', sampleEvent)).not.toThrow()
   })
 
   it('stops delivering to a peer after it is removed', () => {
     const peer = fakePeer()
-    addNotificationPeer(userTopic(7), peer)
+    addNotificationPeer(userTopic('user-7'), peer)
     removeNotificationPeer(peer)
 
-    publishNotificationEvent(7, sampleEvent)
+    publishNotificationEvent('user-7', sampleEvent)
 
     expect(peer.send).not.toHaveBeenCalled()
   })
@@ -96,16 +98,16 @@ describe('publishNotificationEvent', () => {
       }),
     }
     const healthy = fakePeer()
-    addNotificationPeer(userTopic(7), broken)
-    addNotificationPeer(userTopic(7), healthy)
+    addNotificationPeer(userTopic('user-7'), broken)
+    addNotificationPeer(userTopic('user-7'), healthy)
 
     // A throwing socket must not break the insert that triggered the event.
-    expect(() => publishNotificationEvent(7, sampleEvent)).not.toThrow()
+    expect(() => publishNotificationEvent('user-7', sampleEvent)).not.toThrow()
     expect(healthy.send).toHaveBeenCalledOnce()
 
     // The broken peer was dropped, so a second publish does not reach it again.
     broken.send.mockClear()
-    publishNotificationEvent(7, sampleEvent)
+    publishNotificationEvent('user-7', sampleEvent)
     expect(broken.send).not.toHaveBeenCalled()
   })
 })

@@ -13,7 +13,7 @@ import { slugify } from '~~/server/utils/slugify'
  */
 export async function generateUniqueAuthorSlug(
   nameFr: string,
-  excludeId?: number,
+  excludeId?: string,
 ): Promise<string> {
   const base = slugify(nameFr) || 'author'
   let candidate = base

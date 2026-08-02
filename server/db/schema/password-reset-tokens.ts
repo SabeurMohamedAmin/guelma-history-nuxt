@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, text, uuid, timestamp } from 'drizzle-orm/pg-core'
 import { users } from './users'
 
 /**
@@ -9,8 +9,8 @@ import { users } from './users'
  * consumed (`usedAt`) on success and expire via `expiresAt`.
  */
 export const passwordResetTokens = pgTable('password_reset_tokens', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id')
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   tokenHash: text('token_hash').notNull().unique(),

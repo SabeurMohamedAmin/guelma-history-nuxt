@@ -8,7 +8,7 @@ import type { ArticleListItem } from '~~/shared/types/article'
 // The categories returned by /api/home include an articleCount aggregate, so we
 // extend the lightweight shape the filter component needs.
 interface HomeCategory {
-  id: number
+  id: string
   nameAr: string
   nameFr: string
   slug: string
@@ -16,7 +16,7 @@ interface HomeCategory {
   descriptionFr: string | null
   icon: string | null
   coverImage: string | null
-  parentId: number | null
+  parentId: string | null
   articleCount: number
 }
 

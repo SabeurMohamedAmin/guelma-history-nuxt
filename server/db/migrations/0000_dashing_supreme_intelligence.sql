@@ -1,6 +1,6 @@
 CREATE TABLE "article_comments" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"article_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"article_id" uuid NOT NULL,
 	"name" text NOT NULL,
 	"email" text,
 	"message" text NOT NULL,
@@ -10,8 +10,8 @@ CREATE TABLE "article_comments" (
 );
 --> statement-breakpoint
 CREATE TABLE "article_correction_requests" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"article_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"article_id" uuid NOT NULL,
 	"name" text NOT NULL,
 	"email" text NOT NULL,
 	"section" text,
@@ -22,8 +22,8 @@ CREATE TABLE "article_correction_requests" (
 );
 --> statement-breakpoint
 CREATE TABLE "article_media" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"article_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"article_id" uuid NOT NULL,
 	"type" text DEFAULT 'image' NOT NULL,
 	"url" text NOT NULL,
 	"public_id" text,
@@ -36,13 +36,13 @@ CREATE TABLE "article_media" (
 );
 --> statement-breakpoint
 CREATE TABLE "article_tags" (
-	"article_id" integer NOT NULL,
-	"tag_id" integer NOT NULL,
+	"article_id" uuid NOT NULL,
+	"tag_id" uuid NOT NULL,
 	CONSTRAINT "article_tags_article_id_tag_id_pk" PRIMARY KEY("article_id","tag_id")
 );
 --> statement-breakpoint
 CREATE TABLE "articles" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"title_ar" text NOT NULL,
 	"title_fr" text NOT NULL,
 	"slug" text NOT NULL,
@@ -50,9 +50,9 @@ CREATE TABLE "articles" (
 	"excerpt_fr" text,
 	"body" text DEFAULT '' NOT NULL,
 	"cover_image" text,
-	"category_id" integer,
-	"author_id" integer,
-	"created_by_user_id" integer NOT NULL,
+	"category_id" uuid,
+	"author_id" uuid,
+	"created_by_user_id" uuid NOT NULL,
 	"published_at" timestamp with time zone,
 	"reading_time" integer DEFAULT 0,
 	"view_count" integer DEFAULT 0 NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE "articles" (
 );
 --> statement-breakpoint
 CREATE TABLE "authors" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name_ar" text NOT NULL,
 	"name_fr" text NOT NULL,
 	"slug" text NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE "authors" (
 );
 --> statement-breakpoint
 CREATE TABLE "categories" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name_ar" text NOT NULL,
 	"name_fr" text NOT NULL,
 	"slug" text NOT NULL,
@@ -84,14 +84,14 @@ CREATE TABLE "categories" (
 	"description_fr" text,
 	"icon" text,
 	"cover_image" text,
-	"parent_id" integer,
+	"parent_id" uuid,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
 	CONSTRAINT "categories_slug_unique" UNIQUE("slug")
 );
 --> statement-breakpoint
 CREATE TABLE "contact_messages" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"email" text NOT NULL,
 	"message" text NOT NULL,
@@ -105,8 +105,8 @@ CREATE TABLE "contact_messages" (
 );
 --> statement-breakpoint
 CREATE TABLE "password_reset_tokens" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
 	"token_hash" text NOT NULL,
 	"purpose" text DEFAULT 'reset' NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,
@@ -116,7 +116,7 @@ CREATE TABLE "password_reset_tokens" (
 );
 --> statement-breakpoint
 CREATE TABLE "subscribers" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" text NOT NULL,
 	"confirmed" boolean DEFAULT false NOT NULL,
 	"token_hash" text,
@@ -128,7 +128,7 @@ CREATE TABLE "subscribers" (
 );
 --> statement-breakpoint
 CREATE TABLE "tags" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name_ar" text NOT NULL,
 	"name_fr" text NOT NULL,
 	"slug" text NOT NULL,
@@ -136,8 +136,8 @@ CREATE TABLE "tags" (
 );
 --> statement-breakpoint
 CREATE TABLE "user_oauth_accounts" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
 	"provider" text NOT NULL,
 	"provider_user_id" text NOT NULL,
 	"created_at" timestamp with time zone NOT NULL,
@@ -145,14 +145,14 @@ CREATE TABLE "user_oauth_accounts" (
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"username" text NOT NULL,
 	"email" text NOT NULL,
 	"password_hash" text,
 	"profile_completed" boolean DEFAULT false NOT NULL,
 	"email_verified_at" timestamp with time zone,
 	"role" text DEFAULT 'user' NOT NULL,
-	"author_id" integer,
+	"author_id" uuid,
 	"display_name" text,
 	"first_name" text,
 	"last_name" text,

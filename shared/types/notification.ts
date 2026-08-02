@@ -17,7 +17,7 @@ export type NotificationType
 
 /** The actor display fields exposed on a notification (never the full user row). */
 export interface NotificationActor {
-  id: number
+  id: string
   username: string
   displayName: string | null
 }
@@ -30,10 +30,10 @@ export interface NotificationItem {
   /** Unread = false. Derived server-side from `readAt IS NULL`. */
   isRead: boolean
   /** Deep-link target: the article the discussion belongs to. */
-  articleId: number
+  articleId: string
   /**
    * The article slug, used to build the deep link (/articles/<slug>). Routes
-   * use the slug, not the numeric id. Null only if it was not loaded.
+   * use the slug, not the internal UUID. Null only if it was not loaded.
    */
   articleSlug: string | null
   /** The comment that triggered it, for the `?comment=<uuid>` deep link. */
@@ -47,9 +47,9 @@ export type MuteScope = 'all' | 'article' | 'comment'
 
 /** A mute as listed for the current user. */
 export interface NotificationMute {
-  id: number
+  id: string
   scope: MuteScope
-  articleId: number | null
+  articleId: string | null
   commentId: string | null
   createdAt: string
 }

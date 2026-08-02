@@ -36,14 +36,14 @@ export function nextBookmarkState(wasSaved: boolean): BookmarkTransition {
  * same article twice is a no-op" on the client, mirroring the DB unique index.
  * A new Set is returned (never mutated in place) so Vue reactivity tracks it.
  *
- * Generic over the id type: real article ids are int64 DIGIT STRINGS (they
- * exceed Number.MAX_SAFE_INTEGER), but the rule itself is id-shape agnostic.
+ * Article identifiers are UUID strings. Keeping this contract string-only
+ * prevents numeric IDs from accidentally returning to client state.
  */
-export function applyBookmarkToggle<Id extends string | number>(
-  current: ReadonlySet<Id>,
-  articleId: Id,
+export function applyBookmarkToggle(
+  current: ReadonlySet<string>,
+  articleId: string,
   saved: boolean,
-): Set<Id> {
+): Set<string> {
   const next = new Set(current)
   if (saved) next.add(articleId)
   else next.delete(articleId)

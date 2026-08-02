@@ -41,13 +41,13 @@ export interface RequestSubscriptionResult {
 }
 
 export interface ActiveNewsletterSubscriber {
-  id: number
+  id: string
   email: string
   unsubscribeTokenHash: string | null
 }
 
 export interface PublishedArticleNewsletterInput {
-  id: number
+  id: string
   slug: string
   titleAr: string
   titleFr: string
@@ -195,7 +195,7 @@ export async function listActiveSubscribers(): Promise<ActiveNewsletterSubscribe
  * Returns false when the record already exists, which means this subscriber has
  * already received this article alert.
  */
-export async function recordArticleEmailSent(articleId: number, subscriberId: number): Promise<boolean> {
+export async function recordArticleEmailSent(articleId: string, subscriberId: string): Promise<boolean> {
   const insertedRows = await db
     .insert(newsletterArticleEmails)
     .values({ articleId, subscriberId })
@@ -252,15 +252,14 @@ export async function sendPublishedArticleNewsletterAlerts(article: PublishedArt
   }
 }
 
-function createUnsubscribeToken(subscriberId: number): string {
-  const id = String(subscriberId)
-  const signature = signUnsubscribePayload(id)
-  return `${id}.${signature}`
+function createUnsubscribeToken(subscriberId: string): string {
+  const signature = signUnsubscribePayload(subscriberId)
+  return `${subscriberId}.${signature}`
 }
 
-function verifyUnsubscribeToken(rawToken: string): number | null {
+function verifyUnsubscribeToken(rawToken: string): string | null {
   const [id, signature] = rawToken.split('.')
-  if (!id || !signature || !/^\d+$/.test(id)) return null
+  if (!id || !signature || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id)) return null
 
   const expected = signUnsubscribePayload(id)
   const actualBuffer = Buffer.from(signature)
@@ -269,7 +268,7 @@ function verifyUnsubscribeToken(rawToken: string): number | null {
   if (actualBuffer.length !== expectedBuffer.length) return null
   if (!timingSafeEqual(actualBuffer, expectedBuffer)) return null
 
-  return Number(id)
+  return id
 }
 
 function signUnsubscribePayload(payload: string): string {

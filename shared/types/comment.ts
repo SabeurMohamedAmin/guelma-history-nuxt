@@ -12,7 +12,7 @@ export type CommentSortOrder = 'asc' | 'desc'
 
 /** The author display fields exposed on a comment (never the full user row). */
 export interface CommentAuthor {
-  id: number
+  id: string
   username: string
   displayName: string | null
 }
@@ -21,7 +21,7 @@ export interface CommentAuthor {
 export interface CommentNode {
   /** UUID string (e.g. "3f0c…"). Not a numeric counter. */
   id: string
-  /** Article id: an int64 digit string (too big for a JS number). */
+  /** Article UUID. */
   articleId: string
   /** Parent comment UUID, or null for a top-level comment. */
   parentId: string | null

@@ -17,8 +17,9 @@
     "test:coverage": "vitest --coverage",
     "test:unit": "vitest --project unit",
     "test:nuxt": "vitest --project nuxt",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "tsx server/db/generate.ts",
     "db:migrate": "tsx server/db/migrate.ts",
+    "db:uuid:rebuild": "tsx server/db/rebuild-with-uuids.ts",
     "db:migrate:kit": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx server/db/seeds/seed.ts",
@@ -38,7 +39,7 @@
     "@nuxt/icon": "2.2.2",
     "@nuxt/image": "2.0.0",
     "@nuxt/test-utils": "4.0.3",
-    "@nuxtjs/cloudinary": "^2.7.3",
+    "@nuxtjs/cloudinary": "^4.0.0",
     "@nuxtjs/i18n": "10.3.0",
     "@pinia/nuxt": "0.11.3",
     "@vueuse/nuxt": "14.3.0",
@@ -70,7 +71,8 @@
     "happy-dom": "^20.9.0",
     "tsx": "^4.22.2",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.6",
+    "vue-tsc": "^3.3.9"
   },
   "packageManager": "pnpm@10.22.0",
   "engines": {

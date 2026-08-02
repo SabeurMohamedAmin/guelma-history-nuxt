@@ -1,4 +1,4 @@
-import { pgTable, serial, uuid, integer, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { comments } from './comments'
 import { users } from './users'
 
@@ -10,12 +10,12 @@ import { users } from './users'
  * deleting the history, so the moderation queue can show open vs. resolved.
  */
 export const commentFlags = pgTable('comment_flags', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   commentId: uuid('comment_id')
     .notNull()
     .references(() => comments.id, { onDelete: 'cascade' }),
   // The account that reported the comment. Guests cannot flag.
-  reporterId: integer('reporter_id')
+  reporterId: uuid('reporter_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   // Optional free-text reason from the reporter (validated/length-capped in the

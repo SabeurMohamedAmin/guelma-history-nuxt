@@ -8,7 +8,7 @@ import { toH3Error } from '~~/server/utils/handleError'
 /**
  * Deep-link / re-root focus fetch: a comment plus its ancestors (root-first,
  * for the "show parent" breadcrumb) and its direct children. Powers opening
- * `?comment=123` directly and the focus view. Public (guests may read); the
+ * `?comment=<uuid>` directly and the focus view. Public (guests may read); the
  * viewer's own votes are attached when signed in.
  */
 export default defineEventHandler(async (event) => {

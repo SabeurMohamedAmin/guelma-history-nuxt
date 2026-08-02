@@ -1,4 +1,4 @@
-import { index, integer, pgTable, serial, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import { index, uuid, pgTable, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { articles } from './articles'
 import { subscribers } from './subscribers'
 
@@ -13,11 +13,11 @@ import { subscribers } from './subscribers'
  * the same article more than once.
  */
 export const newsletterArticleEmails = pgTable('newsletter_article_emails', {
-  id: serial('id').primaryKey(),
-  articleId: integer('article_id')
+  id: uuid('id').primaryKey().defaultRandom(),
+  articleId: uuid('article_id')
     .notNull()
     .references(() => articles.id, { onDelete: 'cascade' }),
-  subscriberId: integer('subscriber_id')
+  subscriberId: uuid('subscriber_id')
     .notNull()
     .references(() => subscribers.id, { onDelete: 'cascade' }),
   sentAt: timestamp('sent_at', { withTimezone: true, mode: 'date' }).notNull().$defaultFn(() => new Date()),

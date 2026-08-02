@@ -14,7 +14,7 @@ definePageMeta({
 })
 
 type AuthorCard = {
-  id: number
+  id: string
   slug: string
   name: string
   bio: string | null

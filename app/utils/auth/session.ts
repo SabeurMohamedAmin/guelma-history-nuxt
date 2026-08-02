@@ -8,7 +8,7 @@ import type { Role } from '~~/shared/auth/roles'
  * on `user.role`, so keep these shapes in sync.
  */
 export interface SessionUser {
-  id: number
+  id: string
   username: string
   email: string
   displayName: string | null

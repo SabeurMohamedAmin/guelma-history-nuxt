@@ -77,7 +77,7 @@ export function facebookPictureUrl(fbUser: unknown): string | null {
  * logged (the URL is never logged) instead of silently swallowed, so SSRF
  * probes and unexpected DB errors stay observable.
  */
-export async function storeRemoteAvatar(userId: number, url: string): Promise<void> {
+export async function storeRemoteAvatar(userId: string, url: string): Promise<void> {
   try {
     const avatar = await fetchRemoteAvatar(url)
     if (!avatar) return

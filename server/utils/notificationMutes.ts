@@ -10,15 +10,15 @@
 
 /** The fields of a mute row this rule needs. */
 export interface MuteRecord {
-  userId: number
+  userId: string
   scope: 'all' | 'article' | 'comment'
-  articleId: number | null
+  articleId: string | null
   commentId: string | null
 }
 
 /** The target of the notification being sent. */
 export interface MuteTarget {
-  articleId: number
+  articleId: string
   commentId: string
 }
 
@@ -43,10 +43,10 @@ function muteSilencesTarget(mute: MuteRecord, target: MuteTarget): boolean {
  * dropped if ANY of their mutes silences the target.
  */
 export function filterMutedRecipients(
-  recipientIds: number[],
+  recipientIds: string[],
   mutes: MuteRecord[],
   target: MuteTarget,
-): number[] {
+): string[] {
   const mutedUserIds = new Set(
     mutes.filter(mute => muteSilencesTarget(mute, target)).map(mute => mute.userId),
   )

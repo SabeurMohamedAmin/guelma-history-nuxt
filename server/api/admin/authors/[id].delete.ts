@@ -1,6 +1,7 @@
 import { eq, count } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { authors, articles } from '~~/server/db/schema'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * DELETE /api/admin/authors/[id]
@@ -8,10 +9,11 @@ import { authors, articles } from '~~/server/db/schema'
  * never orphan content or hit a foreign-key error.
  */
 export default defineEventHandler(async (event) => {
-  const id = Number(getRouterParam(event, 'id'))
-  if (!Number.isInteger(id) || id < 1) {
+  const parsedId = databaseUuidSchema.safeParse(getRouterParam(event, 'id'))
+  if (!parsedId.success) {
     throw createError({ statusCode: 400, message: 'Invalid author ID' })
   }
+  const id = parsedId.data
 
   const [articleCount] = await db
     .select({ total: count() })

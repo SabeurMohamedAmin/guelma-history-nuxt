@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core'
 import { articles } from './articles'
 import { users } from './users'
 
@@ -14,13 +14,13 @@ import { users } from './users'
  * use `onConflictDoNothing` so a double-tap is a harmless no-op, never a 500.
  */
 export const bookmarks = pgTable('bookmarks', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   // The user who saved the article. Guests cannot bookmark, so this is required.
-  userId: integer('user_id')
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   // The saved article.
-  articleId: integer('article_id')
+  articleId: uuid('article_id')
     .notNull()
     .references(() => articles.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })

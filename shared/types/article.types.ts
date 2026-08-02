@@ -3,15 +3,16 @@ export interface CreateArticleDto {
   titleAr: string
   titleFr: string
   slug?: string
-  excerptAr?: string
-  excerptFr?: string
-  body: string
-  coverImage?: string
-  categoryId?: number
-  authorId?: number
-  publishedAt?: Date
+  excerptAr?: string | null
+  excerptFr?: string | null
+  bodyAr: string
+  bodyFr: string
+  coverImage?: string | null
+  categoryId?: string | null
+  authorId?: string | null
+  publishedAt?: Date | null
   readingTime?: number
-  tagIds?: number[]
+  tagIds?: string[]
 }
 
 export type UpdateArticleDto = Partial<CreateArticleDto>
@@ -22,32 +23,33 @@ export type UpdateArticleDto = Partial<CreateArticleDto>
  * read `category` / `author` instead.
  */
 export interface ArticleResponse {
-  id: number
+  id: string
   titleAr: string
   titleFr: string
   slug: string
   excerptAr: string | null
   excerptFr: string | null
-  body: string
+  bodyAr: string
+  bodyFr: string
   coverImage: string | null
   publishedAt: Date | null
   readingTime: number
   createdAt: Date
   updatedAt: Date
   category?: {
-    id: number
+    id: string
     nameAr: string
     nameFr: string
     slug: string
   }
   author?: {
-    id: number
+    id: string
     nameAr: string
     nameFr: string
     avatar: string | null
   }
   tags?: {
-    id: number
+    id: string
     nameAr: string
     nameFr: string
     slug: string
@@ -58,9 +60,9 @@ export interface ArticlesQueryParams {
   page?: number
   limit?: number
   search?: string
-  categoryId?: number
-  authorId?: number
-  tagId?: number
+  categoryId?: string
+  authorId?: string
+  tagId?: string
   status?: 'published' | 'draft'
   sortBy?: string
   sortOrder?: 'asc' | 'desc'

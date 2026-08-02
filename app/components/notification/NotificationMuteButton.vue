@@ -12,7 +12,7 @@
 import type { MuteScope } from '~~/shared/types/notification'
 
 const props = defineProps<{
-  articleId?: number
+  articleId?: string
   commentId?: string
 }>()
 

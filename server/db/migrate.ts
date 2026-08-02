@@ -13,8 +13,11 @@
  * holding the folder timestamp), so `pnpm db:generate` and drizzle-kit stay in
  * sync with whatever this applies.
  *
- * Statements run one at a time, outside a transaction, because CockroachDB
- * auto-commits before every DDL anyway — wrapping them would only mask errors.
+ * Generated migrations run one statement at a time. The hand-written UUID
+ * conversion is the exception: CockroachDB requires a dropped primary key and
+ * its replacement to occur in the same explicit transaction. Running all of
+ * 0011 atomically also guarantees a failure cannot leave half the foreign keys
+ * removed or only some identifiers converted.
  *
  * Baselining an existing database:
  *   pnpm db:migrate --baseline 0004_redundant_longshot
@@ -68,15 +71,19 @@ function readBaselineFlag(args: string[]): string | undefined {
   return value
 }
 
-/** A migration file split into the statements Drizzle separates by breakpoint. */
+/** Split generated migrations and hand-written one-command-per-line migrations. */
 function readMigration(tag: string): { statements: string[], hash: string } {
   const file = readFileSync(join(migrationsDir, `${tag}.sql`), 'utf8')
+  const separator = file.includes('--> statement-breakpoint')
+    ? '--> statement-breakpoint'
+    : /;\s*(?=(?:--[^\n]*\n|\s)*[A-Z])/g
 
   return {
     statements: file
-      .split('--> statement-breakpoint')
+      .split(separator)
       .map(statement => statement.trim())
-      .filter(statement => statement.length > 0),
+      .filter(statement => statement.length > 0)
+      .map(statement => statement.endsWith(';') ? statement : `${statement};`),
     // Same hash Drizzle stores, so its own tooling recognises our rows.
     hash: createHash('sha256').update(file).digest('hex'),
   }
@@ -92,6 +99,365 @@ async function recordApplied(entry: JournalEntry, hash: string): Promise<void> {
     'INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at") VALUES ($1, $2)',
     [hash, entry.when],
   )
+}
+
+/**
+ * The UUID conversion maps integer text deterministically. Running it against a
+ * partially converted database would hash UUID text and break relationships, so
+ * refuse to start unless every converted primary key still has an integer type.
+ */
+const CONVERTED_UUID_PRIMARY_KEY_TABLES = [
+  'authors',
+  'categories',
+  'users',
+  'articles',
+  'tags',
+  'article_comments',
+  'article_correction_requests',
+  'article_media',
+  'bookmarks',
+  'comment_votes',
+  'comment_flags',
+  'notification_mutes',
+  'subscribers',
+  'newsletter_article_emails',
+  'contact_messages',
+  'user_oauth_accounts',
+  'password_reset_tokens',
+] as const
+
+/** Every table whose single-column primary key is an application UUID. */
+const UUID_PRIMARY_KEY_TABLES = [
+  ...CONVERTED_UUID_PRIMARY_KEY_TABLES,
+  'comments',
+  'notifications',
+] as const
+
+/** Foreign keys that migration 0011 converts from integer to UUID. */
+const CONVERTED_UUID_RELATION_COLUMNS = [
+  ['categories', 'parent_id'],
+  ['users', 'author_id'],
+  ['articles', 'category_id'],
+  ['articles', 'author_id'],
+  ['articles', 'created_by_user_id'],
+  ['article_comments', 'article_id'],
+  ['article_correction_requests', 'article_id'],
+  ['article_media', 'article_id'],
+  ['article_tags', 'article_id'],
+  ['article_tags', 'tag_id'],
+  ['password_reset_tokens', 'user_id'],
+  ['user_oauth_accounts', 'user_id'],
+  ['comments', 'article_id'],
+  ['comments', 'author_id'],
+  ['comment_votes', 'user_id'],
+  ['comment_flags', 'reporter_id'],
+  ['notification_mutes', 'user_id'],
+  ['notification_mutes', 'article_id'],
+  ['notifications', 'recipient_id'],
+  ['notifications', 'actor_id'],
+  ['notifications', 'article_id'],
+  ['bookmarks', 'user_id'],
+  ['bookmarks', 'article_id'],
+  ['newsletter_article_emails', 'article_id'],
+  ['newsletter_article_emails', 'subscriber_id'],
+] as const
+
+/** Relations that were UUIDs before migration 0011. */
+const EXISTING_UUID_RELATION_COLUMNS = [
+  ['comments', 'parent_id'],
+  ['comment_votes', 'comment_id'],
+  ['comment_flags', 'comment_id'],
+  ['notification_mutes', 'comment_id'],
+  ['notifications', 'comment_id'],
+] as const
+
+/** Every application foreign-key column that references a UUID primary key. */
+const UUID_RELATION_COLUMNS = [
+  ...CONVERTED_UUID_RELATION_COLUMNS,
+  ...EXISTING_UUID_RELATION_COLUMNS,
+] as const
+
+/** Expected parent for every UUID relationship. */
+const UUID_FOREIGN_KEY_TARGETS = new Map<string, string>([
+  ['categories.parent_id', 'categories.id'],
+  ['users.author_id', 'authors.id'],
+  ['articles.category_id', 'categories.id'],
+  ['articles.author_id', 'authors.id'],
+  ['articles.created_by_user_id', 'users.id'],
+  ['article_comments.article_id', 'articles.id'],
+  ['article_correction_requests.article_id', 'articles.id'],
+  ['article_media.article_id', 'articles.id'],
+  ['article_tags.article_id', 'articles.id'],
+  ['article_tags.tag_id', 'tags.id'],
+  ['password_reset_tokens.user_id', 'users.id'],
+  ['user_oauth_accounts.user_id', 'users.id'],
+  ['comments.article_id', 'articles.id'],
+  ['comments.parent_id', 'comments.id'],
+  ['comments.author_id', 'users.id'],
+  ['comment_votes.comment_id', 'comments.id'],
+  ['comment_votes.user_id', 'users.id'],
+  ['comment_flags.comment_id', 'comments.id'],
+  ['comment_flags.reporter_id', 'users.id'],
+  ['notification_mutes.user_id', 'users.id'],
+  ['notification_mutes.article_id', 'articles.id'],
+  ['notification_mutes.comment_id', 'comments.id'],
+  ['notifications.recipient_id', 'users.id'],
+  ['notifications.actor_id', 'users.id'],
+  ['notifications.article_id', 'articles.id'],
+  ['notifications.comment_id', 'comments.id'],
+  ['bookmarks.user_id', 'users.id'],
+  ['bookmarks.article_id', 'articles.id'],
+  ['newsletter_article_emails.article_id', 'articles.id'],
+  ['newsletter_article_emails.subscriber_id', 'subscribers.id'],
+])
+
+/** Delete behavior declared by the Drizzle schemas for each UUID relation. */
+const UUID_FOREIGN_KEY_DELETE_RULES = new Map<string, string>([
+  ['categories.parent_id', 'NO ACTION'],
+  ['users.author_id', 'SET NULL'],
+  ['articles.category_id', 'NO ACTION'],
+  ['articles.author_id', 'NO ACTION'],
+  ['articles.created_by_user_id', 'RESTRICT'],
+  ['article_comments.article_id', 'CASCADE'],
+  ['article_correction_requests.article_id', 'CASCADE'],
+  ['article_media.article_id', 'CASCADE'],
+  ['article_tags.article_id', 'CASCADE'],
+  ['article_tags.tag_id', 'CASCADE'],
+  ['password_reset_tokens.user_id', 'CASCADE'],
+  ['user_oauth_accounts.user_id', 'CASCADE'],
+  ['comments.article_id', 'CASCADE'],
+  ['comments.parent_id', 'CASCADE'],
+  ['comments.author_id', 'CASCADE'],
+  ['comment_votes.comment_id', 'CASCADE'],
+  ['comment_votes.user_id', 'CASCADE'],
+  ['comment_flags.comment_id', 'CASCADE'],
+  ['comment_flags.reporter_id', 'CASCADE'],
+  ['notification_mutes.user_id', 'CASCADE'],
+  ['notification_mutes.article_id', 'CASCADE'],
+  ['notification_mutes.comment_id', 'CASCADE'],
+  ['notifications.recipient_id', 'CASCADE'],
+  ['notifications.actor_id', 'CASCADE'],
+  ['notifications.article_id', 'CASCADE'],
+  ['notifications.comment_id', 'CASCADE'],
+  ['bookmarks.user_id', 'CASCADE'],
+  ['bookmarks.article_id', 'CASCADE'],
+  ['newsletter_article_emails.article_id', 'CASCADE'],
+  ['newsletter_article_emails.subscriber_id', 'CASCADE'],
+])
+
+/** Whether each UUID relationship is nullable in the Drizzle schema. */
+const NULLABLE_UUID_RELATIONS = new Set([
+  'categories.parent_id',
+  'users.author_id',
+  'articles.category_id',
+  'articles.author_id',
+  'comments.parent_id',
+  'notification_mutes.article_id',
+  'notification_mutes.comment_id',
+])
+
+async function assertUuidMigrationSourceSchema(): Promise<void> {
+  const rows = await sql.unsafe<{
+    table_name: string
+    column_name: string
+    data_type: string
+  }[]>(
+    `SELECT table_name, column_name, data_type
+     FROM information_schema.columns
+     WHERE table_schema = 'public'`,
+  )
+
+  const columns = new Map(
+    rows.map(row => [`${row.table_name}.${row.column_name}`, row.data_type]),
+  )
+  const integerTypes = new Set(['smallint', 'integer', 'bigint'])
+  const expectedIntegerColumns = [
+    ...CONVERTED_UUID_PRIMARY_KEY_TABLES.map(table => [table, 'id'] as const),
+    ...CONVERTED_UUID_RELATION_COLUMNS,
+  ]
+  const expectedUuidColumns = [
+    ['comments', 'id'],
+    ['notifications', 'id'],
+    ...EXISTING_UUID_RELATION_COLUMNS,
+  ] as const
+
+  const invalidIntegers = expectedIntegerColumns.flatMap(([table, column]) => {
+    const key = `${table}.${column}`
+    const type = columns.get(key)
+    return integerTypes.has(type ?? '') ? [] : [`${key}=${type ?? 'missing'}`]
+  })
+  const invalidUuids = expectedUuidColumns.flatMap(([table, column]) => {
+    const key = `${table}.${column}`
+    const type = columns.get(key)
+    return type === 'uuid' ? [] : [`${key}=${type ?? 'missing'}`]
+  })
+
+  if (invalidIntegers.length > 0 || invalidUuids.length > 0) {
+    throw new Error(
+      `UUID migration preflight failed (${[...invalidIntegers, ...invalidUuids].join(', ')}). Restore an integer-schema backup or baseline 0011 if the database is already fully converted.`,
+    )
+  }
+}
+
+/**
+ * Verify the live schema before recording migration 0011 in Drizzle's ledger.
+ * A failed DDL statement can leave CockroachDB partially converted because DDL
+ * auto-commits, so checking only that the SQL finished is not enough.
+ */
+async function assertUuidMigrationResult(): Promise<void> {
+  const expected = [
+    ...UUID_PRIMARY_KEY_TABLES.map(table => [table, 'id'] as const),
+    ...UUID_RELATION_COLUMNS,
+  ]
+
+  const rows = await sql.unsafe<{
+    table_name: string
+    column_name: string
+    data_type: string
+    column_default: string | null
+    is_nullable: 'YES' | 'NO'
+  }[]>(
+    `SELECT table_name, column_name, data_type, column_default, is_nullable
+     FROM information_schema.columns
+     WHERE table_schema = 'public'`,
+  )
+
+  const columns = new Map(
+    rows.map(row => [`${row.table_name}.${row.column_name}`, row]),
+  )
+  const invalidTypes: string[] = []
+
+  for (const [table, column] of expected) {
+    const key = `${table}.${column}`
+    const row = columns.get(key)
+    if (row?.data_type !== 'uuid') {
+      invalidTypes.push(`${key}=${row?.data_type ?? 'missing'}`)
+    }
+  }
+
+  const invalidDefaults = UUID_PRIMARY_KEY_TABLES.flatMap((table) => {
+    const row = columns.get(`${table}.id`)
+    return row?.column_default?.toLowerCase().includes('gen_random_uuid')
+      ? []
+      : [`${table}.id=${row?.column_default ?? 'missing default'}`]
+  })
+  const invalidNullability = UUID_RELATION_COLUMNS.flatMap(([table, column]) => {
+    const key = `${table}.${column}`
+    const actualNullable = columns.get(key)?.is_nullable === 'YES'
+    const expectedNullable = NULLABLE_UUID_RELATIONS.has(key)
+
+    return actualNullable === expectedNullable
+      ? []
+      : [`${key} is ${actualNullable ? 'nullable' : 'required'}, expected ${expectedNullable ? 'nullable' : 'required'}`]
+  })
+
+  const constraintRows = await sql.unsafe<{
+    table_name: string
+    column_name: string
+    constraint_type: string
+    referenced_table_name: string | null
+    referenced_column_name: string | null
+    delete_rule: string | null
+  }[]>(
+    `SELECT
+       tc.table_name,
+       kcu.column_name,
+       tc.constraint_type,
+       ccu.table_name AS referenced_table_name,
+       ccu.column_name AS referenced_column_name,
+       rc.delete_rule
+     FROM information_schema.table_constraints AS tc
+     JOIN information_schema.key_column_usage AS kcu
+       ON tc.constraint_catalog = kcu.constraint_catalog
+      AND tc.constraint_schema = kcu.constraint_schema
+      AND tc.constraint_name = kcu.constraint_name
+      AND tc.table_name = kcu.table_name
+     LEFT JOIN information_schema.constraint_column_usage AS ccu
+       ON tc.constraint_catalog = ccu.constraint_catalog
+      AND tc.constraint_schema = ccu.constraint_schema
+      AND tc.constraint_name = ccu.constraint_name
+     LEFT JOIN information_schema.referential_constraints AS rc
+       ON tc.constraint_catalog = rc.constraint_catalog
+      AND tc.constraint_schema = rc.constraint_schema
+      AND tc.constraint_name = rc.constraint_name
+     WHERE tc.table_schema = 'public'
+       AND tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY')`,
+  )
+  const constraintTypes = new Map<string, Set<string>>()
+  const foreignKeyTargets = new Map<string, string>()
+  const foreignKeyDeleteRules = new Map<string, string>()
+
+  for (const row of constraintRows) {
+    const key = `${row.table_name}.${row.column_name}`
+    const types = constraintTypes.get(key) ?? new Set<string>()
+    types.add(row.constraint_type)
+    constraintTypes.set(key, types)
+
+    if (
+      row.constraint_type === 'FOREIGN KEY'
+      && row.referenced_table_name
+      && row.referenced_column_name
+    ) {
+      foreignKeyTargets.set(
+        key,
+        `${row.referenced_table_name}.${row.referenced_column_name}`,
+      )
+      if (row.delete_rule) foreignKeyDeleteRules.set(key, row.delete_rule)
+    }
+  }
+
+  const missingPrimaryKeys = UUID_PRIMARY_KEY_TABLES.flatMap((table) => {
+    const key = `${table}.id`
+    return constraintTypes.get(key)?.has('PRIMARY KEY') ? [] : [key]
+  })
+  const missingForeignKeys = UUID_RELATION_COLUMNS.flatMap(([table, column]) => {
+    const key = `${table}.${column}`
+    return constraintTypes.get(key)?.has('FOREIGN KEY') ? [] : [key]
+  })
+  const articleTagPrimaryKeyColumns = ['article_id', 'tag_id']
+  const missingArticleTagPrimaryKey = articleTagPrimaryKeyColumns.flatMap((column) => {
+    const key = `article_tags.${column}`
+    return constraintTypes.get(key)?.has('PRIMARY KEY') ? [] : [key]
+  })
+  const incorrectForeignKeyTargets = [...UUID_FOREIGN_KEY_TARGETS].flatMap(
+    ([source, expectedTarget]) => {
+      const actualTarget = foreignKeyTargets.get(source)
+      return actualTarget === expectedTarget
+        ? []
+        : [`${source} references ${actualTarget ?? 'nothing'}, expected ${expectedTarget}`]
+    },
+  )
+  const incorrectDeleteRules = [...UUID_FOREIGN_KEY_DELETE_RULES].flatMap(
+    ([source, expectedRule]) => {
+      const actualRule = foreignKeyDeleteRules.get(source)
+      return actualRule === expectedRule
+        ? []
+        : [`${source} uses ON DELETE ${actualRule ?? 'unknown'}, expected ${expectedRule}`]
+    },
+  )
+  const invalidConstraints = [
+    ...missingPrimaryKeys.map(key => `${key}=missing primary key`),
+    ...missingForeignKeys.map(key => `${key}=missing foreign key`),
+    ...missingArticleTagPrimaryKey.map(key => `${key}=missing composite primary key`),
+    ...incorrectForeignKeyTargets,
+    ...incorrectDeleteRules,
+  ]
+
+  if (
+    invalidTypes.length > 0
+    || invalidDefaults.length > 0
+    || invalidNullability.length > 0
+    || invalidConstraints.length > 0
+  ) {
+    throw new Error(
+      `UUID migration verification failed. Invalid schema: ${[
+        ...invalidTypes,
+        ...invalidDefaults,
+        ...invalidNullability,
+        ...invalidConstraints,
+      ].join(', ')}`,
+    )
+  }
 }
 
 try {
@@ -114,9 +480,20 @@ try {
 
     if (!baseline) {
       throw new Error(
-        `Unknown baseline "${baselineTag}". Known tags:\n  `
-        + journal.entries.map(entry => entry.tag).join('\n  '),
+        `Unknown baseline "${baselineTag}". Known tags:\n  ${journal.entries.map(entry => entry.tag).join('\n  ')}`,
       )
+    }
+
+    const uuidMigration = journal.entries.find(
+      entry => entry.tag === '0011_preserve_data_uuid_keys',
+    )
+
+    // Baselining says the migration already exists in the live database. Never
+    // trust that claim for 0011 without checking the actual UUID columns,
+    // defaults and constraints first; otherwise a partial conversion becomes
+    // permanently hidden behind a successful ledger row.
+    if (uuidMigration && baseline.when >= uuidMigration.when && lastApplied < uuidMigration.when) {
+      await assertUuidMigrationResult()
     }
 
     const alreadyInDatabase = journal.entries.filter(
@@ -150,22 +527,107 @@ try {
   }
 
   const pending = journal.entries.filter(entry => entry.when > lastApplied)
+  const uuidMigration = journal.entries.find(
+    entry => entry.tag === '0011_preserve_data_uuid_keys',
+  )
 
   if (pending.length === 0) {
+    // An existing ledger row proves only that someone recorded the migration;
+    // audit the live schema on every no-op run so drift or an old partial DDL
+    // application is surfaced immediately.
+    if (uuidMigration && lastApplied >= uuidMigration.when) {
+      await assertUuidMigrationResult()
+      console.log('Verified live UUID schema.')
+    }
+
     console.log('Database is up to date, nothing to apply.')
   }
 
   for (const entry of pending) {
     const { statements, hash } = readMigration(entry.tag)
+    const isLegacyUuidConversion = entry.tag === '0011_preserve_data_uuid_keys'
+      && statements.some(statement => statement.includes('ALTER TABLE authors ALTER COLUMN id'))
+
+    // Older copies of 0011 perform an in-place integer conversion. Fresh
+    // databases create UUIDs directly, so their 0011 file is only a marker and
+    // must not be rejected by the integer-source preflight.
+    if (isLegacyUuidConversion) await assertUuidMigrationSourceSchema()
+
     console.log(`Applying ${entry.tag} (${statements.length} statement(s))...`)
 
-    for (const [index, statement] of statements.entries()) {
+    if (isLegacyUuidConversion) {
+      // Schema-locked changefeed tables reject the constraint and primary-key
+      // changes in this migration. CockroachDB requires each setting change to
+      // run alone in an implicit transaction, before sql.begin(). Restore every
+      // lock in finally even when the UUID transaction rolls back.
+      const schemaLockedTables = [
+        'article_comments',
+        'article_correction_requests',
+        'article_media',
+        'article_tags',
+        'articles',
+        'authors',
+        'bookmarks',
+        'categories',
+        'comment_flags',
+        'comment_votes',
+        'comments',
+        'contact_messages',
+        'newsletter_article_emails',
+        'notification_mutes',
+        'notifications',
+        'password_reset_tokens',
+        'subscribers',
+        'tags',
+        'user_oauth_accounts',
+        'users',
+      ] as const
+      const unlockedTables: string[] = []
+
       try {
-        await sql.unsafe(statement)
+        for (const table of schemaLockedTables) {
+          await sql.unsafe(`ALTER TABLE ${table} SET (schema_locked = false)`)
+          unlockedTables.push(table)
+        }
+
+        await sql.begin(async (transaction) => {
+          // CockroachDB 25.2+ commits before every DDL statement by default.
+          // Keep this setting local so primary keys can be replaced safely in
+          // one transaction without changing the database-wide default.
+          await transaction.unsafe('SET LOCAL autocommit_before_ddl = false')
+
+          for (const [index, statement] of statements.entries()) {
+            try {
+              await transaction.unsafe(statement)
+            }
+            catch (error) {
+              console.error(`\n${entry.tag} failed on statement ${index + 1}:\n${statement}\n`)
+              throw error
+            }
+          }
+        })
       }
-      catch (error) {
-        console.error(`\n${entry.tag} failed on statement ${index + 1}:\n${statement}\n`)
-        throw error
+      finally {
+        for (const table of unlockedTables.reverse()) {
+          await sql.unsafe(`ALTER TABLE ${table} SET (schema_locked = true)`)
+        }
+      }
+
+      await assertUuidMigrationResult()
+    }
+    else {
+      for (const [index, statement] of statements.entries()) {
+        try {
+          await sql.unsafe(statement)
+        }
+        catch (error) {
+          console.error(`\n${entry.tag} failed on statement ${index + 1}:\n${statement}\n`)
+          throw error
+        }
+      }
+
+      if (entry.tag === '0011_preserve_data_uuid_keys') {
+        await assertUuidMigrationResult()
       }
     }
 

@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
-import { getTableName, is } from 'drizzle-orm'
+import { getTableColumns, getTableName, is } from 'drizzle-orm'
 import { PgTable } from 'drizzle-orm/pg-core'
 import * as schema from '~~/server/db/schema'
 
@@ -39,9 +39,8 @@ const allSql = sqlFileNames
   .join('\n')
 
 /** Table names as they exist in Postgres, read straight from the schema exports. */
-const tableNames = Object.values(schema)
-  .filter(value => is(value, PgTable))
-  .map(table => getTableName(table))
+const schemaTables = Object.values(schema).filter(value => is(value, PgTable))
+const tableNames = schemaTables.map(table => getTableName(table))
 
 /** Collapse whitespace so formatting alone never hides two identical migrations. */
 function normalise(sql: string): string {
@@ -95,10 +94,132 @@ describe('migration files', () => {
       seenBefore.set(sql, entry.tag)
     }
   })
+
+  it('runs the UUID conversion atomically and manages the article_tags schema lock', () => {
+    const runner = readFileSync(join(migrationsDir, '..', 'migrate.ts'), 'utf8')
+
+    expect(runner).toContain('entry.tag === \'0011_preserve_data_uuid_keys\'')
+    expect(runner).toContain('await sql.begin(async (transaction) =>')
+    expect(runner).toContain('SET LOCAL autocommit_before_ddl = false')
+    expect(runner).toContain("'article_tags'")
+    expect(runner).toContain('ALTER TABLE ${table} SET (schema_locked = false)')
+    expect(runner).toContain('ALTER TABLE ${table} SET (schema_locked = true)')
+  })
 })
 
 describe('schema coverage', () => {
   it.each(tableNames)('creates the "%s" table in a migration', (tableName) => {
     expect(allSql).toMatch(new RegExp(`CREATE TABLE (IF NOT EXISTS )?"${tableName}"`))
+  })
+
+  it('uses UUIDs for every single-column id primary key', () => {
+    for (const table of schemaTables) {
+      const id = getTableColumns(table).id
+      if (!id) continue
+
+      expect(id.dataType, `${getTableName(table)}.id must be a UUID string`).toBe('string')
+      expect(id.columnType, `${getTableName(table)}.id must use PgUUID`).toBe('PgUUID')
+      expect(id.primary, `${getTableName(table)}.id must remain the primary key`).toBe(true)
+      expect(id.hasDefault, `${getTableName(table)}.id must generate UUIDs by default`).toBe(true)
+    }
+  })
+
+  it('uses UUIDs for every database relationship id', () => {
+    for (const table of schemaTables) {
+      const tableName = getTableName(table)
+
+      for (const [propertyName, column] of Object.entries(getTableColumns(table))) {
+        // Relationship properties consistently end in `Id`. The plain `id`
+        // primary key is covered separately above. Provider and Cloudinary
+        // public IDs are external opaque strings, not database relationships.
+        if (
+          !propertyName.endsWith('Id')
+          || propertyName === 'providerUserId'
+          || propertyName === 'publicId'
+        ) continue
+
+        expect(
+          column.columnType,
+          `${tableName}.${column.name} must use PgUUID`,
+        ).toBe('PgUUID')
+      }
+    }
+  })
+
+  it('creates every UUID relationship directly in the migration chain', () => {
+    for (const table of schemaTables) {
+      const tableName = getTableName(table)
+
+      for (const [propertyName, column] of Object.entries(getTableColumns(table))) {
+        if (
+          !propertyName.endsWith('Id')
+          || propertyName === 'providerUserId'
+          || propertyName === 'publicId'
+        ) continue
+
+        expect(
+          allSql,
+          `${tableName}.${column.name} must be created as UUID`,
+        ).toMatch(new RegExp(`"${column.name}"\\s+uuid(?:\\s|,|\\))`, 'i'))
+      }
+    }
+  })
+
+  it('creates every UUID primary key with a random UUID default', () => {
+    for (const table of schemaTables) {
+      const id = getTableColumns(table).id
+      if (!id) continue
+
+      const tableName = getTableName(table)
+      const createTable = allSql.match(
+        new RegExp(`CREATE TABLE (?:IF NOT EXISTS )?"${tableName}" \\([\\s\\S]*?\\n\\);`, 'i'),
+      )?.[0]
+
+      expect(createTable, `${tableName} must have a CREATE TABLE migration`).toBeDefined()
+      expect(createTable).toMatch(
+        /"id"\s+uuid\s+PRIMARY KEY\s+DEFAULT gen_random_uuid\(\)/i,
+      )
+    }
+  })
+
+  it('does not install serial defaults on UUID columns', () => {
+    const uuidMigration = readFileSync(
+      join(migrationsDir, '0011_preserve_data_uuid_keys.sql'),
+      'utf8',
+    )
+
+    expect(uuidMigration).not.toMatch(/SET DEFAULT nextval/i)
+    expect(uuidMigration).not.toMatch(/SET DATA TYPE (?:SERIAL|INTEGER|BIGINT)/i)
+  })
+
+  it('keeps the retired UUID conversion registered as a compatibility entry', () => {
+    const uuidEntry = journal.entries.find(entry => entry.tag === '0011_preserve_data_uuid_keys')
+    const migration = readFileSync(
+      join(migrationsDir, '0011_preserve_data_uuid_keys.sql'),
+      'utf8',
+    )
+
+    expect(uuidEntry).toBeDefined()
+    expect(uuidEntry?.idx).toBe(11)
+    expect(migration).toContain('Fresh databases now create UUID columns directly')
+    expect(migration).toContain('SELECT 1;')
+    expect(migration).not.toContain('SET DATA TYPE UUID')
+  })
+
+  it('guards migration generation from a stale pre-UUID snapshot', () => {
+    const latestEntry = journal.entries.at(-1)
+    expect(latestEntry?.tag).toBe('0011_preserve_data_uuid_keys')
+
+    const generator = readFileSync(
+      join(migrationsDir, '..', 'generate.ts'),
+      'utf8',
+    )
+    expect(generator).toContain('existsSync(snapshotPath)')
+    expect(generator).toContain('spawnSync(command, [\'exec\', \'drizzle-kit\', \'generate\']')
+
+    const packageJson = JSON.parse(
+      readFileSync(join(migrationsDir, '..', '..', '..', 'package.json'), 'utf8'),
+    ) as { scripts: Record<string, string> }
+    expect(packageJson.scripts['db:generate']).toBe('tsx server/db/generate.ts')
   })
 })

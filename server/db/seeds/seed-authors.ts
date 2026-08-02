@@ -76,7 +76,7 @@ function readAuthorSeeds(): AuthorSeed[] {
 }
 
 /** Resolve the byline `authors` row id for a slug, or null if not seeded yet. */
-async function resolveBylineId(slug: string): Promise<number | null> {
+async function resolveBylineId(slug: string): Promise<string | null> {
   const [byline] = await db.select({ id: authors.id }).from(authors).where(eq(authors.slug, slug))
   if (!byline) {
     console.warn(`\u26A0\uFE0F  Byline "${slug}" not found \u2014 run \`pnpm db:seed\` first; leaving authorId null.`)

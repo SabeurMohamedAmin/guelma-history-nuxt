@@ -25,7 +25,7 @@ function hashToken(rawToken: string): string {
  * verification tokens first so only the latest link works. Returns the raw
  * token to embed in the email link.
  */
-export async function createEmailVerificationToken(userId: number): Promise<string> {
+export async function createEmailVerificationToken(userId: string): Promise<string> {
   await db
     .update(passwordResetTokens)
     .set({ usedAt: new Date() })
@@ -53,7 +53,7 @@ export async function createEmailVerificationToken(userId: number): Promise<stri
  * the verified user's id on success, or null when the token is invalid/expired
  * /already used.
  */
-export async function verifyEmailToken(rawToken: string): Promise<number | null> {
+export async function verifyEmailToken(rawToken: string): Promise<string | null> {
   const tokenRow = await db.query.passwordResetTokens.findFirst({
     where: and(
       eq(passwordResetTokens.tokenHash, hashToken(rawToken)),
