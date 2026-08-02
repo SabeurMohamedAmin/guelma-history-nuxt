@@ -1,4 +1,4 @@
-import { pgTable, serial, uuid, integer, smallint, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, smallint, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { comments } from './comments'
 import { users } from './users'
 
@@ -15,11 +15,11 @@ import { users } from './users'
  * the current user how THEY voted (to highlight their arrow).
  */
 export const commentVotes = pgTable('comment_votes', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   commentId: uuid('comment_id')
     .notNull()
     .references(() => comments.id, { onDelete: 'cascade' }),
-  userId: integer('user_id')
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   // +1 = upvote, -1 = downvote. There is no 0: clearing a vote deletes the row.

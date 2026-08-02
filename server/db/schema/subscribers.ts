@@ -1,4 +1,4 @@
-import { index, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core'
+import { index, pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core'
 
 /**
  * Newsletter subscribers.
@@ -21,7 +21,7 @@ import { index, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core'
  *                allow a later explicit re-subscribe to rotate a fresh token.
  */
 export const subscribers = pgTable('subscribers', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
   status: text('status', {
     enum: ['pending', 'active', 'unsubscribed'],

@@ -8,7 +8,7 @@ type CreateCategoryDto = {
   descriptionFr?: string | null
   icon?: string | null
   coverImage?: string | null
-  parentId?: number | null
+  parentId?: string | null
 }
 
 type UpdateCategoryDto = Partial<CreateCategoryDto>
@@ -43,11 +43,11 @@ export function useCategories() {
     return run(() => $fetch<Category>('/api/admin/categories', { method: 'POST', body: payload }))
   }
 
-  function updateCategory(id: number, payload: UpdateCategoryDto) {
+  function updateCategory(id: string, payload: UpdateCategoryDto) {
     return run(() => $fetch<Category>(`/api/admin/categories/${id}`, { method: 'PATCH', body: payload }))
   }
 
-  function deleteCategory(id: number) {
+  function deleteCategory(id: string) {
     return run(() => $fetch<null>(`/api/admin/categories/${id}`, { method: 'DELETE' }))
   }
 

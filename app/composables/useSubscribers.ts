@@ -2,7 +2,7 @@
 export type SubscriberStatus = 'pending' | 'active' | 'unsubscribed'
 
 export interface AdminSubscriber {
-  id: number
+  id: string
   email: string
   status: SubscriberStatus
   confirmedAt: string | null
@@ -43,11 +43,11 @@ export function useSubscribers() {
     return data
   }
 
-  function deleteSubscriber(id: number) {
+  function deleteSubscriber(id: string) {
     return run(() => $fetch<null>(`/api/admin/subscribers/${id}`, { method: 'DELETE' }))
   }
 
-  function updateSubscriberStatus(id: number, status: Extract<SubscriberStatus, 'active' | 'unsubscribed'>) {
+  function updateSubscriberStatus(id: string, status: Extract<SubscriberStatus, 'active' | 'unsubscribed'>) {
     return run(() => $fetch<null>(`/api/admin/subscribers/${id}/subscription`, {
       method: 'PATCH',
       body: { status },

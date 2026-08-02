@@ -14,7 +14,7 @@ export type ArticlesQueryParams = ArticlesQueryInput
 
 /** A single gallery media item attached to an article. */
 export interface ArticleMediaResponse {
-  id: number
+  id: string
   type: 'image' | 'video' | 'youtube'
   url: string
   publicId: string | null
@@ -38,7 +38,7 @@ export interface ArticleMediaResponse {
  * `authorId` (see server/validators/article.validator.ts).
  */
 export interface ArticleResponse {
-  id: number
+  id: string
   titleAr: string
   titleFr: string
   slug: string
@@ -53,9 +53,9 @@ export interface ArticleResponse {
   readingTime: number
   createdAt: Date
   updatedAt: Date
-  category: { id: number, nameAr: string, nameFr: string, slug: string } | null
-  author: { id: number, nameAr: string, nameFr: string, slug: string, avatar: string | null } | null
-  tags: { id: number, nameAr: string, nameFr: string, slug: string }[]
+  category: { id: string, nameAr: string, nameFr: string, slug: string } | null
+  author: { id: string, nameAr: string, nameFr: string, slug: string, avatar: string | null } | null
+  tags: { id: string, nameAr: string, nameFr: string, slug: string }[]
   media: ArticleMediaResponse[]
 }
 
@@ -74,7 +74,7 @@ export interface PaginatedResponse<T> {
 
 /** Compact article shape for the dashboard "recent articles" list. */
 export interface RecentArticleResponse {
-  id: number
+  id: string
   slug: string
   title: string
   category: string

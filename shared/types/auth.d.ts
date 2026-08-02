@@ -9,7 +9,7 @@ import type { Role } from '~~/shared/auth/roles'
 
 declare module '#auth-utils' {
   interface User {
-    id: number
+    id: string
     username: string
     email: string
     displayName: string | null

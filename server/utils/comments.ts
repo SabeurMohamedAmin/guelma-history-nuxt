@@ -140,7 +140,7 @@ async function findCommentWithAuthorOrThrow(id: string): Promise<CommentWithAuth
  * slug, the same value the client subscribes with. Null when the article is
  * gone (broadcast is then skipped; the write itself already succeeded).
  */
-export async function getArticleSlug(articleId: number): Promise<string | null> {
+export async function getArticleSlug(articleId: string): Promise<string | null> {
   const article = await db.query.articles.findFirst({
     where: eq(articles.id, articleId),
     columns: { slug: true },
@@ -554,7 +554,7 @@ export async function listDescendants(rootIds: string[]): Promise<CommentRow[]> 
 
 export interface SerializedComment {
   id: string
-  articleId: number
+  articleId: string
   parentId: string | null
   depth: number
   /** Body, or the placeholder when the comment is deleted. Always plain text. */
@@ -565,11 +565,11 @@ export interface SerializedComment {
   score: number
   editedAt: string | null
   createdAt: string
-  author: { id: number, username: string, displayName: string | null } | null
+  author: { id: string, username: string, displayName: string | null } | null
 }
 
 type CommentWithAuthor = CommentRow & {
-  author?: { id: number, username: string, displayName: string | null } | null
+  author?: { id: string, username: string, displayName: string | null } | null
 }
 
 /**
@@ -601,7 +601,7 @@ export function serializeComment(row: CommentWithAuthor): SerializedComment {
  * Guests (no userId) get an empty map. Never exposes other users' votes.
  */
 export async function getViewerVotes(
-  userId: number | null | undefined,
+  userId: string | null | undefined,
   commentIds: string[],
 ): Promise<Record<string, -1 | 1>> {
   if (!userId || commentIds.length === 0) return {}
@@ -624,8 +624,8 @@ export interface FlaggedComment {
   commentId: string
   body: string
   isDeleted: boolean
-  articleId: number
-  author: { id: number, username: string, displayName: string | null } | null
+  articleId: string
+  author: { id: string, username: string, displayName: string | null } | null
   reportCount: number
   reasons: string[]
   firstReportedAt: string

@@ -1,7 +1,7 @@
-import { pgTable, text, serial, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, text, uuid, timestamp } from 'drizzle-orm/pg-core'
 
 export const authors = pgTable('authors', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   nameAr: text('name_ar').notNull(),
   nameFr: text('name_fr').notNull(),
   // URL-safe identifier used to address an author in admin routes.

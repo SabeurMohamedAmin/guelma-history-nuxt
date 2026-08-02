@@ -144,7 +144,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
   }
 
   /** Mute a target. Pass the matching id for 'article' / 'comment' scopes. */
-  async function mute(scope: MuteScope, target?: { articleId?: number, commentId?: string }) {
+  async function mute(scope: MuteScope, target?: { articleId?: string, commentId?: string }) {
     await $fetch('/api/notifications/mutes', {
       method: 'POST',
       body: { scope, articleId: target?.articleId, commentId: target?.commentId },
@@ -153,7 +153,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
   }
 
   /** Remove a mute by id (unmute). */
-  async function unmute(muteId: number) {
+  async function unmute(muteId: string) {
     await $fetch(`/api/notifications/mutes/${muteId}`, { method: 'DELETE' })
     mutes.value = mutes.value.filter(m => m.id !== muteId)
   }

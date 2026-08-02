@@ -1,8 +1,6 @@
 // shared/types/article.ts
 
-// NOTE on ids: `articles.id` is a `serial` (32-bit) primary key, so the API
-// serializes it as a JSON NUMBER and it stays a number on the client. Only
-// switch these to digit strings if the column is ever widened to INT8.
+// Database identifiers are UUID strings throughout the API and client.
 
 export interface ImageVariants {
   thumbnail: string
@@ -12,15 +10,15 @@ export interface ImageVariants {
 }
 
 export interface Article {
-  id: number
+  id: string
   titleAr: string
   titleFr: string
   slug: string
   bodyAr: string
   bodyFr: string
   coverImage: string | null
-  categoryId: number | null
-  authorId: number | null
+  categoryId: string | null
+  authorId: string | null
   publishedAt: Date | null
   readingTime: number
   createdAt: Date
@@ -32,7 +30,7 @@ export interface Article {
 }
 
 export interface ArticleListItem {
-  id: number
+  id: string
   titleAr: string
   titleFr: string
   slug: string
@@ -65,7 +63,7 @@ export interface ArticleFilters {
 
 /** Trimmed category / tag reference embedded in an article payload. */
 export interface ArticleTermRef {
-  id: number
+  id: string
   nameAr: string
   nameFr: string
   slug: string
@@ -92,7 +90,7 @@ export interface ArticleMediaItem {
  * both languages; the client picks one and falls back to the other.
  */
 export interface ArticleDetail {
-  id: number
+  id: string
   slug: string
   titleAr: string
   titleFr: string

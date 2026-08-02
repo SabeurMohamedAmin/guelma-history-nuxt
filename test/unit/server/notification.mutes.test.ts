@@ -8,43 +8,50 @@ import type { MuteRecord } from '~~/server/utils/notificationMutes'
  * tested without a database.
  */
 
-const target = { articleId: 10, commentId: 'c-1' }
+const userA = '60000000-0000-4000-8000-000000000001'
+const userB = '60000000-0000-4000-8000-000000000002'
+const userC = '60000000-0000-4000-8000-000000000003'
+const articleA = '61000000-0000-4000-8000-000000000001'
+const articleB = '61000000-0000-4000-8000-000000000002'
+const commentA = '62000000-0000-4000-8000-000000000001'
+const commentB = '62000000-0000-4000-8000-000000000002'
+const target = { articleId: articleA, commentId: commentA }
 
 describe('filterMutedRecipients', () => {
   it('keeps everyone when there are no mutes', () => {
-    expect(filterMutedRecipients([1, 2, 3], [], target)).toEqual([1, 2, 3])
+    expect(filterMutedRecipients([userA, userB, userC], [], target)).toEqual([userA, userB, userC])
   })
 
   it('drops a recipient who muted everything (\'all\')', () => {
-    const mutes: MuteRecord[] = [{ userId: 2, scope: 'all', articleId: null, commentId: null }]
-    expect(filterMutedRecipients([1, 2, 3], mutes, target)).toEqual([1, 3])
+    const mutes: MuteRecord[] = [{ userId: userB, scope: 'all', articleId: null, commentId: null }]
+    expect(filterMutedRecipients([userA, userB, userC], mutes, target)).toEqual([userA, userC])
   })
 
   it('drops a recipient who muted THIS article', () => {
-    const mutes: MuteRecord[] = [{ userId: 1, scope: 'article', articleId: 10, commentId: null }]
-    expect(filterMutedRecipients([1, 2], mutes, target)).toEqual([2])
+    const mutes: MuteRecord[] = [{ userId: userA, scope: 'article', articleId: articleA, commentId: null }]
+    expect(filterMutedRecipients([userA, userB], mutes, target)).toEqual([userB])
   })
 
   it('keeps a recipient who muted a DIFFERENT article', () => {
-    const mutes: MuteRecord[] = [{ userId: 1, scope: 'article', articleId: 99, commentId: null }]
-    expect(filterMutedRecipients([1, 2], mutes, target)).toEqual([1, 2])
+    const mutes: MuteRecord[] = [{ userId: userA, scope: 'article', articleId: articleB, commentId: null }]
+    expect(filterMutedRecipients([userA, userB], mutes, target)).toEqual([userA, userB])
   })
 
   it('drops a recipient who muted THIS comment thread', () => {
-    const mutes: MuteRecord[] = [{ userId: 2, scope: 'comment', articleId: null, commentId: 'c-1' }]
-    expect(filterMutedRecipients([1, 2], mutes, target)).toEqual([1])
+    const mutes: MuteRecord[] = [{ userId: userB, scope: 'comment', articleId: null, commentId: commentA }]
+    expect(filterMutedRecipients([userA, userB], mutes, target)).toEqual([userA])
   })
 
   it('keeps a recipient who muted a DIFFERENT comment thread', () => {
-    const mutes: MuteRecord[] = [{ userId: 2, scope: 'comment', articleId: null, commentId: 'c-other' }]
-    expect(filterMutedRecipients([1, 2], mutes, target)).toEqual([1, 2])
+    const mutes: MuteRecord[] = [{ userId: userB, scope: 'comment', articleId: null, commentId: commentB }]
+    expect(filterMutedRecipients([userA, userB], mutes, target)).toEqual([userA, userB])
   })
 
   it('drops a recipient with multiple mutes when any one matches', () => {
     const mutes: MuteRecord[] = [
-      { userId: 1, scope: 'article', articleId: 99, commentId: null },
-      { userId: 1, scope: 'comment', articleId: null, commentId: 'c-1' },
+      { userId: userA, scope: 'article', articleId: articleB, commentId: null },
+      { userId: userA, scope: 'comment', articleId: null, commentId: commentA },
     ]
-    expect(filterMutedRecipients([1, 2], mutes, target)).toEqual([2])
+    expect(filterMutedRecipients([userA, userB], mutes, target)).toEqual([userB])
   })
 })

@@ -37,7 +37,7 @@ const form = reactive({
   descriptionFr: '',
   icon: '',
   coverImage: '',
-  parentId: null as number | null,
+  parentId: null as string | null,
 })
 
 // Track whether the user edited the slug manually so we stop auto-generating it.
@@ -73,7 +73,7 @@ const parentOptions = computed(() =>
     .map(c => ({ title: categoryName(c), value: c.id })),
 )
 
-const childrenCount = (id: number) => categories.value.filter(c => c.parentId === id).length
+const childrenCount = (id: string) => categories.value.filter(c => c.parentId === id).length
 
 const stats = computed(() => {
   const total = categories.value.length
@@ -89,7 +89,7 @@ const headers = computed(() => [
   { title: '', key: 'actions', align: 'end' as const, sortable: false, width: 110 },
 ])
 
-const parentName = (parentId: number | null) => {
+const parentName = (parentId: string | null) => {
   if (!parentId) return null
   const parent = categories.value.find(c => c.id === parentId)
   return parent ? categoryName(parent) : null

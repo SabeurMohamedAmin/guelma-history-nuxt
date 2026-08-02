@@ -11,7 +11,7 @@ definePageMeta({
 })
 
 type PublicAuthor = {
-  id: number
+  id: string
   slug: string
   name: string
   bio: string | null
@@ -19,7 +19,7 @@ type PublicAuthor = {
 }
 
 type AuthorArticle = {
-  id: number
+  id: string
   titleAr: string
   titleFr: string
   slug: string

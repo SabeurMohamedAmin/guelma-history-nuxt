@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { sanitizeCommentBody } from '~~/server/utils/sanitizeComment'
 import { articleSlugSchema } from './slug'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * Validation rules for the realtime threaded comment system. Single source of
@@ -13,7 +14,7 @@ import { articleSlugSchema } from './slug'
  */
 
 /** A comment id: a UUID string (comments use uuid primary keys, not counters). */
-const commentId = z.string().uuid()
+const commentId = databaseUuidSchema
 
 /** Maximum length of a comment body, in characters. Product rule. */
 export const COMMENT_MAX_LENGTH = 1200

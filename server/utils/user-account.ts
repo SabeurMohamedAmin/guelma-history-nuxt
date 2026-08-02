@@ -233,7 +233,7 @@ export async function findOrLinkOauthUser(profile: OauthProfile): Promise<Sessio
  * the staleness check.
  */
 export async function completeProfile(
-  userId: number,
+  userId: string,
   input: { username: string, password: string },
 ): Promise<SessionUser> {
   const clash = await db.query.users.findFirst({

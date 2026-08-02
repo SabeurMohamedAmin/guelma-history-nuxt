@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type ArticleComment = { id: number, name: string, message: string, createdAt: string | Date }
+type ArticleComment = { id: string, name: string, message: string, createdAt: string | Date }
 
 const props = defineProps<{ slug: string }>()
 const { locale } = useI18n()

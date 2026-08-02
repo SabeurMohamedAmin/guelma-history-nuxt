@@ -11,7 +11,7 @@ import type { SerializedNotification } from '~~/server/utils/notifications'
  */
 
 /** Topic (room) for one user's notification stream. */
-export function userTopic(userId: number): string {
+export function userTopic(userId: string): string {
   return `notifications:user:${userId}`
 }
 
@@ -54,7 +54,7 @@ export function removeNotificationPeer(peer: Peer): void {
  * no connected tabs (no-op). Never throws into the caller: a broken socket must
  * not fail the notification insert that triggered it.
  */
-export function publishNotificationEvent(userId: number, event: NotificationEvent): void {
+export function publishNotificationEvent(userId: string, event: NotificationEvent): void {
   const room = registry.get(userTopic(userId))
   if (!room || room.size === 0) return
 

@@ -1,18 +1,18 @@
 CREATE TABLE "notification_mutes" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
 	"scope" text NOT NULL,
-	"article_id" integer,
+	"article_id" uuid,
 	"comment_id" uuid,
 	"created_at" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "notifications" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"recipient_id" integer NOT NULL,
-	"actor_id" integer NOT NULL,
+	"recipient_id" uuid NOT NULL,
+	"actor_id" uuid NOT NULL,
 	"type" text NOT NULL,
-	"article_id" integer NOT NULL,
+	"article_id" uuid NOT NULL,
 	"comment_id" uuid NOT NULL,
 	"read_at" timestamp with time zone,
 	"created_at" timestamp with time zone NOT NULL

@@ -7,19 +7,20 @@ catch {
   // DATABASE_URL may already come from the shell or deployment runtime.
 }
 
-const connectionString = process.env.DATABASE_URL
+const connectionString = process.env.NUXT_DATABASE_URL
 
 if (!connectionString) {
-  throw new Error('DATABASE_URL is not set. Add it to .env or your shell before running this script.')
+  throw new Error('NUXT_DATABASE_URL is not set. Add it to .env or your shell before running this script.')
 }
 
 const sql = postgres(connectionString, { prepare: false, max: 1 })
 
 async function repairAdminAvatarSchema() {
   await sql.begin(async (tx) => {
-    await tx`ALTER TABLE "admins" ADD COLUMN IF NOT EXISTS "avatar_data" bytea`
-    await tx`ALTER TABLE "admins" ADD COLUMN IF NOT EXISTS "avatar_mime_type" text`
-    await tx`ALTER TABLE "admins" ADD COLUMN IF NOT EXISTS "avatar_updated_at" timestamp with time zone`
+    // All roles now live in the UUID-backed users table.
+    await tx`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatar_data" bytea`
+    await tx`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatar_mime_type" text`
+    await tx`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatar_updated_at" timestamp with time zone`
   })
 
   console.log('✅ Admin avatar columns are ready.')

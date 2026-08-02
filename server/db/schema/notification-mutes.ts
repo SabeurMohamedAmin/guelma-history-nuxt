@@ -1,4 +1,4 @@
-import { pgTable, serial, uuid, integer, text, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core'
 import { articles } from './articles'
 import { comments } from './comments'
 import { users } from './users'
@@ -24,15 +24,15 @@ import { users } from './users'
  * index, so muting the same thing twice is a no-op instead of a duplicate.
  */
 export const notificationMutes = pgTable('notification_mutes', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   // The user who muted. Guests have no notifications, so this is required.
-  userId: integer('user_id')
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   // Which kind of mute this is. See the scope notes above.
   scope: text('scope', { enum: ['all', 'article', 'comment'] }).notNull(),
   // Set only when scope = 'article'; null otherwise.
-  articleId: integer('article_id').references(() => articles.id, { onDelete: 'cascade' }),
+  articleId: uuid('article_id').references(() => articles.id, { onDelete: 'cascade' }),
   // Set only when scope = 'comment'; null otherwise.
   commentId: uuid('comment_id').references(() => comments.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().$defaultFn(() => new Date()),

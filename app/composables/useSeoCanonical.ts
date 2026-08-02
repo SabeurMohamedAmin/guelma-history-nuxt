@@ -34,7 +34,7 @@ export function useSeoCanonical(): void {
       if (!path) return []
 
       return [{
-        rel: 'alternate',
+        rel: 'alternate' as const,
         hreflang: item.language || item.code,
         href: toAbsolute(path),
       }]
@@ -46,9 +46,9 @@ export function useSeoCanonical(): void {
 
   useHead({
     link: () => [
-      { rel: 'canonical', href: canonical.value },
+      { rel: 'canonical' as const, href: canonical.value },
       ...alternates.value,
-      { rel: 'alternate', hreflang: 'x-default', href: defaultHref.value },
+      { rel: 'alternate' as const, hreflang: 'x-default', href: defaultHref.value },
     ],
     meta: () => [
       { property: 'og:locale', content: locale.value === 'fr' ? 'fr_FR' : 'ar_DZ' },

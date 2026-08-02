@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, date, boolean, customType } from 'drizzle-orm/pg-core'
+import { pgTable, text, uuid, timestamp, date, boolean, customType } from 'drizzle-orm/pg-core'
 import { ROLES, type Role } from '../../../shared/auth/roles'
 import { authors } from './authors'
 
@@ -19,7 +19,7 @@ const bytea = customType<{ data: Buffer }>({
 })
 
 export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   username: text('username').notNull().unique(),
   email: text('email').notNull().unique(),
   // Nullable on purpose: a Facebook-OAuth account has no password until the
@@ -43,7 +43,7 @@ export const users = pgTable('users', {
   // Editorial byline link. Connects a writing account (admin/author) to its
   // authors row (nameAr/nameFr/slug). Null for plain users and guests, who do
   // not write. Set null if the byline row is deleted (the account survives).
-  authorId: integer('author_id').references(() => authors.id, { onDelete: 'set null' }),
+  authorId: uuid('author_id').references(() => authors.id, { onDelete: 'set null' }),
   displayName: text('display_name'),
   firstName: text('first_name'),
   lastName: text('last_name'),

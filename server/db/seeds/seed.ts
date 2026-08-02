@@ -104,7 +104,7 @@ const ownerRows = await db
 const ownerPool = ownerRows.length > 0 ? ownerRows.map(row => row.id) : [admin.id]
 
 /** Pick an owner for the article at `index`, cycling through the owner pool. */
-function ownerFor(index: number): number {
+function ownerFor(index: number): string {
   return ownerPool[index % ownerPool.length]!
 }
 
@@ -398,11 +398,10 @@ const articleData = [
   },
 ]
 
-// --- Resolve real DB ids for the hardcoded seed references ---
-// The articleData above references categories/authors by SEED POSITION
-// (categoryId 1-5, authorId 1-3, matching the arrays above). Real primary
-// keys are DB-generated — CockroachDB uses unique_rowid(), not 1, 2, 3… —
-// so we translate each position to the actual id through the row's slug.
+// --- Resolve UUIDs for the seed references ---
+// The article fixtures use small position numbers only as local references into
+// the arrays above. They are never written to UUID columns. Stable slugs resolve
+// each reference to its generated database UUID before insertion.
 const categorySlugByPosition = categoryData.map(category => category.slug)
 const authorSlugByPosition = authorData.map(author => author.slug)
 
@@ -412,8 +411,8 @@ const categoryIdBySlug = new Map(categoryRows.map(row => [row.slug, row.id]))
 const authorRows = await db.select({ id: authors.id, slug: authors.slug }).from(authors)
 const authorIdBySlug = new Map(authorRows.map(row => [row.slug, row.id]))
 
-/** Translate a 1-based seed position into the real database id. */
-function realId(position: number, slugs: string[], idBySlug: Map<string, number>, kind: string): number {
+/** Translate a local 1-based fixture reference into a database UUID. */
+function resolveUuid(position: number, slugs: string[], idBySlug: Map<string, string>, kind: string): string {
   const slug = slugs[position - 1]
   const id = slug === undefined ? undefined : idBySlug.get(slug)
   if (id === undefined) {
@@ -428,8 +427,8 @@ await db
   .values(articleData.map((article, index) => ({
     ...article,
     coverImageVariants: createSeedImageVariants(article.slug),
-    categoryId: realId(article.categoryId, categorySlugByPosition, categoryIdBySlug, 'category'),
-    authorId: realId(article.authorId, authorSlugByPosition, authorIdBySlug, 'author'),
+    categoryId: resolveUuid(article.categoryId, categorySlugByPosition, categoryIdBySlug, 'category'),
+    authorId: resolveUuid(article.authorId, authorSlugByPosition, authorIdBySlug, 'author'),
     createdByUserId: ownerFor(index),
   })))
   .onConflictDoNothing()

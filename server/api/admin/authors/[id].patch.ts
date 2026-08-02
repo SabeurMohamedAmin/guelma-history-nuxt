@@ -1,16 +1,18 @@
 import { eq } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { authors } from '~~/server/db/schema'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * PATCH /api/admin/authors/[id]
  * Partial update. Only the fields present in the body are changed.
  */
 export default defineEventHandler(async (event) => {
-  const id = Number(getRouterParam(event, 'id'))
-  if (!Number.isInteger(id) || id < 1) {
+  const parsedId = databaseUuidSchema.safeParse(getRouterParam(event, 'id'))
+  if (!parsedId.success) {
     throw createError({ statusCode: 400, message: 'Invalid author ID' })
   }
+  const id = parsedId.data
 
   const body = await readBody<{
     nameAr?: string

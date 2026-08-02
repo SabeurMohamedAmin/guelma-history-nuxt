@@ -14,7 +14,7 @@ import { createPasswordHash, verifyPasswordHash } from './password'
  */
 
 export interface UserProfile {
-  id: number
+  id: string
   username: string
   email: string
   displayName: string | null
@@ -33,7 +33,7 @@ export interface UserAvatarImage {
 const MIN_PASSWORD_LENGTH = 8
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-async function findUserOrThrow(userId: number) {
+async function findUserOrThrow(userId: string) {
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) })
   if (!user) {
     throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found.' })
@@ -42,7 +42,7 @@ async function findUserOrThrow(userId: number) {
 }
 
 /** Read the full profile for the given user. */
-export async function getUserProfile(userId: number): Promise<UserProfile> {
+export async function getUserProfile(userId: string): Promise<UserProfile> {
   const user = await findUserOrThrow(userId)
   return {
     id: user.id,
@@ -60,7 +60,7 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
  * Read the avatar blob for the given user. Throws 404 when the user has no
  * stored picture, so the endpoint can fall back to initials on the client.
  */
-export async function getUserAvatar(userId: number): Promise<UserAvatarImage> {
+export async function getUserAvatar(userId: string): Promise<UserAvatarImage> {
   const user = await findUserOrThrow(userId)
 
   if (!user.avatarData || !user.avatarMimeType) {
@@ -75,7 +75,7 @@ export async function getUserAvatar(userId: number): Promise<UserAvatarImage> {
 }
 
 /** Update the editable display name. */
-export async function updateUserDisplayName(userId: number, displayName: string): Promise<UserProfile> {
+export async function updateUserDisplayName(userId: string, displayName: string): Promise<UserProfile> {
   const trimmed = displayName.trim()
   if (!trimmed) {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Display name cannot be empty.' })
@@ -86,7 +86,7 @@ export async function updateUserDisplayName(userId: number, displayName: string)
 }
 
 /** Persist a newly uploaded avatar image directly in the users table. */
-export async function updateUserAvatar(userId: number, data: Buffer, mimeType: string): Promise<UserProfile> {
+export async function updateUserAvatar(userId: string, data: Buffer, mimeType: string): Promise<UserProfile> {
   await db
     .update(users)
     .set({
@@ -105,7 +105,7 @@ export async function updateUserAvatar(userId: number, data: Buffer, mimeType: s
  * and records the change time for the "last password change" display.
  */
 export async function changeUserPassword(
-  userId: number,
+  userId: string,
   currentPassword: string,
   newPassword: string,
 ): Promise<void> {
@@ -139,7 +139,7 @@ export async function changeUserPassword(
  * enforces uniqueness across all accounts.
  */
 export async function changeUserEmail(
-  userId: number,
+  userId: string,
   newEmail: string,
   currentPassword: string,
 ): Promise<UserProfile> {

@@ -1,5 +1,5 @@
 export interface UserProfileData {
-  id: number
+  id: string
   username: string
   email: string
   displayName: string | null

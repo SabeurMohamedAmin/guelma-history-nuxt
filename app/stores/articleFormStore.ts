@@ -4,9 +4,10 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useFetch, useRouter } from '#app'
 import type { ArticleResponse } from '~~/server/types/article.types'
 import type { ImageVariants } from '~~/shared/types/article'
+import { toDatabaseUuid } from '~~/shared/database-uuid'
 
 interface SelectOption {
-  id: number
+  id: string
   name: string
 }
 
@@ -37,8 +38,8 @@ interface ArticleFormFields {
   bodyFr: string
   coverImage: string
   coverImageVariants: ImageVariants | null
-  categoryId: number | null
-  authorId: number | null
+  categoryId: string | null
+  authorId: string | null
   publishedAt: string | null
   readingTime: number | null
   media: MediaFormItem[]
@@ -108,33 +109,6 @@ function toSlug(value: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-/**
- * Largest value a `serial` (int4) primary key can hold. Categories, authors and
- * articles all use serial ids, so anything above this is not a real id.
- */
-const MAX_SERIAL_ID = 2_147_483_647
-
-/**
- * Normalize a relation id coming from a <v-select> into a number.
- *
- * The options carry numeric ids, but the component can hand the value back as a
- * digit string, while the API expects a number. Values outside 1..MAX_SERIAL_ID
- * (null, '', 0, NaN, a generated key) mean "no relation".
- */
-function toId(value: unknown): number | null {
-  const id = Number(value)
-  if (Number.isSafeInteger(id) && id > 0 && id <= MAX_SERIAL_ID) return id
-
-  // null and '' simply mean the select was cleared. Anything else is a value the
-  // select should never have produced, so make it loud while developing rather
-  // than posting an id the API is bound to reject.
-  if (import.meta.dev && value !== null && value !== undefined && value !== '') {
-    console.warn('[articleForm] not a usable relation id:', value, `(${typeof value})`)
-  }
-
-  return null
-}
-
 function getErrorMessage(error: unknown, fallback = 'An unexpected error occurred.'): string {
   const err = error as ApiError
   return err?.data?.message || fallback
@@ -147,6 +121,7 @@ function isNotFoundError(error: unknown): boolean {
 
 export const useArticleFormStore = defineStore('articleForm', () => {
   const router = useRouter()
+  const localePath = useLocalePath()
 
   /**
    * Flow configuration. The same store/form powers both the admin and author
@@ -290,8 +265,8 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     // The response has no flat categoryId/authorId: the selects are bound to the
     // ids carried by the relation objects. Saving still sends categoryId /
     // authorId, see buildPayload().
-    fields.categoryId = toId(article.category?.id)
-    fields.authorId = toId(article.author?.id)
+    fields.categoryId = toDatabaseUuid(article.category?.id)
+    fields.authorId = toDatabaseUuid(article.author?.id)
     fields.publishedAt = toDatetimeLocal(article.publishedAt)
     fields.readingTime = article.readingTime ?? null
     fields.media = (article.media ?? []).map(item => ({
@@ -317,8 +292,8 @@ export const useArticleFormStore = defineStore('articleForm', () => {
       excerptFr: fields.excerptFr.trim() || null,
       coverImage: fields.coverImage.trim() || null,
       coverImageVariants: fields.coverImageVariants,
-      categoryId: toId(fields.categoryId),
-      authorId: toId(fields.authorId),
+      categoryId: toDatabaseUuid(fields.categoryId),
+      authorId: toDatabaseUuid(fields.authorId),
       readingTime: fields.readingTime && fields.readingTime > 0 ? fields.readingTime : undefined,
       publishedAt: toIsoFromDatetimeLocal(fields.publishedAt),
       // Keep only rows that actually have a URL, and persist their order.
@@ -428,7 +403,7 @@ export const useArticleFormStore = defineStore('articleForm', () => {
         })
       }
 
-      await router.push(config.value.listPath)
+      await router.push(localePath(config.value.listPath))
     }
     catch (error: unknown) {
       serverError.value = getErrorMessage(error)

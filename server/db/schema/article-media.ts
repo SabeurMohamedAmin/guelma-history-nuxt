@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, jsonb } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, integer, text, timestamp, jsonb } from 'drizzle-orm/pg-core'
 import type { ImageVariants } from '../../../shared/types/article'
 import { articles } from './articles'
 
@@ -13,8 +13,8 @@ import { articles } from './articles'
  * thumbnail (handy for videos). Rows cascade-delete with their article.
  */
 export const articleMedia = pgTable('article_media', {
-  id: serial('id').primaryKey(),
-  articleId: integer('article_id')
+  id: uuid('id').primaryKey().defaultRandom(),
+  articleId: uuid('article_id')
     .notNull()
     .references(() => articles.id, { onDelete: 'cascade' }),
   // How the item is displayed. Declared as a union so the rows match

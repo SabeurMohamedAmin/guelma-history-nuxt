@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, unique } from 'drizzle-orm/pg-core'
 import { users } from './users'
 
 /**
@@ -15,8 +15,8 @@ import { users } from './users'
 export const PROVIDERS = ['facebook'] as const
 
 export const userOauthAccounts = pgTable('user_oauth_accounts', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id')
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   provider: text('provider', { enum: PROVIDERS }).notNull(),

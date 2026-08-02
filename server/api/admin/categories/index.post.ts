@@ -1,26 +1,16 @@
 import { db } from '~~/server/db'
 import { categories } from '~~/server/db/schema'
+import { createCategorySchema } from '~~/server/validators/category.validator'
+import { validateCategoryParent } from '~~/server/utils/categories'
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{
-    nameAr?: string
-    nameFr?: string
-    slug?: string
-    descriptionAr?: string | null
-    descriptionFr?: string | null
-    icon?: string | null
-    coverImage?: string | null
-    parentId?: number | null
-  }>(event)
-
-  if (!body?.nameAr?.trim() || !body?.nameFr?.trim() || !body?.slug?.trim()) {
-    throw createError({ statusCode: 400, message: 'nameAr, nameFr and slug are required' })
-  }
+  const body = createCategorySchema.parse(await readBody(event))
+  await validateCategoryParent(undefined, body.parentId)
 
   const [created] = await db.insert(categories).values({
-    nameAr: body.nameAr.trim(),
-    nameFr: body.nameFr.trim(),
-    slug: body.slug.trim(),
+    nameAr: body.nameAr,
+    nameFr: body.nameFr,
+    slug: body.slug,
     descriptionAr: body.descriptionAr ?? null,
     descriptionFr: body.descriptionFr ?? null,
     icon: body.icon ?? null,

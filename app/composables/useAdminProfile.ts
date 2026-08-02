@@ -1,5 +1,5 @@
 export interface AdminProfileData {
-  id: number
+  id: string
   username: string
   email: string
   displayName: string | null

@@ -27,7 +27,12 @@ const OTHER_ARTICLE = 'another-article'
 const sampleEvent: CommentBroadcastEvent = {
   type: 'voted',
   // Comment ids are uuid strings.
-  vote: { commentId: 'c-1', upvotes: 3, downvotes: 1, score: 2 },
+  vote: {
+    commentId: '50000000-0000-4000-8000-000000000001',
+    upvotes: 3,
+    downvotes: 1,
+    score: 2,
+  },
 }
 
 beforeEach(() => {

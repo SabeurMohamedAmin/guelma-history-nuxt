@@ -1,16 +1,11 @@
 import { z } from 'zod'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * Validation rules for the notifications feature. Single source of truth for
  * every read/write contract so the API handlers stay thin and the rules can
  * never drift between routes.
  */
-
-/** A numeric id for non-comment entities (e.g. articleId, mute id). */
-const numericId = z.coerce.number().int().positive()
-
-/** A comment id: a UUID string (comments use uuid primary keys, not counters). */
-const commentId = z.string().uuid()
 
 /**
  * Query for listing the current user's notifications (load-more pagination).
@@ -25,7 +20,7 @@ export const listNotificationsSchema = z.object({
 export type ListNotificationsQuery = z.infer<typeof listNotificationsSchema>
 
 /** A notification id from a route param (mark-as-read). */
-export const notificationIdSchema = z.string().uuid()
+export const notificationIdSchema = databaseUuidSchema
 
 /** The mute scopes a user can choose. See the notification_mutes schema. */
 export const MUTE_SCOPES = ['all', 'article', 'comment'] as const
@@ -42,8 +37,8 @@ export type MuteScope = (typeof MUTE_SCOPES)[number]
 export const createMuteSchema = z
   .object({
     scope: z.enum(MUTE_SCOPES),
-    articleId: numericId.optional(),
-    commentId: commentId.optional(),
+    articleId: databaseUuidSchema.optional(),
+    commentId: databaseUuidSchema.optional(),
   })
   .superRefine((value, ctx) => {
     if (value.scope === 'article' && value.articleId === undefined) {
@@ -59,4 +54,4 @@ export const createMuteSchema = z
 export type CreateMutePayload = z.infer<typeof createMuteSchema>
 
 /** A mute id from a route param (unmute). */
-export const muteIdSchema = numericId
+export const muteIdSchema = databaseUuidSchema

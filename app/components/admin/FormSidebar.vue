@@ -12,6 +12,7 @@ import { useMediaUpload } from '~/composables/useMediaUpload'
 
 const store = useArticleFormStore()
 const { t } = useI18n()
+const { required } = useArticleFormRules()
 
 /* ── Cover image ─────────────────────────────────────────────────────────── */
 // Reuses the gallery's Cloudinary endpoint, restricted to images. The returned
@@ -94,7 +95,8 @@ function stepReadingTime(delta: number) {
           variant="outlined"
           density="comfortable"
           prepend-inner-icon="mdi-shape-outline"
-          clearable
+          :rules="[required]"
+          required
         />
         <v-select
           v-model="store.fields.authorId"

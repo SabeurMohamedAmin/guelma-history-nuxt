@@ -24,37 +24,46 @@ describe('nextBookmarkState', () => {
 })
 
 describe('applyBookmarkToggle', () => {
+  const articleA = '10000000-0000-4000-8000-000000000001'
+  const articleB = '10000000-0000-4000-8000-000000000002'
+  const articleC = '10000000-0000-4000-8000-000000000003'
+  const missingArticle = '10000000-0000-4000-8000-000000000099'
+
   it('adds an id when saving', () => {
-    const result = applyBookmarkToggle(new Set<number>(), 7, true)
-    expect([...result]).toEqual([7])
+    const result = applyBookmarkToggle(new Set<string>(), articleA, true)
+    expect([...result]).toEqual([articleA])
   })
 
   it('removes an id when unsaving', () => {
-    const result = applyBookmarkToggle(new Set([7]), 7, false)
-    expect(result.has(7)).toBe(false)
+    const result = applyBookmarkToggle(new Set([articleA]), articleA, false)
+    expect(result.has(articleA)).toBe(false)
   })
 
   it('saving the same article twice is a no-op (idempotent)', () => {
-    const once = applyBookmarkToggle(new Set([7]), 7, true)
-    const twice = applyBookmarkToggle(once, 7, true)
-    expect([...twice]).toEqual([7])
+    const once = applyBookmarkToggle(new Set([articleA]), articleA, true)
+    const twice = applyBookmarkToggle(once, articleA, true)
+    expect([...twice]).toEqual([articleA])
   })
 
   it('removing an absent article is a no-op (idempotent)', () => {
-    const result = applyBookmarkToggle(new Set([1, 2]), 99, false)
-    expect([...result]).toEqual([1, 2])
+    const result = applyBookmarkToggle(new Set([articleA, articleB]), missingArticle, false)
+    expect([...result]).toEqual([articleA, articleB])
   })
 
   it('returns a new set without mutating the input (reactivity-safe)', () => {
-    const input = new Set([1])
-    const result = applyBookmarkToggle(input, 2, true)
+    const input = new Set([articleA])
+    const result = applyBookmarkToggle(input, articleB, true)
     expect(result).not.toBe(input)
-    expect([...input]).toEqual([1])
-    expect([...result]).toEqual([1, 2])
+    expect([...input]).toEqual([articleA])
+    expect([...result]).toEqual([articleA, articleB])
   })
 
   it('does not disturb other saved ids', () => {
-    const result = applyBookmarkToggle(new Set([1, 2, 3]), 2, false)
-    expect([...result].sort()).toEqual([1, 3])
+    const result = applyBookmarkToggle(
+      new Set([articleA, articleB, articleC]),
+      articleB,
+      false,
+    )
+    expect([...result].sort()).toEqual([articleA, articleC])
   })
 })

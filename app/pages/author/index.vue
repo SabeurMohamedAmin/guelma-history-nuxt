@@ -9,7 +9,7 @@
  */
 
 interface RecentArticle {
-  id: number
+  id: string
   slug: string
   title: string
   category: string

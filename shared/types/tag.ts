@@ -1,6 +1,6 @@
 // shared/types/tag.ts
 export interface Tag {
-  id: number
+  id: string
   nameAr: string
   nameFr: string
   slug: string
