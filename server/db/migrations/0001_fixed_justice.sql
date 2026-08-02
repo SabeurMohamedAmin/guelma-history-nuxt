@@ -1,6 +1,6 @@
 CREATE TABLE "comment_flags" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"comment_id" integer NOT NULL,
+	"comment_id" uuid NOT NULL,
 	"reporter_id" integer NOT NULL,
 	"reason" text,
 	"resolved_at" timestamp with time zone,
@@ -9,7 +9,7 @@ CREATE TABLE "comment_flags" (
 --> statement-breakpoint
 CREATE TABLE "comment_votes" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"comment_id" integer NOT NULL,
+	"comment_id" uuid NOT NULL,
 	"user_id" integer NOT NULL,
 	"value" smallint NOT NULL,
 	"created_at" timestamp with time zone NOT NULL,
@@ -17,9 +17,9 @@ CREATE TABLE "comment_votes" (
 );
 --> statement-breakpoint
 CREATE TABLE "comments" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"article_id" integer NOT NULL,
-	"parent_id" integer,
+	"parent_id" uuid,
 	"author_id" integer NOT NULL,
 	"body" text NOT NULL,
 	"status" text DEFAULT 'active' NOT NULL,
