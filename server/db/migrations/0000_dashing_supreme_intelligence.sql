@@ -1,6 +1,6 @@
 CREATE TABLE "article_comments" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"article_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"article_id" uuid NOT NULL,
 	"name" text NOT NULL,
 	"email" text,
 	"message" text NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE "article_media" (
 --> statement-breakpoint
 CREATE TABLE "article_tags" (
 	"article_id" integer NOT NULL,
-	"tag_id" integer NOT NULL,
+	"tag_id" uuid NOT NULL,
 	CONSTRAINT "article_tags_article_id_tag_id_pk" PRIMARY KEY("article_id","tag_id")
 );
 --> statement-breakpoint
@@ -50,9 +50,9 @@ CREATE TABLE "articles" (
 	"excerpt_fr" text,
 	"body" text DEFAULT '' NOT NULL,
 	"cover_image" text,
-	"category_id" integer,
-	"author_id" integer,
-	"created_by_user_id" integer NOT NULL,
+	"category_id" uuid,
+	"author_id" uuid,
+	"created_by_user_id" uuid NOT NULL,
 	"published_at" timestamp with time zone,
 	"reading_time" integer DEFAULT 0,
 	"view_count" integer DEFAULT 0 NOT NULL,
@@ -84,7 +84,7 @@ CREATE TABLE "categories" (
 	"description_fr" text,
 	"icon" text,
 	"cover_image" text,
-	"parent_id" integer,
+	"parent_id" uuid,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
 	CONSTRAINT "categories_slug_unique" UNIQUE("slug")
@@ -106,7 +106,7 @@ CREATE TABLE "contact_messages" (
 --> statement-breakpoint
 CREATE TABLE "password_reset_tokens" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
+	"user_id" uuid NOT NULL,
 	"token_hash" text NOT NULL,
 	"purpose" text DEFAULT 'reset' NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,

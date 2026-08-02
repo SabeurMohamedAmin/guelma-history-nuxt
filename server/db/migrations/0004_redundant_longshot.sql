@@ -1,7 +1,7 @@
 CREATE TABLE "newsletter_article_emails" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"article_id" integer NOT NULL,
-	"subscriber_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"article_id" uuid NOT NULL,
+	"subscriber_id" uuid NOT NULL,
 	"sent_at" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
