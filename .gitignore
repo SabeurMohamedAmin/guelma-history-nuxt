@@ -26,6 +26,8 @@ logs
 # Test coverage
 coverage/
 
+# Local database exports can contain private user data
+database-backups/
 
 .kiro
 .data
