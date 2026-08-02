@@ -12,7 +12,7 @@ CREATE TABLE "notifications" (
 	"recipient_id" uuid NOT NULL,
 	"actor_id" uuid NOT NULL,
 	"type" text NOT NULL,
-	"article_id" integer NOT NULL,
+	"article_id" uuid NOT NULL,
 	"comment_id" uuid NOT NULL,
 	"read_at" timestamp with time zone,
 	"created_at" timestamp with time zone NOT NULL
