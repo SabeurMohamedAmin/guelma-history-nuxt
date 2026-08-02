@@ -114,7 +114,7 @@ function buildIdAliases(backup: Backup): IdAliases {
   return aliases
 }
 
-function convertRow(table: TableName, source: Row, aliases: IdAliases): Row {
+function convertRow(table: TableName, source: Row, aliases: IdAliases): Row | undefined {
   const row = { ...source }
   const idPrefix = idPrefixes[table]
   if (idPrefix) row.id = toUuid(idPrefix, row.id)
@@ -125,6 +125,14 @@ function convertRow(table: TableName, source: Row, aliases: IdAliases): Row {
 
     const resolved = aliases.get(parentTable)?.get(String(value))
     if (resolved === undefined) {
+      // Expired tokens and OAuth links can be left orphaned by an interrupted
+      // historical migration. They cannot authenticate without a users row and
+      // are safe to discard; core content relationships must still fail loudly.
+      if (table === 'user_oauth_accounts' || table === 'password_reset_tokens') {
+        console.warn(`Skipped orphaned ${table} row: ${column} references missing ${parentTable}(${String(value)}).`)
+        return undefined
+      }
+
       throw new Error(`Cannot restore ${table}.${column}: parent ${parentTable}(${String(value)}) is missing from the backup.`)
     }
     row[column] = resolved
@@ -161,8 +169,11 @@ async function restoreBackup(sql: postgres.Sql): Promise<void> {
   await sql.begin(async transaction => {
     for (const table of tableOrder) {
       const rows = backup.tables[table] || []
+      let restoredCount = 0
       for (const source of rows) {
         const row = convertRow(table, source, aliases)
+        if (!row) continue
+
         const columns = Object.keys(row)
         const names = columns.map(quoteIdentifier).join(', ')
         const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ')
@@ -170,8 +181,9 @@ async function restoreBackup(sql: postgres.Sql): Promise<void> {
           `INSERT INTO ${quoteIdentifier(table)} (${names}) VALUES (${placeholders})`,
           columns.map(column => row[column]),
         )
+        restoredCount++
       }
-      console.log(`Restored ${rows.length} rows into ${table}.`)
+      console.log(`Restored ${restoredCount} of ${rows.length} rows into ${table}.`)
     }
   })
 }
