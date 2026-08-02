@@ -10,8 +10,8 @@ CREATE TABLE "article_comments" (
 );
 --> statement-breakpoint
 CREATE TABLE "article_correction_requests" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"article_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"article_id" uuid NOT NULL,
 	"name" text NOT NULL,
 	"email" text NOT NULL,
 	"section" text,
@@ -137,7 +137,7 @@ CREATE TABLE "tags" (
 --> statement-breakpoint
 CREATE TABLE "user_oauth_accounts" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
+	"user_id" uuid NOT NULL,
 	"provider" text NOT NULL,
 	"provider_user_id" text NOT NULL,
 	"created_at" timestamp with time zone NOT NULL,
@@ -152,7 +152,7 @@ CREATE TABLE "users" (
 	"profile_completed" boolean DEFAULT false NOT NULL,
 	"email_verified_at" timestamp with time zone,
 	"role" text DEFAULT 'user' NOT NULL,
-	"author_id" integer,
+	"author_id" uuid,
 	"display_name" text,
 	"first_name" text,
 	"last_name" text,
