@@ -544,14 +544,18 @@ try {
   }
 
   for (const entry of pending) {
-    if (entry.tag === '0011_preserve_data_uuid_keys') {
-      await assertUuidMigrationSourceSchema()
-    }
-
     const { statements, hash } = readMigration(entry.tag)
+    const isLegacyUuidConversion = entry.tag === '0011_preserve_data_uuid_keys'
+      && statements.some(statement => statement.includes('ALTER TABLE authors ALTER COLUMN id'))
+
+    // Older copies of 0011 perform an in-place integer conversion. Fresh
+    // databases create UUIDs directly, so their 0011 file is only a marker and
+    // must not be rejected by the integer-source preflight.
+    if (isLegacyUuidConversion) await assertUuidMigrationSourceSchema()
+
     console.log(`Applying ${entry.tag} (${statements.length} statement(s))...`)
 
-    if (entry.tag === '0011_preserve_data_uuid_keys') {
+    if (isLegacyUuidConversion) {
       // Schema-locked changefeed tables reject the constraint and primary-key
       // changes in this migration. CockroachDB requires each setting change to
       // run alone in an implicit transaction, before sql.begin(). Restore every
@@ -620,6 +624,10 @@ try {
           console.error(`\n${entry.tag} failed on statement ${index + 1}:\n${statement}\n`)
           throw error
         }
+      }
+
+      if (entry.tag === '0011_preserve_data_uuid_keys') {
+        await assertUuidMigrationResult()
       }
     }
 
