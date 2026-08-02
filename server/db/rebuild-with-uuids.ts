@@ -146,6 +146,23 @@ function runMigrations(): void {
   if (result.status !== 0) throw new Error('Database migration failed. The backup has not been restored.')
 }
 
+async function resetDatabase(sql: postgres.Sql): Promise<void> {
+  // CockroachDB owns and protects the public schema, so it cannot be dropped.
+  // Remove every object inside it instead, including any tables added later.
+  const tables = await sql<{ table_name: string }[]>`
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+  `
+
+  for (const { table_name: table } of tables) {
+    await sql.unsafe(`DROP TABLE IF EXISTS ${quoteIdentifier('public')}.${quoteIdentifier(table)} CASCADE`)
+  }
+
+  // Clear the migration ledger so the empty database is rebuilt from 0000.
+  await sql.unsafe(`DROP SCHEMA IF EXISTS ${quoteIdentifier('drizzle')} CASCADE`)
+}
+
 async function main(): Promise<void> {
   if (!['export', 'restore', 'rebuild'].includes(command || '')) {
     throw new Error('Usage: pnpm db:uuid:rebuild <export|restore|rebuild> [backup-file]')
@@ -157,12 +174,11 @@ async function main(): Promise<void> {
     if (command === 'restore') return await restoreBackup(sql)
 
     if (process.env.CONFIRM_DATABASE_REBUILD !== 'yes') {
-      throw new Error('Rebuild deletes the public schema. Re-run with CONFIRM_DATABASE_REBUILD=yes.')
+      throw new Error('Rebuild deletes all public tables. Re-run with CONFIRM_DATABASE_REBUILD=yes.')
     }
 
     await exportBackup(sql)
-    await sql`DROP SCHEMA public CASCADE`
-    await sql`CREATE SCHEMA public`
+    await resetDatabase(sql)
     await sql.end()
 
     runMigrations()
