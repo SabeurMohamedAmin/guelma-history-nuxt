@@ -145,12 +145,7 @@ describe('schema coverage', () => {
     }
   })
 
-  it('keeps every UUID relation conversion in the data-preserving migration', () => {
-    const migration = readFileSync(
-      join(migrationsDir, '0011_preserve_data_uuid_keys.sql'),
-      'utf8',
-    )
-
+  it('creates every UUID relationship directly in the migration chain', () => {
     for (const table of schemaTables) {
       const tableName = getTableName(table)
 
@@ -161,46 +156,28 @@ describe('schema coverage', () => {
           || propertyName === 'publicId'
         ) continue
 
-        // comments.parent_id, comment-based relations and notification IDs were
-        // UUIDs before migration 0011. Every relation whose old snapshot says
-        // integer must explicitly be converted before its FK is restored.
-        const oldTable = (JSON.parse(
-          readFileSync(join(migrationsDir, 'meta', '0010_snapshot.json'), 'utf8'),
-        ) as { tables: Record<string, { columns: Record<string, { type: string }> }> })
-          .tables[`public.${tableName}`]
-        const oldType = oldTable?.columns[column.name]?.type
-
-        if (oldType === 'integer' || oldType === 'serial' || oldType === 'bigint') {
-          expect(migration).toContain(
-            `ALTER TABLE ${tableName} ALTER COLUMN ${column.name} SET DATA TYPE UUID`,
-          )
-        }
+        expect(
+          allSql,
+          `${tableName}.${column.name} must be created as UUID`,
+        ).toMatch(new RegExp(`"${column.name}"\\s+uuid(?:\\s|,|\\))`, 'i'))
       }
     }
   })
 
-  it('restores random UUID defaults for every converted primary key', () => {
-    const migration = readFileSync(
-      join(migrationsDir, '0011_preserve_data_uuid_keys.sql'),
-      'utf8',
-    )
-
+  it('creates every UUID primary key with a random UUID default', () => {
     for (const table of schemaTables) {
       const id = getTableColumns(table).id
       if (!id) continue
 
       const tableName = getTableName(table)
-      const oldSnapshot = JSON.parse(
-        readFileSync(join(migrationsDir, 'meta', '0010_snapshot.json'), 'utf8'),
-      ) as { tables: Record<string, { columns: Record<string, { type: string }> }> }
-      const oldType = oldSnapshot.tables[`public.${tableName}`]?.columns.id?.type
+      const createTable = allSql.match(
+        new RegExp(`CREATE TABLE (?:IF NOT EXISTS )?"${tableName}" \\([\\s\\S]*?\\n\\);`, 'i'),
+      )?.[0]
 
-      // comments and notifications already used UUIDs before migration 0011.
-      if (oldType === 'serial' || oldType === 'integer' || oldType === 'bigint') {
-        expect(migration).toContain(
-          `ALTER TABLE ${tableName} ALTER COLUMN id SET DEFAULT gen_random_uuid()`,
-        )
-      }
+      expect(createTable, `${tableName} must have a CREATE TABLE migration`).toBeDefined()
+      expect(createTable).toMatch(
+        /"id"\s+uuid\s+PRIMARY KEY\s+DEFAULT gen_random_uuid\(\)/i,
+      )
     }
   })
 
@@ -214,12 +191,18 @@ describe('schema coverage', () => {
     expect(uuidMigration).not.toMatch(/SET DATA TYPE (?:SERIAL|INTEGER|BIGINT)/i)
   })
 
-  it('registers the data-preserving UUID conversion after the integer migrations', () => {
+  it('keeps the retired UUID conversion registered as a compatibility entry', () => {
     const uuidEntry = journal.entries.find(entry => entry.tag === '0011_preserve_data_uuid_keys')
+    const migration = readFileSync(
+      join(migrationsDir, '0011_preserve_data_uuid_keys.sql'),
+      'utf8',
+    )
+
     expect(uuidEntry).toBeDefined()
     expect(uuidEntry?.idx).toBe(11)
-    expect(allSql).toContain('SET DATA TYPE UUID')
-    expect(allSql).toContain('SET DEFAULT gen_random_uuid()')
+    expect(migration).toContain('Fresh databases now create UUID columns directly')
+    expect(migration).toContain('SELECT 1;')
+    expect(migration).not.toContain('SET DATA TYPE UUID')
   })
 
   it('guards migration generation from a stale pre-UUID snapshot', () => {
