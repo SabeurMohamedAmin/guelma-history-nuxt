@@ -1080,8 +1080,11 @@ onMounted(() => {
       max-width="460"
       persistent
     >
-      <v-card rounded="xl">
-        <v-card-item class="pt-5 px-5">
+      <v-card
+        rounded="xl"
+        class="py-2"
+      >
+        <v-card-item class="pa-2">
           <template #prepend>
             <v-avatar
               color="error"
@@ -1095,7 +1098,7 @@ onMounted(() => {
             </v-avatar>
           </template>
 
-          <v-card-title class="text-h6 font-weight-bold">
+          <v-card-title class="text-heading-small font-weight-bold">
             {{ t('admin.confirmDelete') }}
           </v-card-title>
 
@@ -1106,12 +1109,11 @@ onMounted(() => {
 
         <v-card-text
           v-if="selectedArticle"
-          class="px-5 pt-4"
+          class="pa-2"
         >
           <v-sheet
-            color="surface-variant"
-            rounded="lg"
-            class="d-flex align-center ga-3 pa-3"
+            rounded="xl"
+            class="d-flex align-center ga-3 pa-2 bg-transparent border"
           >
             <v-img
               v-if="selectedArticle.coverImage"
@@ -1137,13 +1139,13 @@ onMounted(() => {
             </v-avatar>
 
             <div class="min-width-0">
-              <div class="text-body-2 font-weight-medium text-truncate">
+              <div class="text-title-small  text-md-title-medium font-weight-medium">
                 {{ selectedArticle.titleFr || selectedArticle.titleAr }}
               </div>
 
               <div
                 v-if="selectedArticle.category"
-                class="text-caption text-medium-emphasis mt-1"
+                class="text-body-small  text-md-body-medium text-medium-emphasis mt-2"
               >
                 {{
                   locale === 'fr'
@@ -1155,12 +1157,14 @@ onMounted(() => {
           </v-sheet>
         </v-card-text>
 
-        <v-card-actions class="px-5 pb-5 pt-4">
+        <v-card-actions class="pa-2">
           <v-spacer />
 
           <v-btn
             variant="text"
             :disabled="deleting"
+            rounded="xl"
+            class="px-3"
             @click="closeDeleteDialog"
           >
             {{ t('common.cancel') }}
@@ -1169,6 +1173,8 @@ onMounted(() => {
           <v-btn
             color="error"
             variant="flat"
+            rounded="xl"
+            class="px-3"
             prepend-icon="mdi-delete-outline"
             :loading="deleting"
             @click="onDeleteConfirm"
