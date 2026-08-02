@@ -59,7 +59,9 @@
     "myArticles": "Mes articles",
     "siteName": "Histoire de Guelma",
     "search": "Rechercher",
-    "status": "Statut"
+    "status": "Statut",
+    "results": "résultats",
+    "actions": "Actions"
   },
   "home": {
     "heroTitle": "Histoire de Guelma",
@@ -658,6 +660,7 @@
   },
   "articles": {
     "title": "Tous les articles",
+    "filters": "Filtres",
     "subtitle": "Parcourez l'ensemble des articles sur l'histoire et le patrimoine de Guelma, et affinez votre recherche avec les filtres.",
     "searchPlaceholder": "Rechercher un article...",
     "filterByCategory": "Filtrer par catégorie",

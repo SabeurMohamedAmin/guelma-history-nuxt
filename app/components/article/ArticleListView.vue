@@ -1009,7 +1009,7 @@ onMounted(() => {
                 class="mb-4"
               >
                 <v-icon
-                  icon="mdi-file-document-search-outline"
+                  icon="mdi-file-search-outline"
                   size="30"
                 />
               </v-avatar>
