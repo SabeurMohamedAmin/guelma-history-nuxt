@@ -179,7 +179,7 @@ async function restoreBackup(sql: postgres.Sql): Promise<void> {
         const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ')
         await transaction.unsafe(
           `INSERT INTO ${quoteIdentifier(table)} (${names}) VALUES (${placeholders})`,
-          columns.map(column => row[column]),
+          columns.map(column => row[column] as never),
         )
         restoredCount++
       }
