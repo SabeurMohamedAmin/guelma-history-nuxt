@@ -62,11 +62,11 @@ const foreignKeyPrefixes: Partial<Record<TableName, Record<string, string>>> = {
   article_correction_requests: { article_id: 'articles' },
   article_media: { article_id: 'articles' },
   article_tags: { article_id: 'articles', tag_id: 'tags' },
-  comments: { article_id: 'articles', author_id: 'users' },
-  comment_votes: { user_id: 'users' },
-  comment_flags: { reporter_id: 'users' },
-  notification_mutes: { user_id: 'users', article_id: 'articles' },
-  notifications: { recipient_id: 'users', actor_id: 'users', article_id: 'articles' },
+  comments: { article_id: 'articles', parent_id: 'comments', author_id: 'users' },
+  comment_votes: { comment_id: 'comments', user_id: 'users' },
+  comment_flags: { comment_id: 'comments', reporter_id: 'users' },
+  notification_mutes: { user_id: 'users', article_id: 'articles', comment_id: 'comments' },
+  notifications: { recipient_id: 'users', actor_id: 'users', article_id: 'articles', comment_id: 'comments' },
   bookmarks: { user_id: 'users', article_id: 'articles' },
   newsletter_article_emails: { article_id: 'articles', subscriber_id: 'subscribers' },
   user_oauth_accounts: { user_id: 'users' },
@@ -87,13 +87,47 @@ function toUuid(prefix: string, value: unknown): unknown {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
 
-function convertRow(table: TableName, source: Row): Row {
+type IdAliases = Map<string, Map<string, unknown>>
+
+function buildIdAliases(backup: Backup): IdAliases {
+  const aliases: IdAliases = new Map()
+
+  for (const table of tableOrder) {
+    const prefix = idPrefixes[table]
+    if (!prefix && table !== 'comments' && table !== 'notifications') continue
+
+    const tableAliases = new Map<string, unknown>()
+    for (const row of backup.tables[table] || []) {
+      const originalId = row.id
+      if (originalId === null || originalId === undefined) continue
+
+      const targetId = prefix ? toUuid(prefix, originalId) : originalId
+      tableAliases.set(String(originalId), targetId)
+
+      // A partially converted child FK may already contain the deterministic
+      // UUID even though the parent row in the backup still has its integer ID.
+      if (prefix) tableAliases.set(String(toUuid(prefix, originalId)), targetId)
+    }
+    aliases.set(table, tableAliases)
+  }
+
+  return aliases
+}
+
+function convertRow(table: TableName, source: Row, aliases: IdAliases): Row {
   const row = { ...source }
   const idPrefix = idPrefixes[table]
   if (idPrefix) row.id = toUuid(idPrefix, row.id)
 
-  for (const [column, prefix] of Object.entries(foreignKeyPrefixes[table] || {})) {
-    row[column] = toUuid(prefix, row[column])
+  for (const [column, parentTable] of Object.entries(foreignKeyPrefixes[table] || {})) {
+    const value = row[column]
+    if (value === null || value === undefined) continue
+
+    const resolved = aliases.get(parentTable)?.get(String(value))
+    if (resolved === undefined) {
+      throw new Error(`Cannot restore ${table}.${column}: parent ${parentTable}(${String(value)}) is missing from the backup.`)
+    }
+    row[column] = resolved
   }
 
   return row
@@ -122,12 +156,13 @@ async function exportBackup(sql: postgres.Sql): Promise<void> {
 
 async function restoreBackup(sql: postgres.Sql): Promise<void> {
   const backup = JSON.parse(await readFile(backupPath, 'utf8')) as Backup
+  const aliases = buildIdAliases(backup)
 
   await sql.begin(async transaction => {
     for (const table of tableOrder) {
       const rows = backup.tables[table] || []
       for (const source of rows) {
-        const row = convertRow(table, source)
+        const row = convertRow(table, source, aliases)
         const columns = Object.keys(row)
         const names = columns.map(quoteIdentifier).join(', ')
         const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ')
