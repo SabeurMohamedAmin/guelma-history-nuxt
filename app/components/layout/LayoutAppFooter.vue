@@ -51,7 +51,7 @@ async function subscribe() {
 <template>
   <v-footer class="app-footer pa-0 mt-16">
     <div class="app-footer__accent"></div>
-    <v-row class="gy-8 py-10 py-md-14 px-2 px-md-10">
+    <v-row class="gy-8 py-4 py-md-6 px-2 px-md-6">
       <!-- Brand + social -->
       <v-col
         cols="12"

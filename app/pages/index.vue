@@ -174,7 +174,7 @@ const readMoreIcon = computed(() =>
         rounded="lg"
         class="pa-2 pa-lg-4 text-center newsletter-card"
       >
-        <h2 class="text-title-medium text-lg-headline-small font-weight-bold mb-2">
+        <h2 class="text-title-medium text-md-headline-small font-weight-bold mb-2">
           <v-icon
             icon="mdi-email-outline me-2"
             size="default"
