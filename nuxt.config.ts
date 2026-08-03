@@ -209,6 +209,15 @@ export default defineNuxtConfig({
         },
       },
     },
+    '/api/v1/admin/articles/media/upload': {
+      security: {
+        rateLimiter: { tokensPerInterval: 10, interval: 300000 },
+        requestSizeLimiter: {
+          maxRequestSizeInBytes: 110_000_000,
+          maxUploadFileRequestInBytes: 110_000_000,
+        },
+      },
+    },
     '/api/v1/admin/profile/avatar': {
       security: {
         requestSizeLimiter: {
