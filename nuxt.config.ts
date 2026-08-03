@@ -177,6 +177,10 @@ export default defineNuxtConfig({
     // Strict rate limit on the sensitive auth routes (max 10 requests / 5 min
     // per IP) to slow brute-force and credential-stuffing attacks.
     '/api/auth/**': {
+      headers: {
+        'cache-control': 'private, no-store',
+        pragma: 'no-cache',
+      },
       security: {
         rateLimiter: {
           tokensPerInterval: 10,
@@ -186,11 +190,29 @@ export default defineNuxtConfig({
     },
     // Flutter credentials and refresh tokens receive the same strict limit.
     '/api/v1/admin/auth/**': {
+      headers: {
+        'cache-control': 'private, no-store',
+        pragma: 'no-cache',
+      },
       security: {
         rateLimiter: {
           tokensPerInterval: 10,
           interval: 300000,
         },
+      },
+    },
+
+    // All administrator API responses may contain drafts or personal data.
+    '/api/admin/**': {
+      headers: {
+        'cache-control': 'private, no-store',
+        pragma: 'no-cache',
+      },
+    },
+    '/api/author/**': {
+      headers: {
+        'cache-control': 'private, no-store',
+        pragma: 'no-cache',
       },
     },
 
