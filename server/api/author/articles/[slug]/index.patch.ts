@@ -27,10 +27,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, statusMessage: 'Not Found', message: `Article ${slug} not found.` })
     }
 
-    await requireArticleOwner(event, id)
+    const actor = await requireArticleOwner(event, id)
 
     const { expectedRevision, ...body } = revisionAwareUpdateSchema.parse(await readBody(event))
-    return await articleService.updateWithRevision(id, body, expectedRevision)
+    return await articleService.updateWithRevision(id, body, expectedRevision, actor.id)
   }
   catch (error) {
     toH3Error(error)
