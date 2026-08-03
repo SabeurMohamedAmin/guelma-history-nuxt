@@ -60,6 +60,7 @@ export default defineVersionedApiHandler(async (event) => {
     throw createError({ statusCode: 409, message: 'Save with this idempotency key is already processing.' })
   }
 
+  let response
   try {
     const article = await articleService.updateWithRevision(
       id,
@@ -68,12 +69,32 @@ export default defineVersionedApiHandler(async (event) => {
       principal.user.id,
       true,
     )
-    const response = serializeMobileArticle(article)
-    await mobileArticleSaveIdempotencyRepository.complete(principal.user.id, key, response)
-    return success(response)
+    response = serializeMobileArticle(article)
   }
   catch (error) {
+    // The article transaction did not commit, so this key may be retried.
     await mobileArticleSaveIdempotencyRepository.remove(principal.user.id, key)
     throw error
   }
+
+  try {
+    await mobileArticleSaveIdempotencyRepository.complete(principal.user.id, key, response)
+  }
+  catch (error) {
+    // The article already committed. Keep the claim instead of deleting it:
+    // deleting would let the same stale request execute again. The client can
+    // reload safely; expiry cleanup will eventually remove the incomplete row.
+    console.error('[autosave] Failed to persist completed idempotency response', {
+      articleId: id,
+      userId: principal.user.id,
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal Server Error',
+      message: 'The draft was saved, but the response could not be finalized. Reload the article.',
+    })
+  }
+
+  return success(response)
 })
