@@ -1,6 +1,6 @@
-import { and, asc, count, desc, eq, ilike, isNotNull, isNull, or, type SQL } from 'drizzle-orm'
+import { and, asc, count, desc, eq, ilike, inArray, isNotNull, isNull, or, type SQL } from 'drizzle-orm'
 import { db } from '~~/server/db'
-import { articleMedia, articles, categories } from '~~/server/db/schema'
+import { articleMedia, articles, authors, categories, tags, users } from '~~/server/db/schema'
 import type {
   ArticleMediaResponse,
   ArticleResponse,
@@ -23,6 +23,20 @@ type ArticleRow = NonNullable<
 >
 
 /** Drizzle persistence and row mapping for articles. */
+export interface ArticleRelationIds {
+  ownerId?: string
+  categoryId?: string | null
+  authorId?: string | null
+  tagIds?: string[]
+}
+
+export interface MissingArticleRelations {
+  owner: boolean
+  category: boolean
+  author: boolean
+  tagIds: string[]
+}
+
 export class ArticleRepository {
   async findAll(params: ArticlesQueryParams, ownerId?: string): Promise<PaginatedResponse<ArticleResponse>> {
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = params
@@ -106,6 +120,35 @@ export class ArticleRepository {
       publishedAt: (row.publishedAt ?? row.createdAt).toISOString(),
       status: row.publishedAt ? 'published' : 'draft',
     }))
+  }
+
+  /** Check whether supplied foreign keys point to existing rows. */
+  async findMissingRelations(input: ArticleRelationIds): Promise<MissingArticleRelations> {
+    const uniqueTagIds = [...new Set(input.tagIds ?? [])]
+
+    const [owner, category, author, tagRows] = await Promise.all([
+      input.ownerId
+        ? db.query.users.findFirst({ where: eq(users.id, input.ownerId), columns: { id: true } })
+        : Promise.resolve(undefined),
+      input.categoryId
+        ? db.query.categories.findFirst({ where: eq(categories.id, input.categoryId), columns: { id: true } })
+        : Promise.resolve(undefined),
+      input.authorId
+        ? db.query.authors.findFirst({ where: eq(authors.id, input.authorId), columns: { id: true } })
+        : Promise.resolve(undefined),
+      uniqueTagIds.length > 0
+        ? db.select({ id: tags.id }).from(tags).where(inArray(tags.id, uniqueTagIds))
+        : Promise.resolve([]),
+    ])
+
+    const foundTagIds = new Set(tagRows.map(row => row.id))
+
+    return {
+      owner: Boolean(input.ownerId && !owner),
+      category: Boolean(input.categoryId && !category),
+      author: Boolean(input.authorId && !author),
+      tagIds: uniqueTagIds.filter(id => !foundTagIds.has(id)),
+    }
   }
 
   private buildWhereClause(params: ArticlesQueryParams, ownerId?: string): SQL | undefined {
