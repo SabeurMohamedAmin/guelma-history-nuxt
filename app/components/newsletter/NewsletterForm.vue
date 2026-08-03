@@ -49,7 +49,7 @@ async function subscribe() {
 
 <template>
   <v-sheet
-    class="newsletter-form rounded-xl pa-6 pa-md-8 text-center"
+    class="newsletter-form rounded-xl pa-2 pa-md-6 text-center"
     color="surface"
     border
   >
