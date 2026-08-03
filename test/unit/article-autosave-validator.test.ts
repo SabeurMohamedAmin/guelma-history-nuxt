@@ -1,5 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { autosaveArticleSchema } from '~~/server/validators/article.validator'
+import {
+  autosaveArticleSchema,
+  revisionAwareUpdateArticleSchema,
+} from '~~/server/validators/article.validator'
+
+describe('revision-aware article update validation', () => {
+  it('accepts an update with a positive expected revision', () => {
+    const result = revisionAwareUpdateArticleSchema.parse({
+      expectedRevision: 4,
+      titleFr: 'Titre révisé',
+    })
+
+    expect(result.expectedRevision).toBe(4)
+  })
+
+  it('rejects missing, zero, fractional, and unknown revisions', () => {
+    expect(() => revisionAwareUpdateArticleSchema.parse({ titleFr: 'Titre' })).toThrow()
+    expect(() => revisionAwareUpdateArticleSchema.parse({ expectedRevision: 0, titleFr: 'Titre' })).toThrow()
+    expect(() => revisionAwareUpdateArticleSchema.parse({ expectedRevision: 1.5, titleFr: 'Titre' })).toThrow()
+    expect(() => revisionAwareUpdateArticleSchema.parse({ expectedRevision: '1', titleFr: 'Titre' })).toThrow()
+  })
+})
 
 describe('article autosave validation', () => {
   it('accepts bilingual draft text with the expected revision', () => {
