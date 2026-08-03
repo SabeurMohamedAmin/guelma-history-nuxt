@@ -218,7 +218,7 @@ Existing Nuxt routes may remain during migration. Old and versioned handlers mus
 - [x] Define nullable-field behavior
 - [~] Define safe sort fields and maximum page sizes — shared page-size cap is 100; domain sort allowlists remain
 - [~] Add typed request and response DTOs — common contracts exist; domain DTO work remains
-- [ ] Add response serializers instead of returning Drizzle rows directly
+- [~] Add response serializers instead of returning Drizzle rows directly — mobile article serializer implemented; expand per domain
 - [x] Create and maintain OpenAPI documentation — `/api/v1/openapi.json` documents health and all implemented mobile authentication routes
 - [x] Define API compatibility and deprecation rules
 
@@ -414,10 +414,10 @@ GET /api/v1/admin/dashboard
 
 ## Articles
 
-- [ ] Paginated article list
-- [ ] Search and safe sorting
-- [ ] Published/unpublished filter using the current model
-- [ ] Get article by a stable identifier
+- [x] Paginated article list
+- [x] Search and safe sorting
+- [x] Published/unpublished filter using the current model
+- [x] Get article by a stable identifier
 - [ ] Create article
 - [ ] Update article
 - [ ] Delete article
@@ -469,7 +469,7 @@ GET /api/v1/admin/dashboard
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Started Milestone 5 with the bearer-protected `/api/v1/admin/dashboard`. It aggregates existing domain services, returns real counts and recent articles with ISO timestamps, includes unresolved reported-comment groups, and does not invent analytics or moderation queues. OpenAPI documents the route.
+Notes: Started Milestone 5 with bearer-protected dashboard and article reads. The dashboard aggregates existing domain services and returns only real metrics. Flutter article listing reuses bilingual search, status filtering, allowlisted sorting, and the 100-row limit; detail lookup uses a stable UUID. A dedicated serializer emits ISO timestamps and the common pagination contract. OpenAPI documents all implemented routes.
 
 ---
 
