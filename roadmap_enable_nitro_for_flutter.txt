@@ -429,11 +429,11 @@ GET /api/v1/admin/dashboard
 
 ## Categories
 
-- [ ] List/search categories
-- [ ] Create category
-- [ ] Update category
-- [ ] Delete safely
-- [ ] Prevent or handle deletion while articles reference the category
+- [x] List/search categories
+- [x] Create category
+- [x] Update category
+- [x] Delete safely
+- [x] Prevent or handle deletion while articles reference the category
 
 ## Authors
 
@@ -469,7 +469,7 @@ GET /api/v1/admin/dashboard
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Started Milestone 5 with bearer-protected dashboard and article reads. The dashboard aggregates existing domain services and returns only real metrics. Flutter article listing reuses bilingual search, status filtering, allowlisted sorting, and the 100-row limit; detail lookup uses a stable UUID. Create, update, and delete routes delegate to the shared article service, preserving bilingual validation, relation checks, owner-versus-byline semantics, publishing behavior, and Cloudinary cleanup. A dedicated serializer emits ISO timestamps, media variants, and the common pagination contract. `homePosition` remains blocked until its domain authorization rule is defined. OpenAPI documents implemented read routes; write-route schema expansion remains.
+Notes: Started Milestone 5 with bearer-protected dashboard and article reads. The dashboard aggregates existing domain services and returns only real metrics. Flutter article listing reuses bilingual search, status filtering, allowlisted sorting, and the 100-row limit; detail lookup uses a stable UUID. Create, update, and delete routes delegate to the shared article service, preserving bilingual validation, relation checks, owner-versus-byline semantics, publishing behavior, and Cloudinary cleanup. A dedicated serializer emits ISO timestamps, media variants, and the common pagination contract. `homePosition` remains blocked until its domain authorization rule is defined. Category CRUD now reuses the shared hierarchy-cycle and reference-safe deletion rules, supports simple bilingual search, and serializes timestamps consistently. OpenAPI documents implemented read routes; write-route schema expansion remains.
 
 ---
 
