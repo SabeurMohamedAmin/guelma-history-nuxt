@@ -150,13 +150,24 @@ export class ArticleService {
     }
   }
 
-  async updateWithRevision(id: string, input: UpdateArticleDto, expectedRevision: number): Promise<ArticleResponse> {
+  async updateWithRevision(
+    id: string,
+    input: UpdateArticleDto,
+    expectedRevision: number,
+    savedByUserId?: string,
+  ): Promise<ArticleResponse> {
     const existing = await this.getById(id)
     if (!existing) throw createNotFoundError(id)
     const data = validateUpdateArticle(input)
     await this.validateRelationIds({ categoryId: data.categoryId, authorId: data.authorId, tagIds: data.tagIds })
     const changedBody = data.bodyFr ?? data.bodyAr
-    const updated = await articleRepository.update(id, data, changedBody ? this.calcReadingTime(changedBody) : undefined, expectedRevision)
+    const updated = await articleRepository.update(
+      id,
+      data,
+      changedBody ? this.calcReadingTime(changedBody) : undefined,
+      expectedRevision,
+      savedByUserId,
+    )
     if (!updated) throw createError({ statusCode: 409, message: 'Article was changed by another editor. Reload and try again.' })
 
     if (data.media !== undefined) {

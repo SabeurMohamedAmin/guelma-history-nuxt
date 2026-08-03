@@ -5,6 +5,7 @@ export function serializeMobileArticle(article: ArticleResponse) {
   return {
     ...article,
     publishedAt: article.publishedAt?.toISOString() ?? null,
+    lastSavedAt: article.lastSavedAt?.toISOString() ?? null,
     createdAt: article.createdAt.toISOString(),
     updatedAt: article.updatedAt.toISOString(),
   }
