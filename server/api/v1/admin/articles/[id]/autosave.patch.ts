@@ -61,7 +61,12 @@ export default defineVersionedApiHandler(async (event) => {
   }
 
   try {
-    const article = await articleService.updateWithRevision(id, draft, expectedRevision)
+    const article = await articleService.updateWithRevision(
+      id,
+      draft,
+      expectedRevision,
+      principal.user.id,
+    )
     const response = serializeMobileArticle(article)
     await mobileArticleSaveIdempotencyRepository.complete(principal.user.id, key, response)
     return success(response)

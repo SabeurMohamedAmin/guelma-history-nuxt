@@ -128,7 +128,13 @@ export class ArticleRepository {
     })
   }
 
-  async update(id: string, input: UpdateArticleDto, readingTime?: number, expectedRevision?: number): Promise<boolean> {
+  async update(
+    id: string,
+    input: UpdateArticleDto,
+    readingTime?: number,
+    expectedRevision?: number,
+    savedByUserId?: string,
+  ): Promise<boolean> {
     const { tagIds, media, ...fields } = input
 
     return db.transaction(async (tx) => {
@@ -138,6 +144,9 @@ export class ArticleRepository {
           ...fields,
           ...(readingTime !== undefined ? { readingTime } : {}),
           ...(expectedRevision !== undefined ? { revision: expectedRevision + 1 } : {}),
+          ...(savedByUserId !== undefined
+            ? { lastSavedAt: new Date(), lastSavedByUserId: savedByUserId }
+            : {}),
           updatedAt: new Date(),
         })
         .where(expectedRevision === undefined
@@ -301,6 +310,8 @@ export class ArticleRepository {
       publishedAt: row.publishedAt ?? null,
       readingTime: row.readingTime ?? 0,
       revision: row.revision,
+      lastSavedAt: row.lastSavedAt ?? null,
+      lastSavedByUserId: row.lastSavedByUserId ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       category: row.category

@@ -106,6 +106,13 @@
       "when": 1785805200000,
       "tag": "0015_mobile_article_save_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785808800000,
+      "tag": "0016_article_save_metadata",
+      "breakpoints": true
     }
   ]
 }
