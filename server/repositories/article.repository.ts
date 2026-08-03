@@ -158,6 +158,14 @@ export class ArticleRepository {
     await db.delete(articles).where(eq(articles.id, id))
   }
 
+  async isMediaPublicIdReferenced(publicId: string): Promise<boolean> {
+    const row = await db.query.articleMedia.findFirst({
+      where: eq(articleMedia.publicId, publicId),
+      columns: { id: true },
+    })
+    return Boolean(row)
+  }
+
   async count(ownerId?: string): Promise<number> {
     const where = ownerId === undefined ? undefined : eq(articles.createdByUserId, ownerId)
     const [row] = await db.select({ count: count() }).from(articles).where(where)
