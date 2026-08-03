@@ -74,6 +74,30 @@ export default defineVersionedApiHandler(() => ({
         },
       },
     },
+    '/admin/comments/reports': {
+      get: {
+        operationId: 'listMobileAdminCommentReports',
+        summary: 'List unresolved reported-comment groups',
+        security: [{ mobileBearer: [] }],
+        responses: {
+          200: { description: 'Unresolved report groups' },
+          401: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
+    '/admin/comments/reports/{commentId}/resolve': {
+      post: {
+        operationId: 'resolveMobileAdminCommentReports',
+        summary: 'Resolve all open reports for a comment',
+        security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'commentId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: {
+          200: { description: 'Reports resolved' },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
     '/admin/dashboard': {
       get: {
         operationId: 'getMobileAdminDashboard',
