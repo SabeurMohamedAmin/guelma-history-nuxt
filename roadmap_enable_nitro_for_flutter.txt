@@ -332,10 +332,10 @@ replacedByTokenId
 
 ## Tasks
 
-- [ ] Design the mobile-session schema
-- [ ] Add a safe Drizzle migration
-- [ ] Add indexes for token lookup, user sessions, and expiration
-- [ ] Store only cryptographic token hashes
+- [x] Design the mobile-session schema
+- [x] Add a safe Drizzle migration
+- [x] Add indexes for token lookup, user sessions, device, family, and expiration
+- [x] Store only cryptographic token hashes
 - [ ] Define access-token issuer, audience, expiry, and token type
 - [ ] Define refresh-token expiry and rotation
 - [ ] Rotate refresh tokens atomically
@@ -389,8 +389,8 @@ DELETE /api/v1/admin/auth/sessions/:id
 - [ ] Authentication rate limits
 
 Completed:
-Commit/MR:
-Notes:
+Commit/MR: tracked in the `dev` branch and !1
+Notes: Added the `mobile_admin_sessions` Drizzle schema and migration `0012`. It stores only refresh-token hashes and supports token families, per-device sessions, rotation links, revocation, expiration, and indexed cleanup. Existing Nuxt cookie authentication is unchanged.
 
 ---
 
