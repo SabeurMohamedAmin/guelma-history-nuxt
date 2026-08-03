@@ -1,5 +1,11 @@
+import { z } from 'zod'
 import { articleService } from '~~/server/services/article.service'
 import { toH3Error } from '~~/server/utils/handleError'
+import { updateArticleSchema } from '~~/server/validators/article.validator'
+
+const revisionAwareUpdateSchema = updateArticleSchema.extend({
+  expectedRevision: z.number().int().positive(),
+})
 
 /**
  * PATCH /api/admin/articles/:slug
@@ -14,8 +20,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Invalid article slug.' })
     }
 
-    const body = await readBody(event)
-    return await articleService.updateBySlug(slug, body)
+    const id = await articleService.resolveIdBySlug(slug)
+    if (id === null) {
+      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: `Article ${slug} not found.` })
+    }
+
+    const { expectedRevision, ...body } = revisionAwareUpdateSchema.parse(await readBody(event))
+    return await articleService.updateWithRevision(id, body, expectedRevision)
   }
   catch (error) {
     toH3Error(error)
