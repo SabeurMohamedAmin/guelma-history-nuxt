@@ -69,6 +69,23 @@ export const versionedUpdateArticleSchema = updateArticleSchema.extend({
   expectedRevision: z.number().int().positive(),
 })
 
+/**
+ * Autosave only accepts editable draft content. Publishing, ownership,
+ * relations, media, slugs, and home-page placement require an explicit save.
+ */
+export const autosaveArticleSchema = z.object({
+  expectedRevision: z.number().int().positive(),
+  titleAr: z.string().trim().min(1, 'Arabic title is required').max(255).optional(),
+  titleFr: z.string().trim().min(1, 'French title is required').max(255).optional(),
+  excerptAr: z.string().max(500).nullable().optional(),
+  excerptFr: z.string().max(500).nullable().optional(),
+  bodyAr: z.string().trim().min(1, 'Arabic body content is required').optional(),
+  bodyFr: z.string().trim().min(1, 'French body content is required').optional(),
+}).strict().refine(
+  value => Object.keys(value).some(key => key !== 'expectedRevision'),
+  { message: 'Autosave requires at least one editable field.' },
+)
+
 export const articlesQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
