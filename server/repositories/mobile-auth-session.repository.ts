@@ -25,6 +25,17 @@ export type RotateMobileSessionResult
     | { status: 'reuse-detected' }
 
 export class MobileAuthSessionRepository {
+  async findActiveById(id: string) {
+    const session = await db.query.mobileAdminSessions.findFirst({
+      where: and(
+        eq(mobileAdminSessions.id, id),
+        isNull(mobileAdminSessions.revokedAt),
+      ),
+    })
+
+    return session && session.expiresAt > new Date() ? session : null
+  }
+
   async create(input: CreateMobileSessionInput) {
     const [session] = await db.insert(mobileAdminSessions).values(input).returning()
     return session ?? null
