@@ -236,6 +236,10 @@ export default defineNuxtConfig({
     '/api/v1/admin/articles/*/autosave': {
       security: {
         rateLimiter: { tokensPerInterval: 120, interval: 300000 },
+        requestSizeLimiter: {
+          maxRequestSizeInBytes: 2_100_000,
+          maxUploadFileRequestInBytes: 0,
+        },
       },
     },
     '/api/v1/admin/articles/media/upload': {

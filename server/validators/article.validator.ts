@@ -79,8 +79,8 @@ export const autosaveArticleSchema = z.object({
   titleFr: z.string().trim().min(1, 'French title is required').max(255).optional(),
   excerptAr: z.string().max(500).nullable().optional(),
   excerptFr: z.string().max(500).nullable().optional(),
-  bodyAr: z.string().trim().min(1, 'Arabic body content is required').optional(),
-  bodyFr: z.string().trim().min(1, 'French body content is required').optional(),
+  bodyAr: z.string().trim().min(1, 'Arabic body content is required').max(1_000_000, 'Arabic body content is too large').optional(),
+  bodyFr: z.string().trim().min(1, 'French body content is required').max(1_000_000, 'French body content is too large').optional(),
 }).strict().refine(
   value => Object.keys(value).some(key => key !== 'expectedRevision'),
   { message: 'Autosave requires at least one editable field.' },

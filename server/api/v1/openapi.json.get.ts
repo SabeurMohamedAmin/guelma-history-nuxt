@@ -416,8 +416,8 @@ export default defineVersionedApiHandler(() => ({
           titleFr: { type: 'string', minLength: 1, maxLength: 255 },
           excerptAr: { type: ['string', 'null'], maxLength: 500 },
           excerptFr: { type: ['string', 'null'], maxLength: 500 },
-          bodyAr: { type: 'string', minLength: 1 },
-          bodyFr: { type: 'string', minLength: 1 },
+          bodyAr: { type: 'string', minLength: 1, maxLength: 1000000 },
+          bodyFr: { type: 'string', minLength: 1, maxLength: 1000000 },
         },
         anyOf: [
           { required: ['titleAr'] }, { required: ['titleFr'] },
