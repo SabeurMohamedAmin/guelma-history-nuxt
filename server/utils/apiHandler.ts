@@ -40,6 +40,18 @@ export function defineVersionedApiHandler<T>(handler: VersionedApiHandler<T>) {
       const descriptor = describeApiError(error)
       setResponseStatus(event, descriptor.statusCode)
 
+      // Log only server failures. Expected client errors are represented by the
+      // stable response contract and do not need noisy logs. Never serialize
+      // the request body, headers, bearer token, password, or refresh token.
+      if (descriptor.statusCode >= 500) {
+        console.error('[api] Unexpected versioned API failure', {
+          requestId,
+          method: event.method,
+          path: event.path,
+          errorName: error instanceof Error ? error.name : 'UnknownError',
+        })
+      }
+
       return createApiErrorBody(descriptor, requestId)
     }
   })
