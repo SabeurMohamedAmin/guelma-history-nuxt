@@ -494,7 +494,7 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 - [x] Preserve original images where archival requirements apply
 - [x] Generate optimized variants through trusted server behavior
 - [x] Never expose Cloudinary API secrets to Flutter
-- [ ] Prevent deletion of media currently in use
+- [x] Prevent deletion of media currently referenced by an article
 - [x] Apply bearer authorization, request limits, and upload-specific rate limits
 
 ## Tests
@@ -506,11 +506,11 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 - [ ] Unauthenticated upload
 - [ ] Duplicate retry
 - [ ] Cloudinary failure
-- [ ] Attempt to delete referenced media
+- [~] Attempt to delete referenced media — 409 guard implemented; database integration coverage remains
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Started upload hardening by replacing prefix-only multipart trust with byte-signature detection and exact MIME matching for an explicit image/video allowlist. Unsupported content returns 415 and oversized files return 413. Unit coverage includes supported signatures and mismatch rejection. The bearer-protected Flutter upload route supports one multipart request for progress reporting, returns stable Cloudinary IDs, preserves originals, generates trusted WebP variants, ignores client filenames for storage IDs, and cleans up image assets created before a later upload failure. Upload-specific request and rate limits are configured. Upload idempotency is persisted for 24 hours per administrator. Retries with the same file return the stored response, concurrent retries return 409, and key reuse for different bytes is rejected. Failed uploads release the claim after Cloudinary cleanup. Referenced-media deletion protection remains.
+Notes: Started upload hardening by replacing prefix-only multipart trust with byte-signature detection and exact MIME matching for an explicit image/video allowlist. Unsupported content returns 415 and oversized files return 413. Unit coverage includes supported signatures and mismatch rejection. The bearer-protected Flutter upload route supports one multipart request for progress reporting, returns stable Cloudinary IDs, preserves originals, generates trusted WebP variants, ignores client filenames for storage IDs, and cleans up image assets created before a later upload failure. Upload-specific request and rate limits are configured. Upload idempotency is persisted for 24 hours per administrator. Retries with the same file return the stored response, concurrent retries return 409, and key reuse for different bytes is rejected. Failed uploads release the claim after Cloudinary cleanup. A bearer-protected cleanup route can remove abandoned editor uploads, but returns 409 when the Cloudinary public ID is referenced by article media. Public IDs and resource types are strictly validated; validator coverage rejects URLs, traversal, and unknown fields. Database integration coverage remains.
 
 ---
 

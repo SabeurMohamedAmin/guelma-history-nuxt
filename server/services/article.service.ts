@@ -140,6 +140,16 @@ export class ArticleService {
     return updated
   }
 
+  async assertMediaCanBeDeleted(publicId: string): Promise<void> {
+    if (await articleRepository.isMediaPublicIdReferenced(publicId)) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Conflict',
+        message: 'Media is currently referenced by an article.',
+      })
+    }
+  }
+
   async delete(id: string): Promise<void> {
     const existing = await this.getById(id)
     if (!existing) {
