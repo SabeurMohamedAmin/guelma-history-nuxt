@@ -404,13 +404,13 @@ Suggested endpoint:
 GET /api/v1/admin/dashboard
 ```
 
-- [ ] Return article count
-- [ ] Return category count
-- [ ] Return author count
-- [ ] Return subscriber count
-- [ ] Return recent articles
-- [ ] Return unresolved report count where available
-- [ ] Do not return fake analytics or review queues
+- [x] Return article count
+- [x] Return category count
+- [x] Return author count
+- [x] Return subscriber count
+- [x] Return recent articles
+- [x] Return unresolved report count where available
+- [x] Do not return fake analytics or review queues
 
 ## Articles
 
@@ -468,8 +468,8 @@ GET /api/v1/admin/dashboard
 - [ ] Revoke other mobile sessions after password changes
 
 Completed:
-Commit/MR:
-Notes:
+Commit/MR: tracked in the `dev` branch
+Notes: Started Milestone 5 with the bearer-protected `/api/v1/admin/dashboard`. It aggregates existing domain services, returns real counts and recent articles with ISO timestamps, includes unresolved reported-comment groups, and does not invent analytics or moderation queues. OpenAPI documents the route.
 
 ---
 
