@@ -40,6 +40,40 @@ export default defineVersionedApiHandler(() => ({
         responses: { 200: { description: 'OpenAPI 3.1 document' } },
       },
     },
+    '/admin/articles': {
+      get: {
+        operationId: 'listMobileAdminArticles',
+        summary: 'List and search bilingual articles',
+        security: [{ mobileBearer: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100 } },
+          { name: 'search', in: 'query', schema: { type: 'string' } },
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['published', 'draft', 'all'] } },
+          { name: 'sortBy', in: 'query', schema: { type: 'string', enum: ['createdAt', 'updatedAt', 'publishedAt', 'title'] } },
+          { name: 'sortOrder', in: 'query', schema: { type: 'string', enum: ['asc', 'desc'] } },
+        ],
+        responses: {
+          200: { description: 'Paginated articles' },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
+    '/admin/articles/{id}': {
+      get: {
+        operationId: 'getMobileAdminArticle',
+        summary: 'Get an article by stable UUID',
+        security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: {
+          200: { description: 'Serialized article' },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+          404: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
     '/admin/dashboard': {
       get: {
         operationId: 'getMobileAdminDashboard',
