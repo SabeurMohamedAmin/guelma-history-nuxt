@@ -1,6 +1,3 @@
-import { eq } from 'drizzle-orm'
-import { db } from '~~/server/db'
-import { articles, articleTags, articleMedia } from '~~/server/db/schema'
 import { articleRepository } from '~~/server/repositories/article.repository'
 import { slugify } from '~~/server/utils/slugify'
 import { destroyManyFromCloudinary } from '~~/server/utils/cloudinary'
@@ -23,9 +20,9 @@ import type {
 /**
  * ArticleService — all article business logic in one place.
  *
- * Responsibilities: validation, slug/reading-time derivation, transaction
- * management, and shaping DB rows into ArticleResponse objects.
- * Endpoints stay thin by delegating entirely to this service.
+ * Responsibilities: validation, slug/reading-time derivation, business-rule
+ * orchestration, publishing side effects, and external media cleanup.
+ * Drizzle persistence and row mapping belong to ArticleRepository.
  */
 export class ArticleService {
   // ─── Reads ──────────────────────────────────────────────────────────────────
@@ -99,28 +96,8 @@ export class ArticleService {
     const slug = data.slug ?? slugify(data.titleFr)
     // Reading time is estimated from the French body, falling back to Arabic.
     const readingTime = data.readingTime ?? this.calcReadingTime(data.bodyFr || data.bodyAr)
-    const { tagIds, media, slug: _slug, readingTime: _rt, ...fields } = data
-
-    // postgres-js transactions are async: await every query inside the callback.
-    const newArticle = await db.transaction(async (tx) => {
-      const [article] = await tx
-        .insert(articles)
-        .values({ ...fields, slug, readingTime, createdByUserId: ownerId })
-        .returning()
-
-      if (article && tagIds && tagIds.length > 0) {
-        await tx.insert(articleTags)
-          .values(tagIds.map(tagId => ({ articleId: article.id, tagId })))
-      }
-
-      if (article && media && media.length > 0) {
-        await tx.insert(articleMedia).values(this.toMediaRows(article.id, media))
-      }
-
-      return article!
-    })
-
-    const created = (await this.getById(newArticle.id))!
+    const articleId = await articleRepository.create(data, ownerId, slug, readingTime)
+    const created = (await this.getById(articleId))!
 
     if (created.publishedAt) {
       await this.sendNewsletterAlertsAfterPublish(created)
@@ -141,41 +118,16 @@ export class ArticleService {
       authorId: data.authorId,
       tagIds: data.tagIds,
     })
-    const { tagIds, media, ...fields } = data
-
     // Recompute the reading time when a body changed (FR first, then AR).
     const changedBody = data.bodyFr ?? data.bodyAr
     const readingTime = changedBody ? this.calcReadingTime(changedBody) : undefined
 
-    // postgres-js transactions are async: await every query inside the callback.
-    await db.transaction(async (tx) => {
-      await tx
-        .update(articles)
-        .set({ ...fields, ...(readingTime ? { readingTime } : {}), updatedAt: new Date() })
-        .where(eq(articles.id, id))
-
-      if (tagIds !== undefined) {
-        await tx.delete(articleTags).where(eq(articleTags.articleId, id))
-        if (tagIds.length > 0) {
-          await tx.insert(articleTags)
-            .values(tagIds.map(tagId => ({ articleId: id, tagId })))
-        }
-      }
-
-      // Replace the whole gallery when `media` is provided (omit it to keep
-      // the existing media untouched).
-      if (media !== undefined) {
-        await tx.delete(articleMedia).where(eq(articleMedia.articleId, id))
-        if (media.length > 0) {
-          await tx.insert(articleMedia).values(this.toMediaRows(id, media))
-        }
-      }
-    })
+    await articleRepository.update(id, data, readingTime)
 
     // The old rows are gone from the DB; now free their Cloudinary assets so
     // repeated edits don't leak orphaned images/videos. Runs after the commit
     // and is best-effort (failures are logged inside the helper).
-    if (media !== undefined) {
+    if (data.media !== undefined) {
       await destroyManyFromCloudinary(this.toCloudinaryAssets(existing.media))
     }
 
@@ -253,22 +205,6 @@ export class ArticleService {
     if (missing.category) throw createInvalidRelationError('categoryId')
     if (missing.author) throw createInvalidRelationError('authorId')
     if (missing.tagIds.length > 0) throw createInvalidRelationError('tagIds')
-  }
-
-  /** Normalize incoming media items into insertable rows for an article. */
-  private toMediaRows(articleId: string, media: NonNullable<CreateArticleDto['media']>) {
-    return media.map((item, index) => ({
-      articleId,
-      type: item.type,
-      url: item.url.trim(),
-      publicId: item.publicId?.trim() || null,
-      resourceType: item.resourceType ?? null,
-      posterUrl: item.posterUrl?.trim() || null,
-      imageVariants: item.imageVariants ?? null,
-      captionAr: item.captionAr?.trim() || null,
-      captionFr: item.captionFr?.trim() || null,
-      position: item.position ?? index,
-    }))
   }
 
   /** Send newsletter alerts without failing the article write if email fails. */
