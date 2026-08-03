@@ -530,7 +530,7 @@ Prevent Nuxt and Flutter editors from silently overwriting each other.
 - [x] Return `409 Conflict` for stale Flutter updates — repository transaction result is returned to the service
 - [x] Add a dedicated autosave contract
 - [x] Ensure autosave cannot publish accidentally
-- [ ] Add idempotency for retry-sensitive saves
+- [x] Add persisted per-admin idempotency for retry-sensitive autosaves
 - [~] Record last save time and actor — `updatedAt` is recorded; explicit actor tracking remains
 - [ ] Decide whether full article revision history is required
 - [ ] Update the Nuxt web editor to use revision checks
@@ -547,7 +547,7 @@ Prevent Nuxt and Flutter editors from silently overwriting each other.
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Article revisions start at 1 and Flutter updates conditionally match `expectedRevision`, incrementing atomically or returning 409. The repository now correctly returns the transaction result to the service and serializes the revision. Revision-aware updates preserve shared media cleanup and first-publish newsletter behavior. A dedicated bearer-protected autosave route accepts only bilingual draft text, requires a revision, rejects unknown or empty payloads, and refuses published articles; it cannot alter publishing, ownership, relations, media, slugs, or home placement. Save idempotency, explicit actor tracking, tests, and Nuxt editor adoption remain.
+Notes: Article revisions start at 1 and Flutter updates conditionally match `expectedRevision`, incrementing atomically or returning 409. The repository now correctly returns the transaction result to the service and serializes the revision. Revision-aware updates preserve shared media cleanup and first-publish newsletter behavior. A dedicated bearer-protected autosave route accepts only bilingual draft text, requires a revision, rejects unknown or empty payloads, and refuses published articles; it cannot alter publishing, ownership, relations, media, slugs, or home placement. Autosaves now require a persisted per-admin idempotency key: completed retries return the original response, concurrent retries conflict, and key reuse for a different article or payload is rejected. Explicit actor tracking, tests, and Nuxt editor adoption remain.
 
 ---
 

@@ -20,6 +20,7 @@ export { userOauthAccounts } from './user-oauth-accounts'
 export { passwordResetTokens } from './password-reset-tokens'
 export { mobileAdminSessions } from './mobile-admin-sessions'
 export { mobileUploadIdempotency } from './mobile-upload-idempotency'
+export { mobileArticleSaveIdempotency } from './mobile-article-save-idempotency'
 
 // Relations power the db.query relational API (with: { category, author, ... })
 export * from './relations'
