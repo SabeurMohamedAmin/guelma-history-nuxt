@@ -172,7 +172,7 @@ const readMoreIcon = computed(() =>
       <v-card
         flat
         rounded="lg"
-        class="pa-8 text-center newsletter-card"
+        class="pa-2 pa-lg-4 text-center newsletter-card"
       >
         <v-icon
           icon="mdi-email-outline"
