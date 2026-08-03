@@ -56,6 +56,17 @@ export default defineNuxtConfig({
   runtimeConfig: {
     resendFromEmail: 'Guelma History <onboarding@resend.dev>',
 
+    // Flutter admin authentication. These values are server-only and must
+    // never be moved into runtimeConfig.public.
+    mobileAuth: {
+      signingKey: '',
+      issuer: 'guelma-history-api',
+      audience: 'guelma-history-flutter-admin',
+      accessTokenTtlSeconds: 15 * 60,
+      refreshTokenTtlDays: 30,
+      maxActiveDevices: 5,
+    },
+
     // Facebook OAuth credentials. Read automatically by nuxt-auth-utils'
     // defineOAuthFacebookEventHandler. Set via NUXT_OAUTH_FACEBOOK_CLIENT_ID
     // and NUXT_OAUTH_FACEBOOK_CLIENT_SECRET.
