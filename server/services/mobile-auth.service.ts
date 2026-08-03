@@ -21,6 +21,11 @@ export class MobileAuthService {
     const data = mobileLoginSchema.parse(input)
     const admin = await authenticateAdmin(data.identifier, data.password)
     if (!admin) throw unauthorized()
+    if (!admin.profileCompleted) throw unauthorized()
+
+    // Opportunistic cleanup avoids requiring a pipeline or public maintenance
+    // endpoint. Failure is allowed to abort login rather than hide DB problems.
+    await mobileAuthSessionRepository.deleteExpired()
 
     const refreshToken = createMobileRefreshToken()
     const session = await mobileAuthSessionRepository.create({
