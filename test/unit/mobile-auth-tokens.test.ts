@@ -27,6 +27,13 @@ describe('mobile authentication tokens', () => {
     expect(claims?.role).toBe('admin')
   })
 
+  it('rejects an expired access token', () => {
+    const expiredConfig = { ...config, accessTokenTtlSeconds: -1 }
+    const created = createMobileAccessToken('user-id', 'session-id', expiredConfig)
+
+    expect(verifyMobileAccessToken(created.token, config)).toBeNull()
+  })
+
   it('rejects a token signed with another key', () => {
     const created = createMobileAccessToken('user-id', 'session-id', config)
     const otherConfig = { ...config, signingKey: `${config.signingKey}-different` }

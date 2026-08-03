@@ -37,14 +37,142 @@ export default defineVersionedApiHandler(() => ({
       get: {
         operationId: 'getOpenApiDocument',
         summary: 'Get the current API contract',
-        responses: {
-          200: { description: 'OpenAPI 3.1 document' },
+        responses: { 200: { description: 'OpenAPI 3.1 document' } },
+      },
+    },
+    '/admin/auth/login': {
+      post: {
+        operationId: 'mobileAdminLogin',
+        summary: 'Create a Flutter admin device session',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MobileLoginRequest' } } },
         },
+        responses: {
+          200: { description: 'Authenticated', content: { 'application/json': { schema: { $ref: '#/components/schemas/MobileTokenResponse' } } } },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+          429: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
+    '/admin/auth/refresh': {
+      post: {
+        operationId: 'refreshMobileAdminSession',
+        summary: 'Rotate a single-use refresh token',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MobileRefreshRequest' } } },
+        },
+        responses: {
+          200: { description: 'Token rotated', content: { 'application/json': { schema: { $ref: '#/components/schemas/MobileTokenResponse' } } } },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+          429: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
+    '/admin/auth/me': {
+      get: {
+        operationId: 'getMobileAdmin',
+        summary: 'Get the authenticated Flutter administrator',
+        security: [{ mobileBearer: [] }],
+        responses: {
+          200: { description: 'Current administrator' },
+          401: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
+    '/admin/auth/sessions': {
+      get: {
+        operationId: 'listMobileAdminSessions',
+        summary: 'List active Flutter device sessions',
+        security: [{ mobileBearer: [] }],
+        responses: {
+          200: { description: 'Safe device session metadata' },
+          401: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
+    '/admin/auth/sessions/{id}': {
+      delete: {
+        operationId: 'revokeMobileAdminSession',
+        summary: 'Revoke another owned Flutter device session',
+        security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: {
+          200: { description: 'Session revoked' },
+          401: { $ref: '#/components/responses/ApiError' },
+          404: { $ref: '#/components/responses/ApiError' },
+          409: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
+    '/admin/auth/logout': {
+      post: {
+        operationId: 'logoutMobileAdmin',
+        summary: 'Revoke the current Flutter device session',
+        security: [{ mobileBearer: [] }],
+        responses: { 200: { description: 'Logged out' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/auth/logout-all': {
+      post: {
+        operationId: 'logoutAllMobileAdminSessions',
+        summary: 'Revoke every Flutter device session',
+        security: [{ mobileBearer: [] }],
+        responses: { 200: { description: 'All devices logged out' }, 401: { $ref: '#/components/responses/ApiError' } },
       },
     },
   },
   components: {
+    securitySchemes: {
+      mobileBearer: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+    },
+    responses: {
+      ApiError: {
+        description: 'Stable API error',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
+      },
+    },
     schemas: {
+      MobileLoginRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['identifier', 'password', 'deviceId', 'platform'],
+        properties: {
+          identifier: { type: 'string', maxLength: 254 },
+          password: { type: 'string', format: 'password', writeOnly: true },
+          deviceId: { type: 'string', maxLength: 200 },
+          deviceName: { type: 'string', maxLength: 200 },
+          platform: { type: 'string', enum: ['android', 'ios'] },
+          appVersion: { type: 'string', maxLength: 50 },
+        },
+      },
+      MobileRefreshRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['refreshToken'],
+        properties: { refreshToken: { type: 'string', writeOnly: true, minLength: 32, maxLength: 512 } },
+      },
+      MobileTokenResponse: {
+        type: 'object',
+        required: ['data'],
+        properties: {
+          data: {
+            type: 'object',
+            required: ['tokenType', 'accessToken', 'accessTokenExpiresAt', 'refreshToken', 'refreshTokenExpiresAt', 'user'],
+            properties: {
+              tokenType: { type: 'string', const: 'Bearer' },
+              accessToken: { type: 'string', writeOnly: true },
+              accessTokenExpiresAt: { type: 'string', format: 'date-time' },
+              refreshToken: { type: 'string', writeOnly: true },
+              refreshTokenExpiresAt: { type: 'string', format: 'date-time' },
+              user: { type: 'object' },
+            },
+          },
+        },
+      },
       HealthResponse: {
         type: 'object',
         required: ['data'],
