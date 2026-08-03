@@ -1,0 +1,638 @@
+# GuelmaHistory — Enable Nuxt/Nitro for Flutter Roadmap
+
+## Purpose
+
+Track the Nuxt 4 and Nitro backend work required to support the GuelmaHistory Flutter admin application without breaking the existing Vuetify 4 web admin.
+
+```text
+Nuxt/Vuetify web admin ─┐
+                        ├─ Nuxt/Nitro API ─ PostgreSQL/Drizzle
+Flutter Android/iOS ────┘                  └─ Cloudinary
+```
+
+Flutter must never connect directly to PostgreSQL, Drizzle, Cloudinary administration credentials, or other private services.
+
+## Tracking legend
+
+```text
+[ ] Not started
+[~] In progress
+[x] Completed and verified
+[!] Blocked — add the reason beside the item
+```
+
+After completing a section, record:
+
+```text
+Completed:
+Commit/MR:
+Notes:
+```
+
+---
+
+# MILESTONE 1 — Audit the Existing Nitro API
+
+## Current system
+
+The existing application already provides:
+
+- Nuxt 4 and Nitro/H3 server routes
+- PostgreSQL with Drizzle ORM
+- Zod server validation
+- `nuxt-auth-utils` cookie sessions
+- Roles: `user < author < admin`
+- Admin article, category, author, reported-comment, subscriber, and profile APIs
+- Arabic and French article fields
+- Cloudinary article media uploads
+
+## Tasks
+
+- [ ] Inventory every `/api/admin/**` endpoint
+- [ ] Inventory administrator routes under `/api/auth/**`
+- [ ] Record request, response, query, error, and permission contracts
+- [ ] Identify handlers containing business logic that belongs in services
+- [ ] Document current pagination, search, filtering, and sorting
+- [ ] Document article media formats and upload limits
+- [ ] Document the article body format rendered by Nuxt
+- [ ] Confirm required Arabic and French fields
+- [ ] Confirm current publishing behavior based on `publishedAt`
+- [ ] Identify browser-only assumptions such as cookie authentication
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# MILESTONE 2 — Define Stable Mobile API Contracts
+
+## Goal
+
+Create predictable contracts for Flutter while retaining existing web routes.
+
+Use a versioned namespace:
+
+```text
+/api/v1/admin/**
+```
+
+Existing Nuxt routes may remain during migration. Old and versioned handlers must call the same server services rather than duplicate business logic.
+
+## Tasks
+
+- [ ] Define a standard success response
+- [ ] Define list pagination metadata
+- [ ] Define stable machine-readable error codes
+- [ ] Define field-level validation errors
+- [ ] Use ISO 8601 UTC timestamps
+- [ ] Define nullable-field behavior
+- [ ] Define safe sort fields and maximum page sizes
+- [ ] Add typed request and response DTOs
+- [ ] Add response serializers instead of returning Drizzle rows directly
+- [ ] Create and maintain OpenAPI documentation
+- [ ] Define API compatibility and deprecation rules
+
+Recommended list response:
+
+```json
+{
+  "data": [],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 0,
+    "hasNextPage": false
+  }
+}
+```
+
+Recommended error response:
+
+```json
+{
+  "error": {
+    "code": "ARTICLE_NOT_FOUND",
+    "message": "Article not found.",
+    "fields": null,
+    "requestId": "safe-request-id"
+  }
+}
+```
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# MILESTONE 3 — Refactor Shared Server Logic
+
+## Goal
+
+Ensure Nuxt web handlers and Flutter API handlers use the same domain rules.
+
+Recommended flow:
+
+```text
+Nitro handler
+  → authenticate and authorize
+  → validate request with Zod
+  → call domain service
+  → serialize response
+```
+
+## Tasks
+
+- [ ] Keep Nitro handlers thin
+- [ ] Centralize API error conversion
+- [ ] Centralize pagination parsing
+- [ ] Centralize authentication and role guards
+- [ ] Reuse article services
+- [ ] Reuse category services
+- [ ] Reuse author services
+- [ ] Reuse reported-comment services
+- [ ] Reuse subscriber services
+- [ ] Reuse profile services
+- [ ] Keep validators independent from Vue components
+- [ ] Add tests for important service rules
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# MILESTONE 4 — Add Secure Mobile Authentication
+
+## Goal
+
+Keep sealed cookie sessions for the Nuxt web admin and add a dedicated mobile authentication mechanism for Flutter.
+
+Recommended mobile model:
+
+- Short-lived access token
+- Rotating refresh token
+- Hashed refresh tokens stored in PostgreSQL
+- One revocable session per device
+- Refresh-token reuse detection
+- Logout current device
+- Logout all devices
+
+Never store raw refresh tokens in the database or logs.
+
+## Mobile session schema
+
+Design a table containing fields such as:
+
+```text
+id
+userId
+tokenHash
+tokenFamilyId
+deviceId
+deviceName
+platform
+appVersion
+createdAt
+lastUsedAt
+expiresAt
+revokedAt
+replacedByTokenId
+```
+
+## Tasks
+
+- [ ] Design the mobile-session schema
+- [ ] Add a safe Drizzle migration
+- [ ] Add indexes for token lookup, user sessions, and expiration
+- [ ] Store only cryptographic token hashes
+- [ ] Define access-token issuer, audience, expiry, and token type
+- [ ] Define refresh-token expiry and rotation
+- [ ] Rotate refresh tokens atomically
+- [ ] Detect refresh-token reuse
+- [ ] Revoke the affected token family after reuse
+- [ ] Revoke current-device sessions on logout
+- [ ] Support logout from all devices
+- [ ] Revoke other mobile sessions after password change/reset
+- [ ] Add safe expired-session cleanup
+- [ ] Decide the maximum number of active devices
+- [ ] Keep signing keys in server-only runtime configuration
+- [ ] Never put authentication secrets in `runtimeConfig.public`
+
+## Endpoints
+
+```text
+POST   /api/v1/admin/auth/login
+POST   /api/v1/admin/auth/refresh
+POST   /api/v1/admin/auth/logout
+POST   /api/v1/admin/auth/logout-all
+GET    /api/v1/admin/auth/me
+GET    /api/v1/admin/auth/sessions
+DELETE /api/v1/admin/auth/sessions/:id
+```
+
+## Authorization integration
+
+- [ ] Preserve cookie authentication for Nuxt web
+- [ ] Add bearer access-token authentication for Flutter
+- [ ] Reuse current timing-safe password verification
+- [ ] Restrict the initial mobile release to `admin`
+- [ ] Re-read the account/role from the database where required
+- [ ] Reject deleted, demoted, expired, or revoked accounts/sessions
+- [ ] Keep transport authentication separate from domain authorization
+- [ ] Never accept a refresh token as an API access token
+
+## Tests
+
+- [ ] Valid login
+- [ ] Invalid credentials
+- [ ] Unverified email
+- [ ] Wrong role
+- [ ] Expired access token
+- [ ] Successful refresh rotation
+- [ ] Concurrent refresh requests
+- [ ] Reused refresh token
+- [ ] Revoked device session
+- [ ] Logout-all
+- [ ] Password-change invalidation
+- [ ] Deleted or demoted account
+- [ ] Authentication rate limits
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# MILESTONE 5 — Build the Versioned Flutter Admin API
+
+## Dashboard
+
+Suggested endpoint:
+
+```text
+GET /api/v1/admin/dashboard
+```
+
+- [ ] Return article count
+- [ ] Return category count
+- [ ] Return author count
+- [ ] Return subscriber count
+- [ ] Return recent articles
+- [ ] Return unresolved report count where available
+- [ ] Do not return fake analytics or review queues
+
+## Articles
+
+- [ ] Paginated article list
+- [ ] Search and safe sorting
+- [ ] Published/unpublished filter using the current model
+- [ ] Get article by a stable identifier
+- [ ] Create article
+- [ ] Update article
+- [ ] Delete article
+- [ ] Update home position where authorized
+- [ ] Validate Arabic and French titles, excerpts, and bodies
+- [ ] Validate category and author/byline
+- [ ] Preserve the difference between owner and display author
+- [ ] Serialize cover and media variants consistently
+
+## Categories
+
+- [ ] List/search categories
+- [ ] Create category
+- [ ] Update category
+- [ ] Delete safely
+- [ ] Prevent or handle deletion while articles reference the category
+
+## Authors
+
+- [ ] Paginated/searchable list
+- [ ] Lightweight selector list
+- [ ] Create author
+- [ ] Update author
+- [ ] Delete safely
+
+## Reported comments
+
+- [ ] List unresolved flags/reports
+- [ ] Resolve reports using existing behavior
+- [ ] Keep reports separate from any future moderation workflow
+
+## Subscribers
+
+- [ ] Paginated list
+- [ ] Search and status filtering
+- [ ] Update subscription state
+- [ ] Delete where policy permits
+- [ ] Export with an explicit permission check
+- [ ] Minimize personal data in list responses
+
+## Profile
+
+- [ ] Get profile
+- [ ] Update display name
+- [ ] Update email safely
+- [ ] Change password
+- [ ] Upload/get avatar
+- [ ] Revoke other mobile sessions after password changes
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# MILESTONE 6 — Make Uploads Flutter-Compatible
+
+## Goal
+
+Retain Cloudinary while making mobile uploads secure and retry-safe.
+
+## Tasks
+
+- [ ] Document accepted image/video MIME types
+- [ ] Keep Nitro request-size rules synchronized with endpoint limits
+- [ ] Verify file content/type where practical
+- [ ] Return stable media IDs and references
+- [ ] Support upload-progress-friendly requests
+- [ ] Add idempotency keys for safe retries
+- [ ] Prevent duplicate media records
+- [ ] Handle interrupted or failed Cloudinary operations
+- [ ] Clean up incomplete uploads safely
+- [ ] Sanitize filenames and metadata
+- [ ] Preserve originals where archival requirements apply
+- [ ] Generate optimized variants through trusted server behavior
+- [ ] Never expose Cloudinary API secrets to Flutter
+- [ ] Prevent deletion of media currently in use
+- [ ] Apply upload-specific authorization and rate limits
+
+## Tests
+
+- [ ] Valid image
+- [ ] Valid supported video
+- [ ] Invalid MIME/type mismatch
+- [ ] Oversized upload
+- [ ] Unauthenticated upload
+- [ ] Duplicate retry
+- [ ] Cloudinary failure
+- [ ] Attempt to delete referenced media
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# MILESTONE 7 — Protect Article Drafts and Concurrent Editing
+
+## Goal
+
+Prevent Nuxt and Flutter editors from silently overwriting each other.
+
+## Tasks
+
+- [ ] Add an article revision/version field
+- [ ] Add a safe migration for existing articles
+- [ ] Return the revision in article responses
+- [ ] Require the expected revision during updates
+- [ ] Increment revision atomically after successful updates
+- [ ] Return `409 Conflict` for stale updates
+- [ ] Add a dedicated autosave contract
+- [ ] Ensure autosave cannot publish accidentally
+- [ ] Add idempotency for retry-sensitive saves
+- [ ] Record last save time and actor
+- [ ] Decide whether full article revision history is required
+- [ ] Update the Nuxt web editor to use revision checks
+- [ ] Expose the same behavior to Flutter
+
+## Tests
+
+- [ ] Normal update increments revision
+- [ ] Two clients edit the same revision
+- [ ] Stale update returns 409
+- [ ] Retry does not duplicate effects
+- [ ] Autosave does not publish
+- [ ] Arabic and French content survive save/recovery
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# MILESTONE 8 — Align the Nuxt Web Admin
+
+## Goal
+
+Keep the Vuetify 4 administration interface compatible with all backend changes.
+
+## Tasks
+
+- [ ] Preserve cookie-based web authentication
+- [ ] Verify all admin middleware
+- [ ] Use standardized API errors in web composables
+- [ ] Adopt standardized pagination where useful
+- [ ] Add mobile-device session management to security/profile settings
+- [ ] Allow admins to revoke Flutter sessions
+- [ ] Update the article editor for revision conflicts
+- [ ] Preserve Arabic, French, and RTL behavior
+- [ ] Prefer Vuetify 4 core components and utility classes
+- [ ] Keep custom CSS readable, small, and scoped
+- [ ] Keep SFC order: `<script setup lang="ts">`, `<template>`, `<style scoped>`
+
+## Regression checks
+
+- [ ] Admin login/logout
+- [ ] Password reset/change
+- [ ] Dashboard
+- [ ] Article create/edit/delete
+- [ ] Media upload
+- [ ] Categories
+- [ ] Authors
+- [ ] Reported comments
+- [ ] Subscribers
+- [ ] Profile/avatar
+- [ ] Arabic and French routes
+- [ ] Mobile and desktop web layouts
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# MILESTONE 9 — Add Missing Backend Domains Later
+
+These features are not required to enable the first Flutter release. Implement them separately after authentication, existing APIs, uploads, and draft safety are stable.
+
+## Editorial workflow
+
+- [ ] Design `draft`, `in_review`, `scheduled`, `published`, and `archived` states
+- [ ] Define legal transitions and permissions
+- [ ] Add scheduling worker behavior
+- [ ] Prevent public APIs from leaking unpublished content
+
+## Roles and permissions
+
+- [ ] Define a permission matrix
+- [ ] Decide whether editor/moderator roles are needed
+- [ ] Update every server-side guard and test
+
+## Comment moderation
+
+- [ ] Add real moderation states separately from reports/flags
+- [ ] Record moderation actor, time, and reason
+
+## Historical references
+
+- [ ] Add structured sources and article-reference relations
+- [ ] Support ordering and uncertain dates
+
+## Timeline and periods
+
+- [ ] Model approximate dates and ranges honestly
+- [ ] Add timeline events and historical periods
+
+## Archival media library
+
+- [ ] Add reusable media assets
+- [ ] Preserve originals
+- [ ] Add historical metadata and usage relations
+
+## Audit trail
+
+- [ ] Record sensitive actions server-side
+- [ ] Never allow clients to create arbitrary audit records
+
+## Push notifications and deep links
+
+- [ ] Register mobile device tokens
+- [ ] Keep provider credentials server-only
+- [ ] Re-check authentication/authorization after deep-link navigation
+
+## Global search and analytics
+
+- [ ] Add permission-aware multi-domain search
+- [ ] Use real, privacy-reviewed analytics data
+- [ ] Never return sample analytics as production values
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# MILESTONE 10 — Security and Production Readiness
+
+## Authentication and authorization
+
+- [ ] Cookie security reviewed
+- [ ] Access/refresh-token security reviewed
+- [ ] Signing-key storage and rotation reviewed
+- [ ] Every protected route has a server-side guard
+- [ ] Role changes take effect immediately
+- [ ] Sensitive responses use `Cache-Control: no-store`
+
+## Validation and data protection
+
+- [ ] Every write endpoint uses Zod validation
+- [ ] Upload content and size validation reviewed
+- [ ] Subscriber/device data minimized
+- [ ] Logs exclude passwords, tokens, and sensitive content
+- [ ] Production errors do not expose stack traces
+- [ ] Database migrations tested against realistic data
+- [ ] Backup and restore procedures verified
+
+## Reliability and performance
+
+- [ ] Retry-sensitive writes are idempotent
+- [ ] Transaction boundaries reviewed
+- [ ] Concurrent editing tested
+- [ ] External provider failures handled
+- [ ] Pagination sizes capped
+- [ ] N+1 database queries removed
+- [ ] Only required columns selected
+- [ ] Evidence-based indexes added
+- [ ] Authentication, save, upload, and provider failures monitored
+
+## Local verification
+
+- [ ] Run lint locally
+- [ ] Run typecheck locally
+- [ ] Run relevant unit/integration tests locally
+- [ ] Manually test Nuxt web admin
+- [ ] Manually test Flutter against development/staging API
+- [ ] No pipeline is required for this workflow
+
+Completed:
+Commit/MR:
+Notes:
+
+---
+
+# First Flutter Backend Release
+
+Complete only this scope first:
+
+- [ ] Mobile admin login
+- [ ] Access-token refresh
+- [ ] Logout and session revocation
+- [ ] Current admin profile
+- [ ] Dashboard summary using existing data
+- [ ] Existing bilingual article CRUD
+- [ ] Existing category CRUD
+- [ ] Existing author CRUD
+- [ ] Existing media upload
+- [ ] Existing reported-comment workflow
+- [ ] Existing subscriber management
+- [ ] Standard errors and pagination
+- [ ] OpenAPI documentation
+- [ ] Authentication, authorization, contract, and upload tests
+- [ ] Nuxt web-admin regression verification
+
+Do not block the first release on new roles, editorial workflow, timeline, historical references, analytics, push notifications, or a full archival media library.
+
+# Recommended Order
+
+```text
+1. Audit existing Nitro routes
+2. Define API contracts and OpenAPI
+3. Refactor shared server services
+4. Add mobile authentication and device sessions
+5. Add versioned admin endpoints
+6. Make uploads retry-safe
+7. Add article revisions and conflict detection
+8. Align and regression-test Nuxt web admin
+9. Connect Flutter MVP
+10. Add new historical/editorial domains incrementally
+11. Complete security and production review
+```
+
+# Definition of Done
+
+A Nitro feature is complete when:
+
+```text
+✓ Requirements and permissions are defined
+✓ Database migration is safe
+✓ Business logic lives in a reusable server service
+✓ Nitro handler remains thin
+✓ Zod request validation exists
+✓ Authentication and authorization are enforced
+✓ Stable response and error contracts exist
+✓ Sensitive fields are not exposed
+✓ Unit/integration tests pass locally
+✓ Nuxt web admin is verified
+✓ Flutter API contract is documented
+✓ Arabic/French behavior is verified
+✓ Retry and concurrency behavior are considered
+✓ This roadmap is updated
+```
+
+Priority:
+
+```text
+Data safety > correctness > security > usability > performance > visual polish
+```
