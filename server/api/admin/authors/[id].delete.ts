@@ -9,6 +9,8 @@ import { databaseUuidSchema } from '~~/shared/database-uuid'
  * never orphan content or hit a foreign-key error.
  */
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const parsedId = databaseUuidSchema.safeParse(getRouterParam(event, 'id'))
   if (!parsedId.success) {
     throw createError({ statusCode: 400, message: 'Invalid author ID' })

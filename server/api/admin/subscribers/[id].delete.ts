@@ -9,6 +9,8 @@ import { databaseUuidSchema } from '~~/shared/database-uuid'
  * admin, or a spam address). Returns 404 if the id does not exist.
  */
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const idResult = databaseUuidSchema.safeParse(getRouterParam(event, 'id'))
   if (!idResult.success) {
     throw createError({ statusCode: 400, message: 'Invalid subscriber ID' })

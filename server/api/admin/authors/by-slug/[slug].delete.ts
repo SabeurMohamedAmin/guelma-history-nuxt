@@ -8,6 +8,8 @@ import { authors, articles } from '~~/server/db/schema'
  * articles assigned, so we never orphan content or hit a foreign-key error.
  */
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const slug = getRouterParam(event, 'slug')?.trim()
   if (!slug) {
     throw createError({ statusCode: 400, message: 'Invalid author slug' })

@@ -9,6 +9,8 @@ import { authors, articles } from '~~/server/db/schema'
  * edit page can render the same shape as the list table.
  */
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const slug = getRouterParam(event, 'slug')?.trim()
   if (!slug) {
     throw createError({ statusCode: 400, message: 'Invalid author slug' })
