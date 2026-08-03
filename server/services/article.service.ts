@@ -155,6 +155,7 @@ export class ArticleService {
     input: UpdateArticleDto,
     expectedRevision: number,
     savedByUserId?: string,
+    requireUnpublished = false,
   ): Promise<ArticleResponse> {
     const existing = await this.getById(id)
     if (!existing) throw createNotFoundError(id)
@@ -167,8 +168,17 @@ export class ArticleService {
       changedBody ? this.calcReadingTime(changedBody) : undefined,
       expectedRevision,
       savedByUserId,
+      requireUnpublished,
     )
-    if (!updated) throw createError({ statusCode: 409, message: 'Article was changed by another editor. Reload and try again.' })
+    if (!updated) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Conflict',
+        message: requireUnpublished
+          ? 'Article was published or changed by another editor. Reload and try again.'
+          : 'Article was changed by another editor. Reload and try again.',
+      })
+    }
 
     if (data.media !== undefined) {
       await destroyManyFromCloudinary(this.toCloudinaryAssets(existing.media))

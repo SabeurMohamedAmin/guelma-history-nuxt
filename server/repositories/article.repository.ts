@@ -134,6 +134,7 @@ export class ArticleRepository {
     readingTime?: number,
     expectedRevision?: number,
     savedByUserId?: string,
+    requireUnpublished = false,
   ): Promise<boolean> {
     const { tagIds, media, ...fields } = input
 
@@ -149,9 +150,11 @@ export class ArticleRepository {
             : {}),
           updatedAt: new Date(),
         })
-        .where(expectedRevision === undefined
-          ? eq(articles.id, id)
-          : and(eq(articles.id, id), eq(articles.revision, expectedRevision)))
+        .where(and(
+          eq(articles.id, id),
+          ...(expectedRevision !== undefined ? [eq(articles.revision, expectedRevision)] : []),
+          ...(requireUnpublished ? [isNull(articles.publishedAt)] : []),
+        ))
         .returning({ id: articles.id })
 
       if (rows.length === 0) return false
