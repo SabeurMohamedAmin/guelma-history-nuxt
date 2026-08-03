@@ -110,6 +110,63 @@ export default defineVersionedApiHandler(() => ({
         },
       },
     },
+    '/admin/categories': {
+      get: {
+        operationId: 'listMobileAdminCategories', summary: 'List and search categories', security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'search', in: 'query', schema: { type: 'string' } }],
+        responses: { 200: { description: 'Categories' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+      post: {
+        operationId: 'createMobileAdminCategory', summary: 'Create a category', security: [{ mobileBearer: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+        responses: { 201: { description: 'Category created' }, 400: { $ref: '#/components/responses/ApiError' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/categories/{id}': {
+      patch: {
+        operationId: 'updateMobileAdminCategory', summary: 'Update a category', security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'Category updated' }, 400: { $ref: '#/components/responses/ApiError' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+      delete: {
+        operationId: 'deleteMobileAdminCategory', summary: 'Safely delete a category', security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'Category deleted' }, 401: { $ref: '#/components/responses/ApiError' }, 409: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/authors': {
+      get: {
+        operationId: 'listMobileAdminAuthors', summary: 'List and search authors', security: [{ mobileBearer: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100 } },
+          { name: 'search', in: 'query', schema: { type: 'string' } },
+        ],
+        responses: { 200: { description: 'Paginated authors' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+      post: {
+        operationId: 'createMobileAdminAuthor', summary: 'Create an author', security: [{ mobileBearer: [] }],
+        responses: { 201: { description: 'Author created' }, 400: { $ref: '#/components/responses/ApiError' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/authors/options': {
+      get: {
+        operationId: 'listMobileAdminAuthorOptions', summary: 'Get lightweight author options', security: [{ mobileBearer: [] }],
+        responses: { 200: { description: 'Author options' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/authors/{id}': {
+      patch: {
+        operationId: 'updateMobileAdminAuthor', summary: 'Update an author', security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'Author updated' }, 400: { $ref: '#/components/responses/ApiError' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+      delete: {
+        operationId: 'deleteMobileAdminAuthor', summary: 'Safely delete an author', security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'Author deleted' }, 401: { $ref: '#/components/responses/ApiError' }, 409: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
     '/admin/comments/reports': {
       get: {
         operationId: 'listMobileAdminCommentReports',
@@ -133,6 +190,57 @@ export default defineVersionedApiHandler(() => ({
           401: { $ref: '#/components/responses/ApiError' },
         },
       },
+    },
+    '/admin/subscribers': {
+      get: {
+        operationId: 'listMobileAdminSubscribers', summary: 'List, search, and filter subscribers', security: [{ mobileBearer: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100 } },
+          { name: 'search', in: 'query', schema: { type: 'string' } },
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['all', 'active', 'pending', 'unsubscribed'] } },
+        ],
+        responses: { 200: { description: 'Paginated subscribers' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/subscribers/{id}/subscription': {
+      patch: {
+        operationId: 'updateMobileAdminSubscriberStatus', summary: 'Update subscription status', security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'Status updated' }, 400: { $ref: '#/components/responses/ApiError' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/subscribers/{id}': {
+      delete: {
+        operationId: 'deleteMobileAdminSubscriber', summary: 'Delete a subscriber', security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'Subscriber deleted' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/subscribers/export': {
+      get: {
+        operationId: 'exportMobileAdminSubscribers', summary: 'Export active subscribers as CSV', security: [{ mobileBearer: [] }],
+        responses: { 200: { description: 'CSV export', content: { 'text/csv': { schema: { type: 'string' } } } }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/profile': {
+      get: {
+        operationId: 'getMobileAdminProfile', summary: 'Get the admin profile', security: [{ mobileBearer: [] }],
+        responses: { 200: { description: 'Profile' }, 401: { $ref: '#/components/responses/ApiError' } },
+      },
+    },
+    '/admin/profile/display-name': {
+      patch: { operationId: 'updateMobileAdminDisplayName', summary: 'Update display name', security: [{ mobileBearer: [] }], responses: { 200: { description: 'Profile updated' }, 401: { $ref: '#/components/responses/ApiError' } } },
+    },
+    '/admin/profile/email': {
+      patch: { operationId: 'updateMobileAdminEmail', summary: 'Update email after password verification', security: [{ mobileBearer: [] }], responses: { 200: { description: 'Email updated' }, 400: { $ref: '#/components/responses/ApiError' }, 401: { $ref: '#/components/responses/ApiError' } } },
+    },
+    '/admin/profile/password': {
+      patch: { operationId: 'updateMobileAdminPassword', summary: 'Change password and revoke all mobile sessions', security: [{ mobileBearer: [] }], responses: { 200: { description: 'Password updated; login required' }, 400: { $ref: '#/components/responses/ApiError' }, 401: { $ref: '#/components/responses/ApiError' } } },
+    },
+    '/admin/profile/avatar': {
+      get: { operationId: 'getMobileAdminAvatar', summary: 'Get private avatar bytes', security: [{ mobileBearer: [] }], responses: { 200: { description: 'WebP avatar' }, 401: { $ref: '#/components/responses/ApiError' }, 404: { $ref: '#/components/responses/ApiError' } } },
+      post: { operationId: 'uploadMobileAdminAvatar', summary: 'Normalize and save an avatar', security: [{ mobileBearer: [] }], responses: { 200: { description: 'Profile updated' }, 400: { $ref: '#/components/responses/ApiError' }, 401: { $ref: '#/components/responses/ApiError' } } },
     },
     '/admin/dashboard': {
       get: {
