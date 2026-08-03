@@ -670,7 +670,7 @@ Notes:
 - [ ] Upload content and size validation reviewed
 - [ ] Subscriber/device data minimized
 - [ ] Logs exclude passwords, tokens, and sensitive content
-- [ ] Production errors do not expose stack traces
+- [x] Production errors do not expose stack traces or unexpected internal error messages
 - [ ] Database migrations tested against realistic data
 - [ ] Backup and restore procedures verified
 
@@ -696,8 +696,8 @@ Notes:
 - [ ] No pipeline is required for this workflow
 
 Completed:
-Commit/MR:
-Notes:
+Commit/MR: tracked in the `dev` branch
+Notes: Security review is in progress. Versioned routes already return standardized errors with request IDs and private no-store headers. Legacy error conversion now logs unexpected failures server-side while returning a generic production message, preventing database/provider details from leaking. Remaining authentication, authorization, migration, reliability, and local verification checks are still open.
 
 ---
 
