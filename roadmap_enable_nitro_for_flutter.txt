@@ -662,7 +662,7 @@ Notes:
 - [ ] Signing-key storage and rotation reviewed
 - [ ] Every protected route has a server-side guard
 - [ ] Role changes take effect immediately
-- [ ] Sensitive responses use `Cache-Control: no-store`
+- [x] Sensitive auth, admin, author, and versioned API responses use `Cache-Control: private, no-store`
 
 ## Validation and data protection
 
@@ -697,7 +697,7 @@ Notes:
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Security review is in progress. Versioned routes already return standardized errors with request IDs and private no-store headers. Legacy error conversion now logs unexpected failures server-side while returning a generic production message, preventing database/provider details from leaking. Remaining authentication, authorization, migration, reliability, and local verification checks are still open.
+Notes: Security review is in progress. Versioned routes already return standardized errors with request IDs and private no-store headers. Legacy error conversion now logs unexpected failures server-side while returning a generic production message, preventing database/provider details from leaking. Route rules prevent caching authentication responses and legacy admin/author responses; versioned handlers already apply private no-store headers. Remaining authentication, authorization, migration, reliability, and local verification checks are still open.
 
 ---
 
