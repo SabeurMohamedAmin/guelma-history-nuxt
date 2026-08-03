@@ -21,7 +21,9 @@ export default defineVersionedApiHandler(async (event) => {
 
   const id = z.uuid().parse(getRouterParam(event, 'id'))
   const parsed = autosaveArticleSchema.parse(await readBody(event))
-  const requestHash = createHash('sha256').update(JSON.stringify({ id, ...parsed })).digest('hex')
+  const requestHash = createHash('sha256')
+    .update(JSON.stringify(canonicalAutosavePayload(id, parsed)))
+    .digest('hex')
   await mobileArticleSaveIdempotencyRepository.cleanup()
 
   const previous = await mobileArticleSaveIdempotencyRepository.find(principal.user.id, key)
@@ -98,3 +100,20 @@ export default defineVersionedApiHandler(async (event) => {
 
   return success(response)
 })
+
+/** Stable key order makes semantically identical retries hash identically. */
+function canonicalAutosavePayload(
+  id: string,
+  input: ReturnType<typeof autosaveArticleSchema.parse>,
+) {
+  return {
+    id,
+    expectedRevision: input.expectedRevision,
+    ...(input.titleAr !== undefined ? { titleAr: input.titleAr } : {}),
+    ...(input.titleFr !== undefined ? { titleFr: input.titleFr } : {}),
+    ...(input.excerptAr !== undefined ? { excerptAr: input.excerptAr } : {}),
+    ...(input.excerptFr !== undefined ? { excerptFr: input.excerptFr } : {}),
+    ...(input.bodyAr !== undefined ? { bodyAr: input.bodyAr } : {}),
+    ...(input.bodyFr !== undefined ? { bodyFr: input.bodyFr } : {}),
+  }
+}
