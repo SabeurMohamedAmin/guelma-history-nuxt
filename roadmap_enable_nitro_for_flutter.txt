@@ -280,7 +280,7 @@ Nitro handler
 - [x] Reuse article services — `ArticleRepository` owns all article Drizzle reads/writes, transactions, relation checks, and row mapping; `ArticleService` owns business rules and external side effects
 - [x] Reuse category services — category handlers now delegate to `CategoryService` and `CategoryRepository`
 - [x] Reuse author services — ID/slug routes now share `AuthorService`, `AuthorRepository`, validation, slug generation, and safe deletion
-- [ ] Reuse reported-comment services
+- [x] Reuse reported-comment services — admin report listing/grouping and resolution use `CommentReportService` and `CommentReportRepository`
 - [x] Reuse subscriber services — list/count/export/status/delete handlers now use `SubscriberService` and `SubscriberRepository`
 - [ ] Reuse profile services
 - [ ] Keep validators independent from Vue components
@@ -288,7 +288,7 @@ Nitro handler
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Completed article, category, author, and subscriber service/repository boundaries. Subscriber CSV formatting and cleanup orchestration remain in the service while token hashes stay excluded from repository response projections. Existing Nuxt response shapes are preserved.
+Notes: Completed article, category, author, subscriber, and reported-comment service/repository boundaries. Public comment threading remains unchanged; only admin report persistence/grouping moved. Existing Nuxt response shapes are preserved.
 
 ---
 
