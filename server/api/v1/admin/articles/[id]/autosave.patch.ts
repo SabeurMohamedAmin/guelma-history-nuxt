@@ -66,6 +66,7 @@ export default defineVersionedApiHandler(async (event) => {
       draft,
       expectedRevision,
       principal.user.id,
+      true,
     )
     const response = serializeMobileArticle(article)
     await mobileArticleSaveIdempotencyRepository.complete(principal.user.id, key, response)
