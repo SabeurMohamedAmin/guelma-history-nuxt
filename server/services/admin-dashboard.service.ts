@@ -31,12 +31,9 @@ export class AdminDashboardService {
         subscribers: subscriberCount,
         unresolvedReports: unresolvedReportCount,
       },
-      recentArticles: recentArticles.map(article => ({
-        ...article,
-        createdAt: article.createdAt instanceof Date
-          ? article.createdAt.toISOString()
-          : article.createdAt,
-      })),
+      // ArticleService already returns a transport-safe compact shape whose
+      // publishedAt value is an ISO string.
+      recentArticles,
     }
   }
 }

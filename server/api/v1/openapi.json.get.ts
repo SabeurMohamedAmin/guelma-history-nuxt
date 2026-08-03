@@ -41,6 +41,18 @@ export default defineVersionedApiHandler(() => ({
       },
     },
     '/admin/articles': {
+      post: {
+        operationId: 'createMobileAdminArticle',
+        summary: 'Create a bilingual article',
+        security: [{ mobileBearer: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+        responses: {
+          201: { description: 'Article created' },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+          409: { $ref: '#/components/responses/ApiError' },
+        },
+      },
       get: {
         operationId: 'listMobileAdminArticles',
         summary: 'List and search bilingual articles',
@@ -61,6 +73,30 @@ export default defineVersionedApiHandler(() => ({
       },
     },
     '/admin/articles/{id}': {
+      patch: {
+        operationId: 'updateMobileAdminArticle',
+        summary: 'Update an article by stable UUID',
+        security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+        responses: {
+          200: { description: 'Article updated' },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+          404: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+      delete: {
+        operationId: 'deleteMobileAdminArticle',
+        summary: 'Delete an article by stable UUID',
+        security: [{ mobileBearer: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: {
+          200: { description: 'Article deleted' },
+          401: { $ref: '#/components/responses/ApiError' },
+          404: { $ref: '#/components/responses/ApiError' },
+        },
+      },
       get: {
         operationId: 'getMobileAdminArticle',
         summary: 'Get an article by stable UUID',
