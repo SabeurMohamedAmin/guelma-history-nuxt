@@ -481,9 +481,9 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 
 ## Tasks
 
-- [ ] Document accepted image/video MIME types
-- [ ] Keep Nitro request-size rules synchronized with endpoint limits
-- [ ] Verify file content/type where practical
+- [x] Document accepted MIME types in code: JPEG, PNG, WebP, GIF, MP4, QuickTime, and WebM
+- [x] Keep Nitro request-size rules synchronized with endpoint limits — existing route allows ~110 MiB for a 100 MiB file cap
+- [x] Verify supported file content signatures and reject declared MIME mismatches
 - [ ] Return stable media IDs and references
 - [ ] Support upload-progress-friendly requests
 - [ ] Add idempotency keys for safe retries
@@ -501,16 +501,16 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 
 - [ ] Valid image
 - [ ] Valid supported video
-- [ ] Invalid MIME/type mismatch
-- [ ] Oversized upload
+- [x] Invalid MIME/type mismatch — unit covered
+- [~] Oversized upload — endpoint and route-rule enforcement implemented; endpoint coverage remains
 - [ ] Unauthenticated upload
 - [ ] Duplicate retry
 - [ ] Cloudinary failure
 - [ ] Attempt to delete referenced media
 
 Completed:
-Commit/MR:
-Notes:
+Commit/MR: tracked in the `dev` branch
+Notes: Started upload hardening by replacing prefix-only multipart trust with byte-signature detection and exact MIME matching for an explicit image/video allowlist. Unsupported content returns 415 and oversized files return 413. Unit coverage includes supported signatures and mismatch rejection. Flutter upload routing, idempotency, and partial Cloudinary cleanup remain.
 
 ---
 

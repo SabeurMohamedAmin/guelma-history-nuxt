@@ -3,6 +3,7 @@ import type { FitEnum } from 'sharp'
 import type { ImageVariants } from '~~/shared/types/article'
 import { requireAdmin } from '~~/server/utils/auth'
 import { uploadToCloudinary } from '~~/server/utils/cloudinary'
+import { validateArticleMediaFile } from '~~/server/utils/mediaFileValidation'
 
 /**
  * POST /api/admin/articles/media/upload
@@ -14,8 +15,6 @@ import { uploadToCloudinary } from '~~/server/utils/cloudinary'
  *
  * The Cloudinary secret never reaches the client, mirroring the avatar upload.
  */
-
-const ALLOWED_PREFIXES = ['image/', 'video/']
 
 // Safety cap on the raw upload to avoid forwarding absurd payloads. Cloudinary
 // optimizes/transcodes afterwards. (100 MB, generous for short videos.)
@@ -32,22 +31,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const fileData = filePart.data
-  const type = filePart.type?.toLowerCase() ?? ''
-  if (!ALLOWED_PREFIXES.some(prefix => type.startsWith(prefix))) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
-      message: 'Unsupported file type. Only images and videos are allowed.',
-    })
-  }
 
   if (fileData.length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Uploaded file is empty.' })
   }
 
   if (fileData.length > MAX_UPLOAD_BYTES) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'File is too large.' })
+    throw createError({ statusCode: 413, statusMessage: 'Payload Too Large', message: 'File is too large.' })
   }
+
+  const type = validateArticleMediaFile(fileData, filePart.type)
 
   // Videos keep their original upload path. For images, Sharp creates display
   // variants that match their UI containers. The uploaded source stays
