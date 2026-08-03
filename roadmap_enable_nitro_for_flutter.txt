@@ -273,7 +273,7 @@ Nitro handler
 
 ## Tasks
 
-- [ ] Keep Nitro handlers thin
+- [~] Keep Nitro handlers thin — article/category/author/subscriber/report/profile handlers now delegate; transport validation and legacy wrappers remain
 - [x] Centralize API error conversion for versioned routes
 - [~] Centralize pagination parsing — pure normalization exists; query-schema integration remains
 - [~] Centralize authentication and role guards — existing admin handlers now explicitly use `requireAdmin()`; shared web/mobile transport work remains
@@ -282,13 +282,13 @@ Nitro handler
 - [x] Reuse author services — ID/slug routes now share `AuthorService`, `AuthorRepository`, validation, slug generation, and safe deletion
 - [x] Reuse reported-comment services — admin report listing/grouping and resolution use `CommentReportService` and `CommentReportRepository`
 - [x] Reuse subscriber services — list/count/export/status/delete handlers now use `SubscriberService` and `SubscriberRepository`
-- [ ] Reuse profile services
+- [x] Reuse profile services — profile/password/email/avatar domain logic now uses `AdminProfileService` and `AdminProfileRepository`
 - [ ] Keep validators independent from Vue components
 - [ ] Add tests for important service rules
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Completed article, category, author, subscriber, and reported-comment service/repository boundaries. Public comment threading remains unchanged; only admin report persistence/grouping moved. Existing Nuxt response shapes are preserved.
+Notes: Completed service/repository boundaries for articles, categories, authors, subscribers, reported comments, and admin profiles. Cookie-session refresh and avatar HTTP caching remain in handlers as transport concerns. Existing Nuxt response shapes are preserved.
 
 ---
 

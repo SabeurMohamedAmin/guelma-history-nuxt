@@ -1,6 +1,6 @@
+import { adminProfileService } from '~~/server/services/admin-profile.service'
 import { requireAdmin, refreshUserSession } from '~~/server/utils/auth'
 import { processAvatarImage } from '~~/server/utils/avatarImage'
-import { updateAvatar } from '~~/server/utils/adminProfile'
 
 /**
  * POST /api/admin/profile/avatar
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const image = await processAvatarImage(filePart.data)
 
-  const profile = await updateAvatar(id, image.data, image.mimeType)
+  const profile = await adminProfileService.updateAvatar(id, image.data, image.mimeType)
   await refreshUserSession(event, id)
 
   return profile

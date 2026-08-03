@@ -1,5 +1,5 @@
+import { adminProfileService } from '~~/server/services/admin-profile.service'
 import { requireAdmin } from '~~/server/utils/auth'
-import { getAdminAvatar } from '~~/server/utils/adminProfile'
 
 /**
  * GET /api/admin/profile/avatar
@@ -13,7 +13,7 @@ import { getAdminAvatar } from '~~/server/utils/adminProfile'
  */
 export default defineEventHandler(async (event) => {
   const { id } = await requireAdmin(event)
-  const avatar = await getAdminAvatar(id)
+  const avatar = await adminProfileService.getAvatar(id)
 
   // Version the cache by the admin id + last update so a new upload busts it.
   const etag = `"avatar-${id}-${avatar.updatedAt?.getTime() ?? 0}"`

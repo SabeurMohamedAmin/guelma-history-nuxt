@@ -1,5 +1,5 @@
+import { adminProfileService } from '~~/server/services/admin-profile.service'
 import { requireAdmin, refreshUserSession } from '~~/server/utils/auth'
-import { updateAdminDisplayName } from '~~/server/utils/adminProfile'
 
 /**
  * PATCH /api/admin/profile/display-name
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'displayName is required.' })
   }
 
-  const profile = await updateAdminDisplayName(id, displayName)
+  const profile = await adminProfileService.updateDisplayName(id, displayName)
   await refreshUserSession(event, id)
 
   return profile

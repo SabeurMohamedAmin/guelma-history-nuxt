@@ -1,5 +1,5 @@
+import { adminProfileService } from '~~/server/services/admin-profile.service'
 import { refreshUserSession, requireAdmin } from '~~/server/utils/auth'
-import { changeAdminPassword } from '~~/server/utils/adminProfile'
 
 /**
  * PATCH /api/admin/profile/password
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await changeAdminPassword(id, currentPassword, newPassword)
+  await adminProfileService.changePassword(id, currentPassword, newPassword)
 
   // Re-issue this session so the acting user stays logged in, while every
   // other previously issued session is invalidated by the staleness check.
