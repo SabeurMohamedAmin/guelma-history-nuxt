@@ -3,6 +3,7 @@ import { and, eq, gt, isNull } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { users } from '~~/server/db/schema/users'
 import { passwordResetTokens } from '~~/server/db/schema/password-reset-tokens'
+import { mobileAdminSessions } from '~~/server/db/schema/mobile-admin-sessions'
 import { createPasswordHash } from './password'
 
 /**
@@ -51,9 +52,9 @@ async function invalidateActiveTokens(userId: string): Promise<void> {
 }
 
 /**
- * Consume a raw token and set a new password atomically-ish:
- * validates the token is unused and unexpired, updates the password, then
- * marks the token used. Returns true on success, false if the token is invalid.
+ * Consume a raw token and set a new password in one transaction. The token is
+ * claimed conditionally, then the password is changed and every mobile session
+ * is revoked before commit.
  */
 export async function resetPasswordWithToken(rawToken: string, newPassword: string): Promise<boolean> {
   const tokenRow = await db.query.passwordResetTokens.findFirst({
@@ -72,8 +73,30 @@ export async function resetPasswordWithToken(rawToken: string, newPassword: stri
 
   const passwordHash = await createPasswordHash(newPassword)
 
-  await db.update(users).set({ passwordHash }).where(eq(users.id, tokenRow.userId))
-  await db.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, tokenRow.id))
+  return db.transaction(async (tx) => {
+    const changedAt = new Date()
+    const [claimedToken] = await tx.update(passwordResetTokens)
+      .set({ usedAt: changedAt })
+      .where(and(
+        eq(passwordResetTokens.id, tokenRow.id),
+        isNull(passwordResetTokens.usedAt),
+        gt(passwordResetTokens.expiresAt, changedAt),
+      ))
+      .returning({ id: passwordResetTokens.id })
 
-  return true
+    if (!claimedToken) return false
+
+    await tx.update(users)
+      .set({ passwordHash, passwordChangedAt: changedAt })
+      .where(eq(users.id, tokenRow.userId))
+
+    await tx.update(mobileAdminSessions)
+      .set({ revokedAt: changedAt })
+      .where(and(
+        eq(mobileAdminSessions.userId, tokenRow.userId),
+        isNull(mobileAdminSessions.revokedAt),
+      ))
+
+    return true
+  })
 }

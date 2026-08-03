@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { adminProfileRepository } from '~~/server/repositories/admin-profile.repository'
 import type { Role } from '~~/shared/auth/roles'
 import { createPasswordHash, verifyPasswordHash } from '~~/server/utils/password'
+import { mobileAuthSessionRepository } from '~~/server/repositories/mobile-auth-session.repository'
 
 export interface AdminProfileResponse {
   id: string
@@ -67,6 +68,7 @@ export class AdminProfileService {
     await this.verifyCurrentPassword(admin.passwordHash, currentPassword)
     const validPassword = passwordSchema.parse(newPassword)
     await adminProfileRepository.updatePassword(id, await createPasswordHash(validPassword))
+    await mobileAuthSessionRepository.revokeAllForUser(id)
   }
 
   async changeEmail(id: string, newEmail: string, currentPassword: string) {
