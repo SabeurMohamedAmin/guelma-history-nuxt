@@ -251,7 +251,7 @@ Recommended error response:
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Added additive `ApiSuccess`, `ApiPaginatedSuccess`, pagination metadata, structured error types, pagination normalization, response helpers, stable error codes, structured Zod field mapping, safe internal-error handling, and request-ID generation. Existing Nuxt endpoint responses remain unchanged while versioned endpoints are introduced.
+Notes: Added additive `ApiSuccess`, `ApiPaginatedSuccess`, pagination metadata, structured error types, pagination normalization, response helpers, stable error codes, structured Zod field mapping, safe internal-error handling, request IDs, private no-store headers, and a reusable versioned Nitro handler. `/api/v1/health` provides a non-sensitive contract probe. Existing Nuxt endpoint responses remain unchanged.
 
 ---
 
@@ -274,8 +274,8 @@ Nitro handler
 ## Tasks
 
 - [ ] Keep Nitro handlers thin
-- [~] Centralize API error conversion — versioned error mapper exists; H3 handler integration remains
-- [ ] Centralize pagination parsing
+- [x] Centralize API error conversion for versioned routes
+- [~] Centralize pagination parsing — pure normalization exists; query-schema integration remains
 - [~] Centralize authentication and role guards — existing admin handlers now explicitly use `requireAdmin()`; shared web/mobile transport work remains
 - [ ] Reuse article services
 - [ ] Reuse category services
