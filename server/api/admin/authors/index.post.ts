@@ -8,6 +8,8 @@ import { generateUniqueAuthorSlug } from '~~/server/utils/author-slug'
  * The slug is derived from nameFr and made unique automatically.
  */
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const body = await readBody<{
     nameAr?: string
     nameFr?: string

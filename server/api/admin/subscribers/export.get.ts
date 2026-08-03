@@ -10,6 +10,8 @@ import { subscribers } from '~~/server/db/schema'
  * opt-in subscription flow and excludes pending/unsubscribed rows.
  */
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const rows = await db
     .select({
       email: subscribers.email,

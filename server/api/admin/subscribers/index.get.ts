@@ -9,7 +9,9 @@ import { subscribers } from '~~/server/db/schema'
  * we only return the fields the UI needs (id, email, status, dates).
  * Newest first so recent sign-ups are immediately visible.
  */
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const rows = await db
     .select({
       id: subscribers.id,

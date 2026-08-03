@@ -6,7 +6,9 @@ import { subscribers } from '~~/server/db/schema'
  * GET /api/admin/subscribers/count
  * Total subscriber count for the dashboard.
  */
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const [row] = await db.select({ count: count() }).from(subscribers)
   return { total: row?.count ?? 0 }
 })

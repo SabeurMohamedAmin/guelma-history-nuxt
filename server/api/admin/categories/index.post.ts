@@ -4,6 +4,8 @@ import { createCategorySchema } from '~~/server/validators/category.validator'
 import { validateCategoryParent } from '~~/server/utils/categories'
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const body = createCategorySchema.parse(await readBody(event))
   await validateCategoryParent(undefined, body.parentId)
 

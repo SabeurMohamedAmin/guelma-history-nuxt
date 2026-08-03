@@ -13,7 +13,9 @@ import { authors, articles } from '~~/server/db/schema'
  * options for form selects and is intentionally kept separate so existing
  * consumers (e.g. the article form) are not affected.
  */
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const articleCount = db
     .select({
       authorId: articles.authorId,

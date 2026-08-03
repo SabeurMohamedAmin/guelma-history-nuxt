@@ -90,15 +90,24 @@ Authentication is browser-oriented. Login creates a sealed `nuxt-auth-utils` coo
 
 Article write/list handlers and profile/report handlers inspected during the audit use `requireAdmin()`.
 
-The following existing read handlers do not currently call `requireAdmin()` and must be corrected before exposing mobile contracts:
+The audit originally found unguarded category, author, and subscriber management routes. Explicit `requireAdmin()` checks have now been added to the following handlers without changing their response contracts:
 
 ```text
-GET /api/admin/categories
-GET /api/admin/authors
-GET /api/admin/subscribers
+GET    /api/admin/categories
+GET    /api/admin/categories/count
+POST   /api/admin/categories
+PATCH  /api/admin/categories/:id
+DELETE /api/admin/categories/:id
+GET    /api/admin/authors
+GET    /api/admin/authors/count
+GET    /api/admin/authors/list
+POST   /api/admin/authors
+GET    /api/admin/subscribers
+GET    /api/admin/subscribers/count
+GET    /api/admin/subscribers/export
 ```
 
-All other handlers in these route groups must also be checked individually while Milestone 3 services are extracted. A route being under `/api/admin` does not protect it automatically.
+Remaining handlers must still be checked individually while services are extracted. A route being under `/api/admin` does not protect it automatically.
 
 ### Business-logic findings
 
