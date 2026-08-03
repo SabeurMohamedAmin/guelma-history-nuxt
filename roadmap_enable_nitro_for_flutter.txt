@@ -212,8 +212,8 @@ Existing Nuxt routes may remain during migration. Old and versioned handlers mus
 
 - [x] Define a standard success response
 - [x] Define list pagination metadata
-- [~] Define stable machine-readable error codes — typed contract exists; error mapper and code catalogue remain
-- [~] Define field-level validation errors — typed contract exists; Zod mapper remains
+- [x] Define stable machine-readable error codes
+- [x] Define field-level validation errors
 - [x] Use ISO 8601 UTC timestamps
 - [x] Define nullable-field behavior
 - [~] Define safe sort fields and maximum page sizes — shared page-size cap is 100; domain sort allowlists remain
@@ -251,7 +251,7 @@ Recommended error response:
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Added additive `ApiSuccess`, `ApiPaginatedSuccess`, pagination metadata, structured error types, pagination normalization, and response helpers. Existing Nuxt endpoint responses remain unchanged while versioned endpoints are introduced.
+Notes: Added additive `ApiSuccess`, `ApiPaginatedSuccess`, pagination metadata, structured error types, pagination normalization, response helpers, stable error codes, structured Zod field mapping, safe internal-error handling, and request-ID generation. Existing Nuxt endpoint responses remain unchanged while versioned endpoints are introduced.
 
 ---
 
@@ -274,7 +274,7 @@ Nitro handler
 ## Tasks
 
 - [ ] Keep Nitro handlers thin
-- [ ] Centralize API error conversion
+- [~] Centralize API error conversion — versioned error mapper exists; H3 handler integration remains
 - [ ] Centralize pagination parsing
 - [~] Centralize authentication and role guards — existing admin handlers now explicitly use `requireAdmin()`; shared web/mobile transport work remains
 - [ ] Reuse article services
