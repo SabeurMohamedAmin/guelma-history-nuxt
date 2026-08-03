@@ -1,4 +1,4 @@
-import { and, eq, isNull, lt } from 'drizzle-orm'
+import { and, desc, eq, isNull, lt, ne } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { mobileAdminSessions } from '~~/server/db/schema'
 
@@ -101,6 +101,42 @@ export class MobileAuthSessionRepository {
 
       return { status: 'rotated', session: next }
     })
+  }
+
+  async listActiveForUser(userId: string) {
+    return db.query.mobileAdminSessions.findMany({
+      where: and(
+        eq(mobileAdminSessions.userId, userId),
+        isNull(mobileAdminSessions.revokedAt),
+      ),
+      orderBy: [desc(mobileAdminSessions.lastUsedAt)],
+    })
+  }
+
+  async revokeByIdForUser(id: string, userId: string): Promise<boolean> {
+    const rows = await db.update(mobileAdminSessions)
+      .set({ revokedAt: new Date() })
+      .where(and(
+        eq(mobileAdminSessions.id, id),
+        eq(mobileAdminSessions.userId, userId),
+        isNull(mobileAdminSessions.revokedAt),
+      ))
+      .returning({ id: mobileAdminSessions.id })
+    return rows.length > 0
+  }
+
+  async revokeAllForUser(userId: string, exceptSessionId?: string): Promise<number> {
+    const conditions = [
+      eq(mobileAdminSessions.userId, userId),
+      isNull(mobileAdminSessions.revokedAt),
+    ]
+    if (exceptSessionId) conditions.push(ne(mobileAdminSessions.id, exceptSessionId))
+
+    const rows = await db.update(mobileAdminSessions)
+      .set({ revokedAt: new Date() })
+      .where(and(...conditions))
+      .returning({ id: mobileAdminSessions.id })
+    return rows.length
   }
 
   async revokeFamily(tokenFamilyId: string): Promise<void> {

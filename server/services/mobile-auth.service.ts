@@ -37,6 +37,40 @@ export class MobileAuthService {
     return this.createTokenResponse(admin, session.id, refreshToken.rawToken, refreshToken.expiresAt)
   }
 
+  async listSessions(userId: string, currentSessionId: string) {
+    const sessions = await mobileAuthSessionRepository.listActiveForUser(userId)
+    return sessions
+      .filter(session => session.expiresAt > new Date())
+      .map(session => ({
+        id: session.id,
+        deviceId: session.deviceId,
+        deviceName: session.deviceName,
+        platform: session.platform,
+        appVersion: session.appVersion,
+        createdAt: session.createdAt.toISOString(),
+        lastUsedAt: session.lastUsedAt.toISOString(),
+        expiresAt: session.expiresAt.toISOString(),
+        current: session.id === currentSessionId,
+      }))
+  }
+
+  async logoutCurrent(userId: string, sessionId: string): Promise<void> {
+    await mobileAuthSessionRepository.revokeByIdForUser(sessionId, userId)
+  }
+
+  async logoutAll(userId: string): Promise<number> {
+    return mobileAuthSessionRepository.revokeAllForUser(userId)
+  }
+
+  async revokeSession(userId: string, sessionId: string, currentSessionId: string): Promise<void> {
+    if (sessionId === currentSessionId) {
+      throw createError({ statusCode: 409, message: 'Use logout to revoke the current session.' })
+    }
+    if (!await mobileAuthSessionRepository.revokeByIdForUser(sessionId, userId)) {
+      throw createError({ statusCode: 404, message: 'Mobile session not found.' })
+    }
+  }
+
   async refresh(input: unknown) {
     const data = mobileRefreshSchema.parse(input)
     const nextToken = createMobileRefreshToken()

@@ -341,8 +341,8 @@ replacedByTokenId
 - [x] Rotate refresh tokens atomically
 - [x] Detect refresh-token reuse
 - [x] Revoke the affected token family after reuse
-- [ ] Revoke current-device sessions on logout
-- [ ] Support logout from all devices
+- [x] Revoke current-device sessions on logout
+- [x] Support logout from all devices
 - [ ] Revoke other mobile sessions after password change/reset
 - [~] Add safe expired-session cleanup — repository cleanup operation exists; scheduled/manual invocation remains
 - [x] Decide the maximum number of active devices — configurable, default 5
@@ -354,11 +354,11 @@ replacedByTokenId
 ```text
 POST   /api/v1/admin/auth/login    [x]
 POST   /api/v1/admin/auth/refresh  [x]
-POST   /api/v1/admin/auth/logout
-POST   /api/v1/admin/auth/logout-all
-GET    /api/v1/admin/auth/me       [x]
-GET    /api/v1/admin/auth/sessions
-DELETE /api/v1/admin/auth/sessions/:id
+POST   /api/v1/admin/auth/logout          [x]
+POST   /api/v1/admin/auth/logout-all      [x]
+GET    /api/v1/admin/auth/me              [x]
+GET    /api/v1/admin/auth/sessions        [x]
+DELETE /api/v1/admin/auth/sessions/:id    [x]
 ```
 
 ## Authorization integration
@@ -390,7 +390,7 @@ DELETE /api/v1/admin/auth/sessions/:id
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Added the `mobile_admin_sessions` Drizzle schema and migration `0012`. It stores only refresh-token hashes and supports token families, per-device sessions, rotation links, revocation, expiration, and indexed cleanup. Added server-only mobile authentication policy, short-lived HS256 access tokens with strict claim verification, opaque refresh-token generation, SHA-256 refresh-token hashing, and a default five-device limit. Refresh tokens now have an atomic, single-use repository rotation operation; concurrent reuse revokes the entire token family. Versioned Flutter login and refresh endpoints reuse timing-safe admin authentication, validate device metadata, re-check account authorization during refresh, and are strictly rate-limited. A dedicated bearer guard verifies strict access-token claims, active database sessions, current admin role, email verification, profile completion, and password-change freshness. The `/auth/me` endpoint exposes the first protected mobile contract without affecting cookie sessions. A safe expired-session deletion operation is available for a future cleanup trigger. Existing Nuxt cookie authentication is unchanged.
+Notes: Added the `mobile_admin_sessions` Drizzle schema and migration `0012`. It stores only refresh-token hashes and supports token families, per-device sessions, rotation links, revocation, expiration, and indexed cleanup. Added server-only mobile authentication policy, short-lived HS256 access tokens with strict claim verification, opaque refresh-token generation, SHA-256 refresh-token hashing, and a default five-device limit. Refresh tokens now have an atomic, single-use repository rotation operation; concurrent reuse revokes the entire token family. Versioned Flutter login and refresh endpoints reuse timing-safe admin authentication, validate device metadata, re-check account authorization during refresh, and are strictly rate-limited. A dedicated bearer guard verifies strict access-token claims, active database sessions, current admin role, email verification, profile completion, and password-change freshness. The `/auth/me` endpoint exposes a protected mobile contract without affecting cookie sessions. Flutter admins can list safe device metadata, revoke another owned device session, log out the current device, or log out every device. Ownership checks prevent cross-account session revocation, and token hashes are never serialized. A safe expired-session deletion operation is available for a future cleanup trigger. Existing Nuxt cookie authentication is unchanged.
 
 ---
 
