@@ -4,6 +4,8 @@ import { articles, categories } from '~~/server/db/schema'
 import { categoryIdSchema } from '~~/server/validators/category.validator'
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const result = categoryIdSchema.safeParse(getRouterParam(event, 'id'))
   if (!result.success) {
     throw createError({ statusCode: 400, message: 'Invalid category ID' })
