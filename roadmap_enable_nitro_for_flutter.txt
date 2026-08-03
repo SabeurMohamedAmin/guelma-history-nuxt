@@ -418,14 +418,14 @@ GET /api/v1/admin/dashboard
 - [x] Search and safe sorting
 - [x] Published/unpublished filter using the current model
 - [x] Get article by a stable identifier
-- [ ] Create article
-- [ ] Update article
-- [ ] Delete article
-- [ ] Update home position where authorized
-- [ ] Validate Arabic and French titles, excerpts, and bodies
-- [ ] Validate category and author/byline
-- [ ] Preserve the difference between owner and display author
-- [ ] Serialize cover and media variants consistently
+- [x] Create article
+- [x] Update article
+- [x] Delete article
+- [~] Update home position where authorized — requires an explicit domain rule before exposure
+- [x] Validate Arabic and French titles, excerpts, and bodies
+- [x] Validate category and author/byline
+- [x] Preserve the difference between owner and display author
+- [x] Serialize cover and media variants consistently
 
 ## Categories
 
@@ -469,7 +469,7 @@ GET /api/v1/admin/dashboard
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Started Milestone 5 with bearer-protected dashboard and article reads. The dashboard aggregates existing domain services and returns only real metrics. Flutter article listing reuses bilingual search, status filtering, allowlisted sorting, and the 100-row limit; detail lookup uses a stable UUID. A dedicated serializer emits ISO timestamps and the common pagination contract. OpenAPI documents all implemented routes.
+Notes: Started Milestone 5 with bearer-protected dashboard and article reads. The dashboard aggregates existing domain services and returns only real metrics. Flutter article listing reuses bilingual search, status filtering, allowlisted sorting, and the 100-row limit; detail lookup uses a stable UUID. Create, update, and delete routes delegate to the shared article service, preserving bilingual validation, relation checks, owner-versus-byline semantics, publishing behavior, and Cloudinary cleanup. A dedicated serializer emits ISO timestamps, media variants, and the common pagination contract. `homePosition` remains blocked until its domain authorization rule is defined. OpenAPI documents implemented read routes; write-route schema expansion remains.
 
 ---
 
