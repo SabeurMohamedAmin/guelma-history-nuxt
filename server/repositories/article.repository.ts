@@ -128,14 +128,24 @@ export class ArticleRepository {
     })
   }
 
-  async update(id: string, input: UpdateArticleDto, readingTime?: number): Promise<void> {
+  async update(id: string, input: UpdateArticleDto, readingTime?: number, expectedRevision?: number): Promise<boolean> {
     const { tagIds, media, ...fields } = input
 
     await db.transaction(async (tx) => {
-      await tx
+      const rows = await tx
         .update(articles)
-        .set({ ...fields, ...(readingTime !== undefined ? { readingTime } : {}), updatedAt: new Date() })
-        .where(eq(articles.id, id))
+        .set({
+          ...fields,
+          ...(readingTime !== undefined ? { readingTime } : {}),
+          ...(expectedRevision !== undefined ? { revision: expectedRevision + 1 } : {}),
+          updatedAt: new Date(),
+        })
+        .where(expectedRevision === undefined
+          ? eq(articles.id, id)
+          : and(eq(articles.id, id), eq(articles.revision, expectedRevision)))
+        .returning({ id: articles.id })
+
+      if (rows.length === 0) return false
 
       if (tagIds !== undefined) {
         await tx.delete(articleTags).where(eq(articleTags.articleId, id))
@@ -151,6 +161,8 @@ export class ArticleRepository {
           await tx.insert(articleMedia).values(this.toMediaRows(id, media))
         }
       }
+
+      return true
     })
   }
 
