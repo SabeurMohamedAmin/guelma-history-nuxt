@@ -1,15 +1,7 @@
-import { asc } from 'drizzle-orm'
-import { db } from '~~/server/db'
-import { categories } from '~~/server/db/schema'
+import { categoryService } from '~~/server/services/category.service'
 
-/**
- * GET /api/admin/categories
- * Returns full categories list for admin CRUD table/forms.
- */
+/** GET /api/admin/categories */
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
-
-  return db.query.categories.findMany({
-    orderBy: [asc(categories.nameFr), asc(categories.nameAr)],
-  })
+  return categoryService.findAll()
 })

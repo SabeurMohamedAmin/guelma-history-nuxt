@@ -1,14 +1,7 @@
-import { count } from 'drizzle-orm'
-import { db } from '~~/server/db'
-import { categories } from '~~/server/db/schema'
+import { categoryService } from '~~/server/services/category.service'
 
-/**
- * GET /api/admin/categories/count
- * Total category count for the dashboard.
- */
+/** GET /api/admin/categories/count */
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
-
-  const [row] = await db.select({ count: count() }).from(categories)
-  return { total: row?.count ?? 0 }
+  return { total: await categoryService.count() }
 })
