@@ -174,13 +174,13 @@ const readMoreIcon = computed(() =>
         rounded="lg"
         class="pa-2 pa-lg-4 text-center newsletter-card"
       >
-        <v-icon
-          icon="mdi-email-outline"
-          size="40"
-          color="primary"
-          class="mb-3"
-        />
-        <h2 class="text-headline-small font-weight-bold mb-2">
+        <h2 class="text-title-medium text-lg-headline-small font-weight-bold mb-2">
+          <v-icon
+            icon="mdi-email-outline me-2"
+            size="default"
+            color="primary"
+            class="mb-3"
+          />
           {{ t('newsletter.title') }}
         </h2>
         <p class="text-body-2 text-medium-emphasis mb-5 mx-auto">
