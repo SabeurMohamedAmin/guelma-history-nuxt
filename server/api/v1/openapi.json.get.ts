@@ -40,6 +40,17 @@ export default defineVersionedApiHandler(() => ({
         responses: { 200: { description: 'OpenAPI 3.1 document' } },
       },
     },
+    '/admin/dashboard': {
+      get: {
+        operationId: 'getMobileAdminDashboard',
+        summary: 'Get real admin counts and recent articles',
+        security: [{ mobileBearer: [] }],
+        responses: {
+          200: { description: 'Dashboard data' },
+          401: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
     '/admin/auth/login': {
       post: {
         operationId: 'mobileAdminLogin',

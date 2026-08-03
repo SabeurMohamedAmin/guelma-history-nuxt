@@ -21,6 +21,10 @@ type ReportedComment = {
 }
 
 export class CommentReportService {
+  async countOpen(): Promise<number> {
+    return (await this.findOpen()).length
+  }
+
   async findOpen(): Promise<FlaggedCommentResponse[]> {
     const flags = await commentReportRepository.findOpen()
     const grouped = new Map<string, FlaggedCommentResponse>()
