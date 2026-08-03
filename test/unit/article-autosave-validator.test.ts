@@ -44,6 +44,13 @@ describe('article autosave validation', () => {
     })).toThrow()
   })
 
+  it('rejects oversized draft content', () => {
+    expect(() => autosaveArticleSchema.parse({
+      expectedRevision: 1,
+      bodyFr: 'a'.repeat(1_000_001),
+    })).toThrow()
+  })
+
   it('preserves Arabic and French content', () => {
     const result = autosaveArticleSchema.parse({
       expectedRevision: 7,
