@@ -300,6 +300,7 @@ export class ArticleRepository {
       homePosition: row.homePosition ?? null,
       publishedAt: row.publishedAt ?? null,
       readingTime: row.readingTime ?? 0,
+      revision: row.revision,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       category: row.category
