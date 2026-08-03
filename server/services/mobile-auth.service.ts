@@ -9,7 +9,6 @@ import { mobileAuthSessionRepository } from '~~/server/repositories/mobile-auth-
 import {
   mobileLoginSchema,
   mobileRefreshSchema,
-  type MobileLoginInput,
 } from '~~/server/validators/mobile-auth.validator'
 
 function unauthorized(message = 'Invalid credentials.') {
