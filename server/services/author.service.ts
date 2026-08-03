@@ -24,6 +24,12 @@ export class AuthorService {
     return author
   }
 
+  async findById(id: string) {
+    const author = (await authorRepository.findAllWithCounts()).find(item => item.id === id)
+    if (!author) throw createError({ statusCode: 404, message: 'Author not found' })
+    return author
+  }
+
   async updateById(id: string, input: unknown) {
     const data = updateAdminAuthorSchema.parse(input)
     const updated = await authorRepository.update(id, data)

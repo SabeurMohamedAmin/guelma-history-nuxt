@@ -437,11 +437,11 @@ GET /api/v1/admin/dashboard
 
 ## Authors
 
-- [ ] Paginated/searchable list
-- [ ] Lightweight selector list
-- [ ] Create author
-- [ ] Update author
-- [ ] Delete safely
+- [x] Paginated/searchable list
+- [x] Lightweight selector list
+- [x] Create author
+- [x] Update author
+- [x] Delete safely
 
 ## Reported comments
 
@@ -469,7 +469,7 @@ GET /api/v1/admin/dashboard
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Started Milestone 5 with bearer-protected dashboard and article reads. The dashboard aggregates existing domain services and returns only real metrics. Flutter article listing reuses bilingual search, status filtering, allowlisted sorting, and the 100-row limit; detail lookup uses a stable UUID. Create, update, and delete routes delegate to the shared article service, preserving bilingual validation, relation checks, owner-versus-byline semantics, publishing behavior, and Cloudinary cleanup. A dedicated serializer emits ISO timestamps, media variants, and the common pagination contract. `homePosition` remains blocked until its domain authorization rule is defined. Category CRUD now reuses the shared hierarchy-cycle and reference-safe deletion rules, supports simple bilingual search, and serializes timestamps consistently. OpenAPI documents implemented read routes; write-route schema expansion remains.
+Notes: Started Milestone 5 with bearer-protected dashboard and article reads. The dashboard aggregates existing domain services and returns only real metrics. Flutter article listing reuses bilingual search, status filtering, allowlisted sorting, and the 100-row limit; detail lookup uses a stable UUID. Create, update, and delete routes delegate to the shared article service, preserving bilingual validation, relation checks, owner-versus-byline semantics, publishing behavior, and Cloudinary cleanup. A dedicated serializer emits ISO timestamps, media variants, and the common pagination contract. `homePosition` remains blocked until its domain authorization rule is defined. Category CRUD now reuses the shared hierarchy-cycle and reference-safe deletion rules, supports simple bilingual search, and serializes timestamps consistently. Author management provides a paginated bilingual search view, lightweight selector list, validated create/update operations, and deletion protection while articles still reference the byline. OpenAPI documents implemented read routes; write-route schema expansion remains.
 
 ---
 
