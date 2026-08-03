@@ -231,6 +231,13 @@ export default defineNuxtConfig({
         },
       },
     },
+    // Autosave is intentionally more permissive than authentication while
+    // still bounded to prevent a broken or hostile client from flooding writes.
+    '/api/v1/admin/articles/*/autosave': {
+      security: {
+        rateLimiter: { tokensPerInterval: 120, interval: 300000 },
+      },
+    },
     '/api/v1/admin/articles/media/upload': {
       security: {
         rateLimiter: { tokensPerInterval: 10, interval: 300000 },
