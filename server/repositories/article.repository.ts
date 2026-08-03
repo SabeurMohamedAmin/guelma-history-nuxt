@@ -1,10 +1,12 @@
 import { and, asc, count, desc, eq, ilike, inArray, isNotNull, isNull, or, type SQL } from 'drizzle-orm'
 import { db } from '~~/server/db'
-import { articleMedia, articles, authors, categories, tags, users } from '~~/server/db/schema'
+import { articleMedia, articles, articleTags, authors, categories, tags, users } from '~~/server/db/schema'
 import type {
   ArticleMediaResponse,
   ArticleResponse,
   ArticlesQueryParams,
+  CreateArticleDto,
+  UpdateArticleDto,
   PaginatedResponse,
   RecentArticleResponse,
 } from '~~/server/types/article.types'
@@ -97,6 +99,61 @@ export class ArticleRepository {
     return row?.id ?? null
   }
 
+  async create(
+    input: CreateArticleDto,
+    ownerId: string,
+    slug: string,
+    readingTime: number,
+  ): Promise<string> {
+    const { tagIds, media, slug: _slug, readingTime: _readingTime, ...fields } = input
+
+    return db.transaction(async (tx) => {
+      const [article] = await tx
+        .insert(articles)
+        .values({ ...fields, slug, readingTime, createdByUserId: ownerId })
+        .returning({ id: articles.id })
+
+      if (!article) throw new Error('Article insert did not return an id.')
+
+      if (tagIds?.length) {
+        await tx.insert(articleTags)
+          .values(tagIds.map(tagId => ({ articleId: article.id, tagId })))
+      }
+
+      if (media?.length) {
+        await tx.insert(articleMedia).values(this.toMediaRows(article.id, media))
+      }
+
+      return article.id
+    })
+  }
+
+  async update(id: string, input: UpdateArticleDto, readingTime?: number): Promise<void> {
+    const { tagIds, media, ...fields } = input
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(articles)
+        .set({ ...fields, ...(readingTime !== undefined ? { readingTime } : {}), updatedAt: new Date() })
+        .where(eq(articles.id, id))
+
+      if (tagIds !== undefined) {
+        await tx.delete(articleTags).where(eq(articleTags.articleId, id))
+        if (tagIds.length > 0) {
+          await tx.insert(articleTags)
+            .values(tagIds.map(tagId => ({ articleId: id, tagId })))
+        }
+      }
+
+      if (media !== undefined) {
+        await tx.delete(articleMedia).where(eq(articleMedia.articleId, id))
+        if (media.length > 0) {
+          await tx.insert(articleMedia).values(this.toMediaRows(id, media))
+        }
+      }
+    })
+  }
+
   async deleteById(id: string): Promise<void> {
     await db.delete(articles).where(eq(articles.id, id))
   }
@@ -153,6 +210,21 @@ export class ArticleRepository {
       author: Boolean(input.authorId && !author),
       tagIds: uniqueTagIds.filter(id => !foundTagIds.has(id)),
     }
+  }
+
+  private toMediaRows(articleId: string, media: NonNullable<CreateArticleDto['media']>) {
+    return media.map((item, index) => ({
+      articleId,
+      type: item.type,
+      url: item.url.trim(),
+      publicId: item.publicId?.trim() || null,
+      resourceType: item.resourceType ?? null,
+      posterUrl: item.posterUrl?.trim() || null,
+      imageVariants: item.imageVariants ?? null,
+      captionAr: item.captionAr?.trim() || null,
+      captionFr: item.captionFr?.trim() || null,
+      position: item.position ?? index,
+    }))
   }
 
   private buildWhereClause(params: ArticlesQueryParams, ownerId?: string): SQL | undefined {
