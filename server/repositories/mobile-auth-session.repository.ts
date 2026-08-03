@@ -181,8 +181,11 @@ export class MobileAuthSessionRepository {
   }
 
   async deleteExpired(before = new Date()): Promise<number> {
+    // Retain recently expired rows briefly so reuse investigations still have
+    // context, while ensuring the table cannot grow forever.
+    const retentionCutoff = new Date(before.getTime() - 7 * 24 * 60 * 60 * 1000)
     const deleted = await db.delete(mobileAdminSessions)
-      .where(lt(mobileAdminSessions.expiresAt, before))
+      .where(lt(mobileAdminSessions.expiresAt, retentionCutoff))
       .returning({ id: mobileAdminSessions.id })
     return deleted.length
   }

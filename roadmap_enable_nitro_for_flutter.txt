@@ -344,7 +344,7 @@ replacedByTokenId
 - [x] Revoke current-device sessions on logout
 - [x] Support logout from all devices
 - [x] Revoke mobile sessions after password change/reset
-- [~] Add safe expired-session cleanup — repository cleanup operation exists; scheduled/manual invocation remains
+- [x] Add safe expired-session cleanup — login opportunistically removes sessions expired for more than seven days without requiring a pipeline
 - [x] Decide and enforce the maximum number of active devices — configurable, default 5; oldest device is revoked when necessary
 - [x] Keep signing keys in server-only runtime configuration
 - [x] Never put authentication secrets in `runtimeConfig.public`
@@ -374,10 +374,10 @@ DELETE /api/v1/admin/auth/sessions/:id    [x]
 
 ## Tests
 
-- [ ] Valid login
-- [ ] Invalid credentials
-- [ ] Unverified email
-- [ ] Wrong role
+- [~] Valid login — implementation and input-validation coverage complete; database endpoint coverage remains
+- [~] Invalid credentials — timing-safe implementation complete; endpoint coverage remains
+- [~] Unverified email — rejected by shared authentication; endpoint coverage remains
+- [~] Wrong role — exact admin role required; endpoint coverage remains
 - [~] Expired access token — strict expiry verification and unit coverage implemented; endpoint coverage remains
 - [ ] Successful refresh rotation
 - [ ] Concurrent refresh requests
@@ -390,7 +390,7 @@ DELETE /api/v1/admin/auth/sessions/:id    [x]
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Added the `mobile_admin_sessions` Drizzle schema and migration `0012`. It stores only refresh-token hashes and supports token families, per-device sessions, rotation links, revocation, expiration, and indexed cleanup. Added server-only mobile authentication policy, short-lived HS256 access tokens with strict claim verification, opaque refresh-token generation, SHA-256 refresh-token hashing, and a default five-device limit. Refresh tokens now have an atomic, single-use repository rotation operation; concurrent reuse revokes the entire token family. Versioned Flutter login and refresh endpoints reuse timing-safe admin authentication, validate device metadata, re-check account authorization during refresh, and are strictly rate-limited. A dedicated bearer guard verifies strict access-token claims, active database sessions, current admin role, email verification, profile completion, and password-change freshness. The `/auth/me` endpoint exposes a protected mobile contract without affecting cookie sessions. Flutter admins can list safe device metadata, revoke another owned device session, log out the current device, or log out every device. Ownership checks prevent cross-account session revocation, and token hashes are never serialized. The configured active-device limit is enforced transactionally during login; a new login replaces the same device and revokes the oldest device when the limit is reached. Core token tests cover valid signatures, expiry, wrong keys, malformed/refresh-token rejection, and deterministic refresh-token hashing. OpenAPI now documents login, refresh, bearer security, profile, device-session management, and logout contracts. Admin password changes revoke every mobile session. Password-reset token claiming, password replacement, `passwordChangedAt`, and mobile-session revocation now commit atomically, preventing token replay races and stale mobile access. A safe expired-session deletion operation is available for a future cleanup trigger. Existing Nuxt cookie authentication is unchanged.
+Notes: Added the `mobile_admin_sessions` Drizzle schema and migration `0012`. It stores only refresh-token hashes and supports token families, per-device sessions, rotation links, revocation, expiration, and indexed cleanup. Added server-only mobile authentication policy, short-lived HS256 access tokens with strict claim verification, opaque refresh-token generation, SHA-256 refresh-token hashing, and a default five-device limit. Refresh tokens now have an atomic, single-use repository rotation operation; concurrent reuse revokes the entire token family. Versioned Flutter login and refresh endpoints reuse timing-safe admin authentication, validate device metadata, re-check account authorization during refresh, and are strictly rate-limited. A dedicated bearer guard verifies strict access-token claims, active database sessions, current admin role, email verification, profile completion, and password-change freshness. The `/auth/me` endpoint exposes a protected mobile contract without affecting cookie sessions. Flutter admins can list safe device metadata, revoke another owned device session, log out the current device, or log out every device. Ownership checks prevent cross-account session revocation, and token hashes are never serialized. The configured active-device limit is enforced transactionally during login; a new login replaces the same device and revokes the oldest device when the limit is reached. Core token tests cover valid signatures, expiry, wrong keys, malformed/refresh-token rejection, and deterministic refresh-token hashing. OpenAPI now documents login, refresh, bearer security, profile, device-session management, and logout contracts. Mobile login additionally rejects incomplete profiles and opportunistically deletes sessions expired for more than seven days, avoiding pipelines and public cleanup endpoints. Validator tests cover supported device metadata, strict unknown-field rejection, platform allowlisting, and refresh-token bounds. Admin password changes revoke every mobile session. Password-reset token claiming, password replacement, `passwordChangedAt`, and mobile-session revocation now commit atomically, preventing token replay races and stale mobile access. A safe expired-session deletion operation is available for a future cleanup trigger. Existing Nuxt cookie authentication is unchanged.
 
 ---
 
