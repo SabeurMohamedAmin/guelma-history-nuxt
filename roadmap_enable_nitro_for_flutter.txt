@@ -277,7 +277,7 @@ Nitro handler
 - [x] Centralize API error conversion for versioned routes
 - [~] Centralize pagination parsing — pure normalization exists; query-schema integration remains
 - [~] Centralize authentication and role guards — existing admin handlers now explicitly use `requireAdmin()`; shared web/mobile transport work remains
-- [ ] Reuse article services
+- [~] Reuse article services — `ArticleRepository` now owns read queries and row mapping; write persistence extraction remains
 - [ ] Reuse category services
 - [ ] Reuse author services
 - [ ] Reuse reported-comment services
@@ -287,8 +287,8 @@ Nitro handler
 - [ ] Add tests for important service rules
 
 Completed:
-Commit/MR:
-Notes:
+Commit/MR: tracked in the `dev` branch and !1
+Notes: Introduced the repository pattern with `ArticleRepository`. Article list/detail/count/recent Drizzle queries and persistence mapping now sit below `ArticleService`; business rules, write transactions, newsletter behavior, and Cloudinary cleanup remain in the service. Article search now covers both Arabic and French titles.
 
 ---
 
