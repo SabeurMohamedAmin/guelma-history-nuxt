@@ -18,6 +18,7 @@ export { contactMessages } from './contact-messages'
 export { users } from './users'
 export { userOauthAccounts } from './user-oauth-accounts'
 export { passwordResetTokens } from './password-reset-tokens'
+export { mobileAdminSessions } from './mobile-admin-sessions'
 
 // Relations power the db.query relational API (with: { category, author, ... })
 export * from './relations'
