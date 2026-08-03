@@ -48,20 +48,125 @@ The existing application already provides:
 
 ## Tasks
 
-- [ ] Inventory every `/api/admin/**` endpoint
-- [ ] Inventory administrator routes under `/api/auth/**`
-- [ ] Record request, response, query, error, and permission contracts
-- [ ] Identify handlers containing business logic that belongs in services
-- [ ] Document current pagination, search, filtering, and sorting
-- [ ] Document article media formats and upload limits
-- [ ] Document the article body format rendered by Nuxt
-- [ ] Confirm required Arabic and French fields
-- [ ] Confirm current publishing behavior based on `publishedAt`
-- [ ] Identify browser-only assumptions such as cookie authentication
+- [x] Inventory every `/api/admin/**` endpoint
+- [x] Inventory administrator routes under `/api/auth/**`
+- [x] Record request, response, query, error, and permission contracts
+- [x] Identify handlers containing business logic that belongs in services
+- [x] Document current pagination, search, filtering, and sorting
+- [x] Document article media formats and upload limits
+- [x] Document the article body format rendered by Nuxt
+- [x] Confirm required Arabic and French fields
+- [x] Confirm current publishing behavior based on `publishedAt`
+- [x] Identify browser-only assumptions such as cookie authentication
 
-Completed:
-Commit/MR:
-Notes:
+## Verified audit findings
+
+### Existing admin route groups
+
+```text
+/api/admin/articles
+/api/admin/articles/:slug
+/api/admin/articles/media/upload
+/api/admin/authors
+/api/admin/categories
+/api/admin/comments/flags
+/api/admin/profile
+/api/admin/subscribers
+/api/admin/upload
+```
+
+The administrator web login currently uses:
+
+```text
+POST /api/auth/login
+POST /api/auth/logout
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
+```
+
+Authentication is browser-oriented. Login creates a sealed `nuxt-auth-utils` cookie session with `setUserSession()`, protected routes read it with `getUserSession()`, and logout clears it with `clearUserSession()`.
+
+### Authorization findings
+
+Article write/list handlers and profile/report handlers inspected during the audit use `requireAdmin()`.
+
+The following existing read handlers do not currently call `requireAdmin()` and must be corrected before exposing mobile contracts:
+
+```text
+GET /api/admin/categories
+GET /api/admin/authors
+GET /api/admin/subscribers
+```
+
+All other handlers in these route groups must also be checked individually while Milestone 3 services are extracted. A route being under `/api/admin` does not protect it automatically.
+
+### Business-logic findings
+
+Articles already have a dedicated `ArticleService` covering validation, relation checks, transactions, serialization, publishing side effects, media replacement, and Cloudinary cleanup.
+
+Categories, authors, subscribers, profile operations, and reported-comment operations do not yet follow one consistent service structure. Several handlers or utilities access Drizzle directly. These domains require service extraction before versioned routes are added.
+
+Current error responses are inconsistent:
+
+- Article routes commonly pass errors through `toH3Error()`.
+- Validation errors become one joined message without structured field errors.
+- Some comment routes wrap results as `{ success, data }`.
+- Other routes return arrays or domain objects directly.
+- Unexpected production errors may currently expose `Error.message`.
+
+### Pagination, filtering, and sorting
+
+Article listing supports:
+
+```text
+page, limit, search, categoryId, category, authorId, tagId,
+featured, status, sortBy, sortOrder
+```
+
+Article `limit` is capped at 100. Article status is inferred from `publishedAt`: non-null is `published`, null is `draft`.
+
+The article response currently uses a `pagination` object with `currentPage`, `perPage`, `total`, `lastPage`, `hasNextPage`, and `hasPrevPage`. Other inspected admin lists return unpaginated arrays. The versioned API therefore needs a common pagination contract.
+
+Article search currently applies only to `titleAr`, despite the bilingual model. This must be reviewed for Arabic/French mobile search.
+
+### Article content and publishing
+
+Creation currently requires both:
+
+```text
+titleAr, titleFr, bodyAr, bodyFr
+```
+
+Arabic and French excerpts are optional. Article gallery captions are also bilingual. Bodies are stored as strings, so Flutter must preserve the exact content format accepted and rendered by the Nuxt application.
+
+There is no dedicated editorial status column. `publishedAt` is authoritative:
+
+```text
+publishedAt != null → published
+publishedAt == null → draft
+```
+
+The first transition from null to a date triggers newsletter alerts. Mobile autosave must not set `publishedAt` accidentally.
+
+### Media upload
+
+`POST /api/admin/articles/media/upload`:
+
+- Requires `admin`
+- Accepts multipart field `file`
+- Accepts declared `image/*` and `video/*`
+- Has an endpoint limit of 100 MiB
+- Has a Nuxt route-rule request limit of approximately 110 MB
+- Uploads through server-only Cloudinary credentials
+- Preserves an original image
+- Generates WebP thumbnail, slider, and main variants with Sharp
+- Returns image/video metadata including Cloudinary `publicId`
+
+The current check trusts the multipart MIME declaration and does not implement idempotency. Those issues remain for Milestone 6.
+
+Completed: 2026-08-03
+Commit/MR: tracked in the `dev` branch and !1
+Notes: Milestone 1 audit completed from the current repository. Runtime security fixes and service refactoring remain separate implementation work.
 
 ---
 
