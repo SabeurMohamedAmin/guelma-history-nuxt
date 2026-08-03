@@ -12,7 +12,7 @@ const revisionAwareUpdateSchema = updateArticleSchema.extend({
  * Partial update — only provided fields are changed.
  */
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  const admin = await requireAdmin(event)
   try {
     const slug = getRouterParam(event, 'slug')
 
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const { expectedRevision, ...body } = revisionAwareUpdateSchema.parse(await readBody(event))
-    return await articleService.updateWithRevision(id, body, expectedRevision)
+    return await articleService.updateWithRevision(id, body, expectedRevision, admin.id)
   }
   catch (error) {
     toH3Error(error)
