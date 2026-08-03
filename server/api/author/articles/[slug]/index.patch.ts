@@ -1,11 +1,6 @@
-import { z } from 'zod'
 import { articleService } from '~~/server/services/article.service'
 import { toH3Error } from '~~/server/utils/handleError'
-import { updateArticleSchema } from '~~/server/validators/article.validator'
-
-const revisionAwareUpdateSchema = updateArticleSchema.extend({
-  expectedRevision: z.number().int().positive(),
-})
+import { revisionAwareUpdateArticleSchema } from '~~/server/validators/article.validator'
 
 /**
  * PATCH /api/author/articles/:slug
@@ -29,7 +24,7 @@ export default defineEventHandler(async (event) => {
 
     const actor = await requireArticleOwner(event, id)
 
-    const { expectedRevision, ...body } = revisionAwareUpdateSchema.parse(await readBody(event))
+    const { expectedRevision, ...body } = revisionAwareUpdateArticleSchema.parse(await readBody(event))
     return await articleService.updateWithRevision(id, body, expectedRevision, actor.id)
   }
   catch (error) {

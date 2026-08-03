@@ -65,9 +65,12 @@ export const createArticleSchema = z.object({
 })
 
 export const updateArticleSchema = createArticleSchema.partial()
-export const versionedUpdateArticleSchema = updateArticleSchema.extend({
+export const revisionAwareUpdateArticleSchema = updateArticleSchema.extend({
   expectedRevision: z.number().int().positive(),
 })
+
+// Backward-compatible name used by the versioned Flutter route.
+export const versionedUpdateArticleSchema = revisionAwareUpdateArticleSchema
 
 /**
  * Autosave only accepts editable draft content. Publishing, ownership,
