@@ -184,6 +184,15 @@ export default defineNuxtConfig({
         },
       },
     },
+    // Flutter credentials and refresh tokens receive the same strict limit.
+    '/api/v1/admin/auth/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 10,
+          interval: 300000,
+        },
+      },
+    },
 
     // The admin avatar endpoint sets its own long-lived Cache-Control header,
     // so it needs no route rule here.
