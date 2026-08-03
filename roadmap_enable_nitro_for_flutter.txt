@@ -337,14 +337,14 @@ replacedByTokenId
 - [x] Add indexes for token lookup, user sessions, device, family, and expiration
 - [x] Store only cryptographic token hashes
 - [x] Define access-token issuer, audience, expiry, and token type
-- [~] Define refresh-token expiry and rotation — 30-day configurable expiry and opaque token generation exist; database rotation remains
-- [ ] Rotate refresh tokens atomically
-- [ ] Detect refresh-token reuse
-- [ ] Revoke the affected token family after reuse
+- [x] Define refresh-token expiry and rotation — configurable 30-day expiry, opaque tokens, and database rotation are implemented
+- [x] Rotate refresh tokens atomically
+- [x] Detect refresh-token reuse
+- [x] Revoke the affected token family after reuse
 - [ ] Revoke current-device sessions on logout
 - [ ] Support logout from all devices
 - [ ] Revoke other mobile sessions after password change/reset
-- [ ] Add safe expired-session cleanup
+- [~] Add safe expired-session cleanup — repository cleanup operation exists; scheduled/manual invocation remains
 - [x] Decide the maximum number of active devices — configurable, default 5
 - [x] Keep signing keys in server-only runtime configuration
 - [x] Never put authentication secrets in `runtimeConfig.public`
@@ -390,7 +390,7 @@ DELETE /api/v1/admin/auth/sessions/:id
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Added the `mobile_admin_sessions` Drizzle schema and migration `0012`. It stores only refresh-token hashes and supports token families, per-device sessions, rotation links, revocation, expiration, and indexed cleanup. Added server-only mobile authentication policy, short-lived HS256 access tokens with strict claim verification, opaque refresh-token generation, SHA-256 refresh-token hashing, and a default five-device limit. Existing Nuxt cookie authentication is unchanged.
+Notes: Added the `mobile_admin_sessions` Drizzle schema and migration `0012`. It stores only refresh-token hashes and supports token families, per-device sessions, rotation links, revocation, expiration, and indexed cleanup. Added server-only mobile authentication policy, short-lived HS256 access tokens with strict claim verification, opaque refresh-token generation, SHA-256 refresh-token hashing, and a default five-device limit. Refresh tokens now have an atomic, single-use repository rotation operation; concurrent reuse revokes the entire token family. A safe expired-session deletion operation is available for a future cleanup trigger. Existing Nuxt cookie authentication is unchanged.
 
 ---
 
