@@ -486,8 +486,8 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 - [x] Verify supported file content signatures and reject declared MIME mismatches
 - [x] Return stable Cloudinary public IDs as media IDs and references
 - [x] Support upload-progress-friendly single multipart requests
-- [ ] Add idempotency keys for safe retries
-- [ ] Prevent duplicate media records
+- [x] Add persisted, per-admin idempotency keys for safe retries
+- [x] Prevent duplicate uploads for completed and concurrent retries
 - [x] Handle failed image variant/original Cloudinary operations
 - [x] Clean up partially uploaded image assets safely
 - [x] Ignore client filenames for storage IDs and generate server IDs
@@ -510,7 +510,7 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Started upload hardening by replacing prefix-only multipart trust with byte-signature detection and exact MIME matching for an explicit image/video allowlist. Unsupported content returns 415 and oversized files return 413. Unit coverage includes supported signatures and mismatch rejection. The bearer-protected Flutter upload route supports one multipart request for progress reporting, returns stable Cloudinary IDs, preserves originals, generates trusted WebP variants, ignores client filenames for storage IDs, and cleans up image assets created before a later upload failure. Upload-specific request and rate limits are configured. Idempotency and referenced-media deletion protection remain.
+Notes: Started upload hardening by replacing prefix-only multipart trust with byte-signature detection and exact MIME matching for an explicit image/video allowlist. Unsupported content returns 415 and oversized files return 413. Unit coverage includes supported signatures and mismatch rejection. The bearer-protected Flutter upload route supports one multipart request for progress reporting, returns stable Cloudinary IDs, preserves originals, generates trusted WebP variants, ignores client filenames for storage IDs, and cleans up image assets created before a later upload failure. Upload-specific request and rate limits are configured. Upload idempotency is persisted for 24 hours per administrator. Retries with the same file return the stored response, concurrent retries return 409, and key reuse for different bytes is rejected. Failed uploads release the claim after Cloudinary cleanup. Referenced-media deletion protection remains.
 
 ---
 
