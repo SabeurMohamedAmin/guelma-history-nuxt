@@ -28,6 +28,11 @@ export const newsletterUnsubscribeSchema = z.object({
   token: newsletterTokenSchema,
 })
 
+export const adminSubscriberStatusSchema = z.object({
+  status: z.enum(['active', 'unsubscribed']),
+})
+
+export type AdminSubscriberStatusPayload = z.infer<typeof adminSubscriberStatusSchema>
 export type NewsletterSubscribePayload = z.infer<typeof newsletterSubscribeSchema>
 export type NewsletterConfirmPayload = z.infer<typeof newsletterConfirmSchema>
 export type NewsletterUnsubscribePayload = z.infer<typeof newsletterUnsubscribeSchema>

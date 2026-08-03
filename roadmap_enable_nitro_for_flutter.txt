@@ -281,14 +281,14 @@ Nitro handler
 - [x] Reuse category services — category handlers now delegate to `CategoryService` and `CategoryRepository`
 - [x] Reuse author services — ID/slug routes now share `AuthorService`, `AuthorRepository`, validation, slug generation, and safe deletion
 - [ ] Reuse reported-comment services
-- [ ] Reuse subscriber services
+- [x] Reuse subscriber services — list/count/export/status/delete handlers now use `SubscriberService` and `SubscriberRepository`
 - [ ] Reuse profile services
 - [ ] Keep validators independent from Vue components
 - [ ] Add tests for important service rules
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Completed article, category, and author service/repository boundaries. Author ID/slug compatibility routes now share validation, unique-slug generation, count queries, and safe-delete rules. Existing Nuxt response shapes are preserved.
+Notes: Completed article, category, author, and subscriber service/repository boundaries. Subscriber CSV formatting and cleanup orchestration remain in the service while token hashes stay excluded from repository response projections. Existing Nuxt response shapes are preserved.
 
 ---
 

@@ -1,14 +1,6 @@
-import { count } from 'drizzle-orm'
-import { db } from '~~/server/db'
-import { subscribers } from '~~/server/db/schema'
+import { subscriberService } from '~~/server/services/subscriber.service'
 
-/**
- * GET /api/admin/subscribers/count
- * Total subscriber count for the dashboard.
- */
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
-
-  const [row] = await db.select({ count: count() }).from(subscribers)
-  return { total: row?.count ?? 0 }
+  return { total: await subscriberService.count() }
 })
