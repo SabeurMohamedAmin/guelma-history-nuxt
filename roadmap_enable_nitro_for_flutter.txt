@@ -210,14 +210,14 @@ Existing Nuxt routes may remain during migration. Old and versioned handlers mus
 
 ## Tasks
 
-- [ ] Define a standard success response
-- [ ] Define list pagination metadata
-- [ ] Define stable machine-readable error codes
-- [ ] Define field-level validation errors
-- [ ] Use ISO 8601 UTC timestamps
-- [ ] Define nullable-field behavior
-- [ ] Define safe sort fields and maximum page sizes
-- [ ] Add typed request and response DTOs
+- [x] Define a standard success response
+- [x] Define list pagination metadata
+- [~] Define stable machine-readable error codes — typed contract exists; error mapper and code catalogue remain
+- [~] Define field-level validation errors — typed contract exists; Zod mapper remains
+- [x] Use ISO 8601 UTC timestamps
+- [x] Define nullable-field behavior
+- [~] Define safe sort fields and maximum page sizes — shared page-size cap is 100; domain sort allowlists remain
+- [~] Add typed request and response DTOs — common contracts exist; domain DTO work remains
 - [ ] Add response serializers instead of returning Drizzle rows directly
 - [ ] Create and maintain OpenAPI documentation
 - [ ] Define API compatibility and deprecation rules
@@ -250,8 +250,8 @@ Recommended error response:
 ```
 
 Completed:
-Commit/MR:
-Notes:
+Commit/MR: tracked in the `dev` branch and !1
+Notes: Added additive `ApiSuccess`, `ApiPaginatedSuccess`, pagination metadata, structured error types, pagination normalization, and response helpers. Existing Nuxt endpoint responses remain unchanged while versioned endpoints are introduced.
 
 ---
 
