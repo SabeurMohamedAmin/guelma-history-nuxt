@@ -5,6 +5,7 @@ import {
   createRequestId,
   describeApiError,
 } from '~~/server/utils/apiError'
+import { API_COMPATIBILITY_POLICY } from '~~/server/constants/api'
 
 export interface ApiRequestContext {
   requestId: string
@@ -21,8 +22,16 @@ export function defineVersionedApiHandler<T>(handler: VersionedApiHandler<T>) {
     const requestId = createRequestId(getHeader(event, 'x-request-id'))
 
     setHeader(event, 'x-request-id', requestId)
+    setHeader(event, 'x-api-version', API_COMPATIBILITY_POLICY.version)
     setHeader(event, 'cache-control', 'private, no-store')
     setHeader(event, 'content-type', 'application/json; charset=utf-8')
+
+    if (API_COMPATIBILITY_POLICY.deprecated) {
+      setHeader(event, 'deprecation', 'true')
+      if (API_COMPATIBILITY_POLICY.sunsetAt) {
+        setHeader(event, 'sunset', API_COMPATIBILITY_POLICY.sunsetAt)
+      }
+    }
 
     try {
       return await handler(event, { requestId })
