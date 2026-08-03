@@ -193,10 +193,10 @@ export class ArticleService {
     if (!existing) {
       throw createNotFoundError(id)
     }
-    // articleTags and articleMedia cascade-delete via FK constraints defined in
-    // the schema. Deleting the rows does not touch Cloudinary, so free the
-    // uploaded assets explicitly (best-effort) to avoid orphaned storage.
-    await db.delete(articles).where(eq(articles.id, id))
+    // Related tag/media rows cascade-delete through database constraints. The
+    // repository owns persistence; the service then handles external
+    // Cloudinary cleanup as a best-effort domain side effect.
+    await articleRepository.deleteById(id)
 
     await destroyManyFromCloudinary(this.toCloudinaryAssets(existing.media))
   }

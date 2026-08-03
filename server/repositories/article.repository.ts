@@ -97,6 +97,10 @@ export class ArticleRepository {
     return row?.id ?? null
   }
 
+  async deleteById(id: string): Promise<void> {
+    await db.delete(articles).where(eq(articles.id, id))
+  }
+
   async count(ownerId?: string): Promise<number> {
     const where = ownerId === undefined ? undefined : eq(articles.createdByUserId, ownerId)
     const [row] = await db.select({ count: count() }).from(articles).where(where)
