@@ -283,12 +283,12 @@ Nitro handler
 - [x] Reuse reported-comment services — admin report listing/grouping and resolution use `CommentReportService` and `CommentReportRepository`
 - [x] Reuse subscriber services — list/count/export/status/delete handlers now use `SubscriberService` and `SubscriberRepository`
 - [x] Reuse profile services — profile/password/email/avatar domain logic now uses `AdminProfileService` and `AdminProfileRepository`
-- [ ] Keep validators independent from Vue components
-- [ ] Add tests for important service rules
+- [x] Keep validators independent from Vue components
+- [~] Add tests for important service rules — common API helpers and centralized admin validators are covered; repository integration tests remain
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Completed service/repository boundaries for articles, categories, authors, subscribers, reported comments, and admin profiles. Cookie-session refresh and avatar HTTP caching remain in handlers as transport concerns. Existing Nuxt response shapes are preserved.
+Notes: Completed service/repository boundaries for articles, categories, authors, subscribers, reported comments, and admin profiles. Cookie-session refresh and avatar HTTP caching remain in handlers as transport concerns. Shared API helpers and centralized admin validators have unit coverage; database-backed repository integration tests remain. Existing Nuxt response shapes are preserved.
 
 ---
 
