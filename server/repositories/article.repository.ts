@@ -131,7 +131,7 @@ export class ArticleRepository {
   async update(id: string, input: UpdateArticleDto, readingTime?: number, expectedRevision?: number): Promise<boolean> {
     const { tagIds, media, ...fields } = input
 
-    await db.transaction(async (tx) => {
+    return db.transaction(async (tx) => {
       const rows = await tx
         .update(articles)
         .set({

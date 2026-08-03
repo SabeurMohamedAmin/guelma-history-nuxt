@@ -158,7 +158,16 @@ export class ArticleService {
     const changedBody = data.bodyFr ?? data.bodyAr
     const updated = await articleRepository.update(id, data, changedBody ? this.calcReadingTime(changedBody) : undefined, expectedRevision)
     if (!updated) throw createError({ statusCode: 409, message: 'Article was changed by another editor. Reload and try again.' })
-    return (await this.getById(id))!
+
+    if (data.media !== undefined) {
+      await destroyManyFromCloudinary(this.toCloudinaryAssets(existing.media))
+    }
+
+    const result = (await this.getById(id))!
+    if (isFirstPublish(existing.publishedAt, result.publishedAt)) {
+      await this.sendNewsletterAlertsAfterPublish(result)
+    }
+    return result
   }
 
   async delete(id: string): Promise<void> {
