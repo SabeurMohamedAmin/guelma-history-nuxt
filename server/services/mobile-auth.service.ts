@@ -3,6 +3,7 @@ import { authenticateAdmin } from '~~/server/utils/auth'
 import {
   createMobileAccessToken,
   createMobileRefreshToken,
+  getMobileAuthConfig,
   hashMobileRefreshToken,
 } from '~~/server/utils/mobileAuthTokens'
 import { mobileAuthSessionRepository } from '~~/server/repositories/mobile-auth-session.repository'
@@ -31,7 +32,7 @@ export class MobileAuthService {
       platform: data.platform,
       appVersion: optionalText(data.appVersion),
       expiresAt: refreshToken.expiresAt,
-    })
+    }, getMobileAuthConfig().maxActiveDevices)
     if (!session) throw createError({ statusCode: 500, message: 'Mobile session could not be created.' })
 
     return this.createTokenResponse(admin, session.id, refreshToken.rawToken, refreshToken.expiresAt)

@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, lt, ne } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, lt, ne } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { mobileAdminSessions } from '~~/server/db/schema'
 
@@ -36,9 +36,41 @@ export class MobileAuthSessionRepository {
     return session && session.expiresAt > new Date() ? session : null
   }
 
-  async create(input: CreateMobileSessionInput) {
-    const [session] = await db.insert(mobileAdminSessions).values(input).returning()
-    return session ?? null
+  /**
+   * Create a device session while enforcing one active family per device and a
+   * bounded number of devices. Oldest sessions are revoked inside the same
+   * transaction, so a successful login never leaves the account over limit.
+   */
+  async create(input: CreateMobileSessionInput, maxActiveDevices: number) {
+    return db.transaction(async (tx) => {
+      const now = new Date()
+      const active = await tx.query.mobileAdminSessions.findMany({
+        where: and(
+          eq(mobileAdminSessions.userId, input.userId),
+          isNull(mobileAdminSessions.revokedAt),
+        ),
+        orderBy: [asc(mobileAdminSessions.lastUsedAt)],
+      })
+
+      const sameDeviceIds = active
+        .filter(session => session.deviceId === input.deviceId)
+        .map(session => session.id)
+      const otherDevices = active.filter(session => session.deviceId !== input.deviceId)
+      const overflow = Math.max(0, otherDevices.length - maxActiveDevices + 1)
+      const revokeIds = [
+        ...sameDeviceIds,
+        ...otherDevices.slice(0, overflow).map(session => session.id),
+      ]
+
+      if (revokeIds.length > 0) {
+        await tx.update(mobileAdminSessions)
+          .set({ revokedAt: now })
+          .where(inArray(mobileAdminSessions.id, revokeIds))
+      }
+
+      const [session] = await tx.insert(mobileAdminSessions).values(input).returning()
+      return session ?? null
+    })
   }
 
   /**
