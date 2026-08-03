@@ -1,5 +1,5 @@
+import { adminProfileService } from '~~/server/services/admin-profile.service'
 import { requireAdmin, refreshUserSession } from '~~/server/utils/auth'
-import { changeAdminEmail } from '~~/server/utils/adminProfile'
 
 /**
  * PATCH /api/admin/profile/email
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const profile = await changeAdminEmail(id, email, currentPassword)
+  const profile = await adminProfileService.changeEmail(id, email, currentPassword)
   await refreshUserSession(event, id)
 
   return profile
