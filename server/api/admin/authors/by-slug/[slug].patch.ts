@@ -9,6 +9,8 @@ import { generateUniqueAuthorSlug } from '~~/server/utils/author-slug'
  * When nameFr changes, the slug is regenerated (and kept unique).
  */
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
+
   const slug = getRouterParam(event, 'slug')?.trim()
   if (!slug) {
     throw createError({ statusCode: 400, message: 'Invalid author slug' })

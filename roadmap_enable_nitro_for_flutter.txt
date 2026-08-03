@@ -107,7 +107,22 @@ GET    /api/admin/subscribers/count
 GET    /api/admin/subscribers/export
 ```
 
-Remaining handlers must still be checked individually while services are extracted. A route being under `/api/admin` does not protect it automatically.
+A second handler-by-handler pass added explicit `requireAdmin()` checks to:
+
+```text
+PATCH  /api/admin/authors/:id
+DELETE /api/admin/authors/:id
+GET    /api/admin/authors/by-slug/:slug
+PATCH  /api/admin/authors/by-slug/:slug
+DELETE /api/admin/authors/by-slug/:slug
+PATCH  /api/admin/subscribers/:id/subscription
+DELETE /api/admin/subscribers/:id
+POST   /api/admin/upload
+```
+
+The legacy `/api/admin/upload` placeholder previously returned a misleading successful response without uploading anything. It is now protected and returns `501 Not Implemented`, directing article media clients to `/api/admin/articles/media/upload`.
+
+A route being under `/api/admin` does not protect it automatically. All new admin handlers must include an explicit guard or use a future protected router/middleware mechanism with equivalent test coverage.
 
 ### Business-logic findings
 
@@ -261,7 +276,7 @@ Nitro handler
 - [ ] Keep Nitro handlers thin
 - [ ] Centralize API error conversion
 - [ ] Centralize pagination parsing
-- [ ] Centralize authentication and role guards
+- [~] Centralize authentication and role guards — existing admin handlers now explicitly use `requireAdmin()`; shared web/mobile transport work remains
 - [ ] Reuse article services
 - [ ] Reuse category services
 - [ ] Reuse author services
