@@ -705,23 +705,25 @@ Notes: Security review is in progress. Versioned routes already return standardi
 
 Complete only this scope first:
 
-- [ ] Mobile admin login
-- [ ] Access-token refresh
-- [ ] Logout and session revocation
-- [ ] Current admin profile
-- [ ] Dashboard summary using existing data
-- [ ] Existing bilingual article CRUD
-- [ ] Existing category CRUD
-- [ ] Existing author CRUD
-- [ ] Existing media upload
-- [ ] Existing reported-comment workflow
-- [ ] Existing subscriber management
-- [ ] Standard errors and pagination
-- [ ] OpenAPI documentation
-- [ ] Authentication, authorization, contract, and upload tests
-- [ ] Nuxt web-admin regression verification
+- [~] Mobile admin login — implemented; database endpoint verification remains
+- [~] Access-token refresh — implemented; rotation/reuse integration verification remains
+- [~] Logout and session revocation — implemented; database endpoint verification remains
+- [~] Current admin profile — implemented; regression verification remains
+- [~] Dashboard summary using existing data — implemented; regression verification remains
+- [~] Existing bilingual article CRUD — implemented with revision protection; integration verification remains
+- [~] Existing category CRUD — implemented; integration verification remains
+- [~] Existing author CRUD — implemented; integration verification remains
+- [~] Existing media upload — implemented and hardened; provider/integration verification remains
+- [~] Existing reported-comment workflow — implemented; integration verification remains
+- [~] Existing subscriber management — implemented with minimized responses; integration verification remains
+- [~] Standard errors and pagination — implemented for versioned routes; contract verification remains
+- [~] OpenAPI documentation — implemented for current v1 routes; validation remains
+- [~] Authentication, authorization, contract, and upload tests — unit coverage exists; database/endpoint coverage remains
+- [ ] Nuxt web-admin regression verification — requires local/manual execution
 
 Do not block the first release on new roles, editorial workflow, timeline, historical references, analytics, push notifications, or a full archival media library.
+
+Release status: backend implementation is substantially complete, but no item is marked verified until local migrations, lint, typecheck, relevant tests, and manual Nuxt/Flutter regression checks pass. No pipeline is required.
 
 # Recommended Order
 
