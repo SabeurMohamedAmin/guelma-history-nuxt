@@ -278,7 +278,7 @@ Nitro handler
 - [~] Centralize pagination parsing — pure normalization exists; query-schema integration remains
 - [~] Centralize authentication and role guards — existing admin handlers now explicitly use `requireAdmin()`; shared web/mobile transport work remains
 - [x] Reuse article services — `ArticleRepository` owns all article Drizzle reads/writes, transactions, relation checks, and row mapping; `ArticleService` owns business rules and external side effects
-- [ ] Reuse category services
+- [x] Reuse category services — category handlers now delegate to `CategoryService` and `CategoryRepository`
 - [ ] Reuse author services
 - [ ] Reuse reported-comment services
 - [ ] Reuse subscriber services
@@ -288,7 +288,7 @@ Nitro handler
 
 Completed:
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Completed the article repository boundary. `ArticleRepository` owns all article Drizzle reads/writes, atomic tag/media replacement, relation checks, and persistence mapping. `ArticleService` owns validation decisions, slug/reading-time calculation, publishing detection, newsletter delivery, and Cloudinary cleanup. Article search covers Arabic and French titles.
+Notes: Completed the article repository boundary and added the category service/repository boundary. Category handlers are thin; `CategoryService` owns parent-cycle and safe-delete rules while `CategoryRepository` owns Drizzle access. Existing Nuxt response shapes are preserved.
 
 ---
 
