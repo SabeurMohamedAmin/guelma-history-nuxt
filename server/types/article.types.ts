@@ -51,6 +51,7 @@ export interface ArticleResponse {
   homePosition: number | null
   publishedAt: Date | null
   readingTime: number
+  revision: number
   createdAt: Date
   updatedAt: Date
   category: { id: string, nameAr: string, nameFr: string, slug: string } | null

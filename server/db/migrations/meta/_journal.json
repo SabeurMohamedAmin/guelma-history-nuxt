@@ -92,6 +92,13 @@
       "when": 1785798000000,
       "tag": "0013_mobile_upload_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785801600000,
+      "tag": "0014_article_revision",
+      "breakpoints": true
     }
   ]
 }

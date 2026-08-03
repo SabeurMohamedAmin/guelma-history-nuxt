@@ -38,6 +38,8 @@ export const articles = pgTable('articles', {
   // article card counters. Default to 0 so existing rows stay valid.
   viewCount: integer('view_count').notNull().default(0),
   commentCount: integer('comment_count').notNull().default(0),
+  // Optimistic concurrency token shared by Nuxt and Flutter editors.
+  revision: integer('revision').notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().$defaultFn(() => new Date()),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().$defaultFn(() => new Date()),
 })

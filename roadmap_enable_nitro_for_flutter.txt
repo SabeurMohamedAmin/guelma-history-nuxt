@@ -522,12 +522,12 @@ Prevent Nuxt and Flutter editors from silently overwriting each other.
 
 ## Tasks
 
-- [ ] Add an article revision/version field
-- [ ] Add a safe migration for existing articles
-- [ ] Return the revision in article responses
-- [ ] Require the expected revision during updates
-- [ ] Increment revision atomically after successful updates
-- [ ] Return `409 Conflict` for stale updates
+- [x] Add an article revision/version field
+- [x] Add a safe migration for existing articles
+- [x] Return the revision in article responses
+- [x] Require the expected revision during Flutter updates
+- [x] Increment revision atomically after successful Flutter updates
+- [x] Return `409 Conflict` for stale Flutter updates
 - [ ] Add a dedicated autosave contract
 - [ ] Ensure autosave cannot publish accidentally
 - [ ] Add idempotency for retry-sensitive saves

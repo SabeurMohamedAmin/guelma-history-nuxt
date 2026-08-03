@@ -65,6 +65,9 @@ export const createArticleSchema = z.object({
 })
 
 export const updateArticleSchema = createArticleSchema.partial()
+export const versionedUpdateArticleSchema = updateArticleSchema.extend({
+  expectedRevision: z.number().int().positive(),
+})
 
 export const articlesQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
@@ -84,6 +87,7 @@ export const articlesQuerySchema = z.object({
 
 export type CreateArticleInput = z.infer<typeof createArticleSchema>
 export type UpdateArticleInput = z.infer<typeof updateArticleSchema>
+export type VersionedUpdateArticleInput = z.infer<typeof versionedUpdateArticleSchema>
 export type ArticlesQueryInput = z.infer<typeof articlesQuerySchema>
 
 export function validateCreateArticle(data: unknown) {
