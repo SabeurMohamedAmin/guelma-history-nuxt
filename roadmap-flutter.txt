@@ -1,0 +1,2064 @@
+[@github](plugin://github@openai-curated-remote) there is a repo guelma-history-nuxt, this project is about this.
+
+i want to add app for admin handler using flutter ios/android, check if this road is good or make new one or update this one it's up to you.
+
+# GuelmaHistory Admin — Flutter Android & iOS Roadmap
+
+## Project Goal
+
+Build a polished, secure, production-ready **GuelmaHistory Admin mobile application using Flutter**, developed in Android Studio and targeting:
+
+- Android
+- iOS
+- Tablets
+- Large-screen/foldable devices where practical
+
+The application will allow authorized GuelmaHistory administrators, editors, authors, and moderators to manage the website from a dedicated native-feeling mobile application.
+
+The app should feel like a professional **mobile editorial CMS**, not like a website squeezed into a mobile screen.
+
+---
+
+# Core Technology Direction
+
+Use:
+
+```text
+Flutter
+   │
+   ├── Android App
+   └── iOS App
+          │
+          ▼
+   GuelmaHistory API
+          │
+    ┌─────┴─────┐
+    ▼           ▼
+Database    Media Storage
+          │
+          ▼
+    GuelmaHistory.com
+```
+
+## Important Architecture Rule
+
+The Flutter application should **NOT connect directly to the production database**.
+
+Use:
+
+```text
+Flutter App
+     ↓
+HTTPS
+     ↓
+Authenticated API
+     ↓
+Backend
+     ↓
+Database / Storage
+```
+
+All sensitive authorization and validation must happen on the server.
+
+---
+
+# PHASE 0 — Inspect GuelmaHistory
+
+Before writing Flutter screens, understand the existing GuelmaHistory backend.
+
+## Checklist
+
+- [ ] Identify website framework
+- [ ] Identify backend framework
+- [ ] Identify database
+- [ ] Inspect database schema
+- [ ] Identify existing REST/GraphQL API
+- [ ] Inspect authentication
+- [ ] Inspect authorization
+- [ ] Inspect article model
+- [ ] Inspect categories
+- [ ] Inspect authors
+- [ ] Inspect comments
+- [ ] Inspect subscribers
+- [ ] Inspect timeline/history data
+- [ ] Inspect media storage
+- [ ] Inspect analytics
+- [ ] Inspect SEO fields
+- [ ] Identify hosting environment
+- [ ] Identify existing API security
+- [ ] Determine which admin APIs already exist
+- [ ] Determine which APIs must be created
+
+Create:
+
+`ADMIN_ARCHITECTURE.md`
+
+Document:
+
+1. Existing backend
+2. Existing database
+3. Existing APIs
+4. Authentication system
+5. Required admin APIs
+6. Flutter architecture
+7. Security strategy
+8. Media strategy
+9. Synchronization strategy
+10. Implementation order
+
+Do not begin large architectural changes until this is understood.
+
+---
+
+# PHASE 1 — Flutter Project Foundation
+
+Create a clean production Flutter architecture.
+
+Recommended conceptual structure:
+
+```text
+lib/
+│
+├── app/
+│
+├── core/
+│   ├── api/
+│   ├── auth/
+│   ├── config/
+│   ├── errors/
+│   ├── routing/
+│   ├── storage/
+│   ├── theme/
+│   └── utils/
+│
+├── shared/
+│   ├── widgets/
+│   ├── models/
+│   └── services/
+│
+└── features/
+    ├── authentication/
+    ├── dashboard/
+    ├── articles/
+    ├── media/
+    ├── timeline/
+    ├── references/
+    ├── categories/
+    ├── authors/
+    ├── comments/
+    ├── subscribers/
+    ├── analytics/
+    ├── users/
+    └── settings/
+```
+
+Prefer **feature-first architecture**.
+
+Do not create giant folders containing hundreds of unrelated:
+
+```text
+screens/
+models/
+services/
+widgets/
+```
+
+Keep each feature reasonably self-contained.
+
+---
+
+# PHASE 2 — Flutter Architecture
+
+Choose one consistent architecture and follow it throughout the application.
+
+Recommended pattern:
+
+```text
+Presentation
+     ↓
+State / Controller
+     ↓
+Repository
+     ↓
+API / Data Source
+     ↓
+GuelmaHistory Backend
+```
+
+Example:
+
+```text
+ArticleEditorScreen
+        ↓
+ArticleController
+        ↓
+ArticleRepository
+        ↓
+ArticleApiService
+        ↓
+GuelmaHistory API
+```
+
+## Checklist
+
+- [ ] Choose state-management solution
+- [ ] Choose routing solution
+- [ ] Configure API client
+- [ ] Configure JSON serialization
+- [ ] Configure secure storage
+- [ ] Configure logging
+- [ ] Configure environment management
+- [ ] Configure error handling
+- [ ] Configure localization
+- [ ] Configure RTL
+- [ ] Configure dependency injection if required
+
+Do not mix several state-management approaches without a strong reason.
+
+---
+
+# PHASE 3 — Environments
+
+Create separate environments.
+
+```text
+Development
+Staging
+Production
+```
+
+Never hard-code production URLs throughout the source code.
+
+Example concept:
+
+```text
+DEV API
+https://dev-api...
+
+STAGING API
+https://staging-api...
+
+PRODUCTION API
+https://api.guelmahistory.com
+```
+
+## Checklist
+
+- [ ] Development environment
+- [ ] Staging environment
+- [ ] Production environment
+- [ ] Environment-specific API URLs
+- [ ] Environment-specific logging
+- [ ] Production debug logging disabled
+- [ ] Secrets excluded from Git
+
+---
+
+# PHASE 4 — Networking Layer
+
+Build one reliable networking layer.
+
+The application should support:
+
+- Authentication headers
+- Request timeouts
+- Response parsing
+- API errors
+- Validation errors
+- Network errors
+- Authentication expiration
+- Pagination
+- Upload progress
+- Download progress where required
+- Request cancellation
+
+## Important
+
+Do NOT scatter raw HTTP requests throughout widgets.
+
+Use:
+
+```text
+Widget
+  ↓
+Controller
+  ↓
+Repository
+  ↓
+API Client
+```
+
+---
+
+# PHASE 5 — Authentication
+
+Create a polished mobile login experience.
+
+## Login Screen
+
+Support:
+
+- [ ] Email/username
+- [ ] Password
+- [ ] Show/hide password
+- [ ] Remember session
+- [ ] Loading state
+- [ ] Invalid credentials state
+- [ ] Network error state
+- [ ] Session expiration
+- [ ] Logout
+
+Optional later:
+
+- [ ] Biometrics
+- [ ] Face ID
+- [ ] Fingerprint authentication
+
+Biometrics should unlock an existing secure session rather than replace server authentication.
+
+---
+
+# PHASE 6 — Secure Token Storage
+
+Never store authentication credentials in normal preferences.
+
+Use secure platform storage backed by appropriate Android/iOS security mechanisms.
+
+## Checklist
+
+- [ ] Securely store tokens
+- [ ] Handle token refresh
+- [ ] Handle token expiration
+- [ ] Delete credentials on logout
+- [ ] Handle revoked sessions
+- [ ] Never log tokens
+- [ ] Never expose credentials in crash reports
+
+Authentication flow:
+
+```text
+Launch App
+    ↓
+Check secure session
+    ↓
+Valid?
+ ┌──┴──┐
+No    Yes
+↓      ↓
+Login  Dashboard
+```
+
+---
+
+# PHASE 7 — Roles & Permissions
+
+Support:
+
+### Super Admin
+
+Everything.
+
+### Editor
+
+Create, edit and publish content.
+
+### Author
+
+Create and edit authorized content.
+
+### Moderator
+
+Manage comments.
+
+The Flutter UI should adapt based on permissions.
+
+However:
+
+**Flutter permissions are UX, not security.**
+
+The server must independently verify every protected operation.
+
+---
+
+# PHASE 8 — Mobile Design System
+
+Create a dedicated GuelmaHistory Flutter design system.
+
+Visual direction:
+
+**Historical + Editorial + Modern + Premium**
+
+The app should respect Material conventions without looking like an untouched default Flutter project.
+
+Create reusable Flutter components for:
+
+- [ ] Primary button
+- [ ] Secondary button
+- [ ] Destructive button
+- [ ] Icon button
+- [ ] Text field
+- [ ] Search field
+- [ ] Dropdown/select
+- [ ] Date selector
+- [ ] Checkbox
+- [ ] Switch
+- [ ] Status badge
+- [ ] Content card
+- [ ] Article card
+- [ ] Media card
+- [ ] User avatar
+- [ ] Empty state
+- [ ] Error state
+- [ ] Skeleton loader
+- [ ] Dialog
+- [ ] Bottom sheet
+- [ ] Snackbar/toast
+- [ ] Confirmation dialog
+
+Establish design tokens for:
+
+```text
+Colors
+Typography
+Spacing
+Radius
+Elevation
+Animation duration
+Icon sizes
+Touch targets
+```
+
+---
+
+# PHASE 9 — Arabic & RTL First
+
+Arabic must be treated as a first-class language from day one.
+
+Do not build the entire application LTR and attempt to reverse it later.
+
+## Checklist
+
+- [ ] Arabic localization
+- [ ] RTL layout
+- [ ] Appropriate Arabic font
+- [ ] Arabic text fields
+- [ ] Mixed Arabic/Latin content
+- [ ] Arabic numbers/dates where appropriate
+- [ ] RTL icons
+- [ ] RTL navigation
+- [ ] RTL dialogs
+- [ ] RTL bottom sheets
+- [ ] RTL editor
+- [ ] RTL lists
+- [ ] RTL charts
+- [ ] RTL pagination where applicable
+
+Test strings such as:
+
+```text
+قال المؤرخ Ernest Mercier في سنة 1872 عن مدينة قالمة...
+```
+
+Mixed-direction text must remain readable.
+
+---
+
+# PHASE 10 — Responsive Flutter Layout
+
+The application must adapt instead of simply stretching.
+
+## Phone
+
+Use:
+
+- Bottom navigation where appropriate
+- Drawer where appropriate
+- Full-screen editors
+- Bottom sheets
+- Cards instead of wide tables
+
+## Tablet
+
+Use:
+
+```text
+┌──────────────┬──────────────────────────────┐
+│ Navigation   │                              │
+│ Rail         │       Main Content           │
+│              │                              │
+└──────────────┴──────────────────────────────┘
+```
+
+For larger screens consider:
+
+```text
+Navigation Rail
+      +
+Master / Detail
+```
+
+Example:
+
+```text
+┌───────────────────┬─────────────────────────┐
+│ Articles          │ Article                 │
+│                   │                         │
+│ Article A         │ Title                   │
+│ Article B         │ Content                 │
+│ Article C         │ Metadata                │
+│ Article D         │                         │
+└───────────────────┴─────────────────────────┘
+```
+
+## Test
+
+- [ ] Small Android phone
+- [ ] Large Android phone
+- [ ] iPhone
+- [ ] Large iPhone
+- [ ] Android tablet
+- [ ] iPad
+- [ ] Landscape
+- [ ] Portrait
+
+---
+
+# PHASE 11 — Navigation
+
+Suggested mobile navigation:
+
+```text
+Dashboard
+Articles
+Media
+Timeline
+More
+```
+
+`More` contains:
+
+```text
+Categories
+Authors
+Comments
+Subscribers
+Analytics
+Users
+Settings
+```
+
+Avoid putting 10+ primary destinations in a bottom navigation bar.
+
+Tablet navigation can expose more sections using a navigation rail.
+
+---
+
+# PHASE 12 — Dashboard
+
+The dashboard should answer:
+
+**What requires my attention?**
+
+Not merely show pretty statistics.
+
+Display:
+
+```text
+Articles
+Published
+Drafts
+Pending Comments
+Subscribers
+Views
+```
+
+Then:
+
+### Needs Attention
+
+```text
+3 articles awaiting review
+12 comments awaiting moderation
+2 scheduled articles
+```
+
+### Recent Articles
+
+Each card:
+
+```text
+[Image]
+
+History of Guelma
+
+Published
+Ahmed
+1,240 views
+
+[Edit]
+```
+
+### Quick Actions
+
+```text
++ New Article
++ Upload Photo
++ Timeline Event
+✓ Moderate Comments
+```
+
+---
+
+# PHASE 13 — Article Management
+
+This is the application's most important feature.
+
+## Article List
+
+Provide:
+
+- [ ] Search
+- [ ] Filter
+- [ ] Sort
+- [ ] Pagination/infinite loading
+- [ ] Pull to refresh
+- [ ] Status filtering
+
+Statuses:
+
+```text
+Draft
+In Review
+Scheduled
+Published
+Archived
+```
+
+Article card:
+
+```text
+┌──────────────────────────────────┐
+│ [Image]                          │
+│                                  │
+│ تاريخ مدينة قالمة                │
+│                                  │
+│ Published • Ahmed                │
+│ 2,421 views                      │
+│                                  │
+│                 Edit   •••       │
+└──────────────────────────────────┘
+```
+
+---
+
+# PHASE 14 — Mobile Article Editor
+
+This requires special attention.
+
+Writing a long historical article on a phone is fundamentally different from desktop editing.
+
+Use a focused editor.
+
+## Main Editor
+
+```text
+← Article                         •••
+
+Title
+────────────────────────
+
+Article content...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[B] [I] [H] [Quote] [Link] [Image]
+
+✓ Saved
+```
+
+Keep secondary metadata away from the primary writing surface.
+
+Provide a separate:
+
+**Article Settings**
+
+containing:
+
+- Category
+- Tags
+- Author
+- Featured image
+- Historical period
+- Status
+- Publication date
+- Featured
+- SEO
+
+---
+
+# PHASE 15 — Rich Text Editing
+
+Required:
+
+- [ ] Arabic RTL
+- [ ] Headings
+- [ ] Bold
+- [ ] Italic
+- [ ] Lists
+- [ ] Quotes
+- [ ] Links
+- [ ] Images
+- [ ] Captions
+- [ ] Undo
+- [ ] Redo
+- [ ] Selection formatting
+
+Test heavily with the Android and iOS keyboards.
+
+Test:
+
+- Arabic keyboard
+- French keyboard
+- English keyboard
+- Mixed-direction text
+- Copy/paste
+- Large articles
+
+---
+
+# PHASE 16 — Autosave
+
+This is extremely important on mobile.
+
+Phones experience:
+
+- Incoming calls
+- App switching
+- Network loss
+- OS termination
+- Accidental back gestures
+- Battery loss
+
+The editor should continuously protect work.
+
+Concept:
+
+```text
+Typing
+  ↓
+Local Draft
+  ↓
+Debounce
+  ↓
+API Autosave
+  ↓
+✓ Saved
+```
+
+Display:
+
+```text
+Saving...
+✓ Saved
+Saved 20 seconds ago
+Offline — saved locally
+```
+
+---
+
+# PHASE 17 — Offline Draft Protection
+
+At minimum, unfinished article text should survive temporary connectivity loss.
+
+Implement:
+
+```text
+Editor
+   ↓
+Local draft
+   ↓
+Network available?
+   ├── YES → synchronize
+   └── NO  → keep local
+```
+
+When connectivity returns:
+
+```text
+Local changes detected
+
+[Review]
+[Sync]
+```
+
+Do not silently overwrite newer server content.
+
+---
+
+# PHASE 18 — Conflict Handling
+
+Consider:
+
+1. Editor A opens article.
+2. Editor B edits article.
+3. Editor A saves old content.
+
+The app should detect revision conflicts when supported by the backend.
+
+Provide options such as:
+
+```text
+A newer version exists.
+
+Review Changes
+Keep Server Version
+Use My Version
+```
+
+Never silently destroy another editor's work.
+
+---
+
+# PHASE 19 — Article Preview
+
+Provide a preview that closely matches GuelmaHistory.com.
+
+Options:
+
+```text
+Preview
+   ↓
+Phone
+Tablet
+Website
+```
+
+Where practical, preview using the actual rendering rules/content format used by the website.
+
+---
+
+# PHASE 20 — Historical References
+
+References should be structured data.
+
+Fields:
+
+```text
+Source Type
+Title
+Author
+Publication
+Year
+Page
+Archive
+URL
+Notes
+```
+
+Support:
+
+```text
+Book
+Newspaper
+Archive
+Photograph
+Oral testimony
+Academic paper
+Museum collection
+Government document
+Website
+Other
+```
+
+Mobile UX:
+
+```text
+Sources (4)
+
+≡ Ibn Khaldun — Histoire...
+≡ Archives Nationales...
+≡ Le Monde — 1945...
+≡ Musée...
+
++ Add Source
+```
+
+Allow drag/reorder where practical.
+
+---
+
+# PHASE 21 — Media Library
+
+Build a mobile-first archive manager.
+
+Grid:
+
+```text
+┌───────┐ ┌───────┐ ┌───────┐
+│ PHOTO │ │ PHOTO │ │ PHOTO │
+└───────┘ └───────┘ └───────┘
+
+┌───────┐ ┌───────┐ ┌───────┐
+│ PHOTO │ │ PHOTO │ │ PHOTO │
+└───────┘ └───────┘ └───────┘
+```
+
+Allow:
+
+- [ ] Search
+- [ ] Filter
+- [ ] Sort
+- [ ] Grid/list toggle
+- [ ] Pagination
+- [ ] Media details
+
+---
+
+# PHASE 22 — Mobile Media Upload
+
+This is one area where a mobile admin app can outperform a web dashboard.
+
+Support:
+
+```text
++ Upload
+
+Take Photo
+Choose from Gallery
+Choose File
+```
+
+Where permissions and platform capabilities allow.
+
+Upload workflow:
+
+```text
+Select Image
+     ↓
+Preview
+     ↓
+Metadata
+     ↓
+Optimize Copy
+     ↓
+Upload
+     ↓
+Server Processing
+     ↓
+Complete
+```
+
+Display real upload progress.
+
+---
+
+# PHASE 23 — Historical Image Metadata
+
+For every historical asset support:
+
+```text
+Title
+Alternative Text
+Caption
+Description
+
+Photographer
+Exact Date
+Approximate Date
+Location
+Source
+Archive
+Collection
+Donor
+Copyright
+Usage Rights
+Historical Period
+Notes
+```
+
+Never destroy the original archival file when generating optimized versions.
+
+---
+
+# PHASE 24 — Timeline Manager
+
+Timeline event:
+
+```text
+Date
+Title
+Description
+Historical Period
+Location
+Images
+Articles
+Sources
+People
+```
+
+Support uncertain dates:
+
+```text
+1836
+
+8 May 1945
+
+c. 1850
+
+1900–1910
+
+Unknown
+```
+
+Do not force uncertain historical dates into fake precise timestamps.
+
+---
+
+# PHASE 25 — Categories & Tags
+
+Mobile management should remain simple.
+
+Support:
+
+- Create
+- Edit
+- Search
+- Reorder if required
+- Archive/delete safely
+
+Before deleting:
+
+```text
+Delete "Roman Period"?
+
+27 articles currently use this category.
+
+Choose another category before deleting.
+
+[Cancel]
+[Reassign]
+```
+
+---
+
+# PHASE 26 — Authors
+
+Author profile:
+
+```text
+Photo
+
+Name
+Arabic Name
+Biography
+Role
+Email
+Social Links
+
+Published Articles
+Drafts
+```
+
+Support:
+
+- [ ] Create
+- [ ] Edit
+- [ ] Disable
+- [ ] Assign content
+- [ ] View articles
+- [ ] Manage permissions where authorized
+
+---
+
+# PHASE 27 — Comment Moderation
+
+Mobile is ideal for quick moderation.
+
+Use swipe actions carefully.
+
+Example:
+
+```text
+← Reject       COMMENT       Approve →
+```
+
+Also provide explicit buttons for accessibility and discoverability.
+
+Support:
+
+- Pending
+- Approved
+- Rejected
+- Spam
+
+Actions:
+
+- Approve
+- Reject
+- Spam
+- Delete
+- Open article
+- View commenter history where permitted
+
+---
+
+# PHASE 28 — Subscribers
+
+Provide:
+
+- Subscriber count
+- Growth
+- Search
+- Filter
+- Status
+- Export if appropriate
+
+Avoid exposing subscriber information on screens where it isn't required.
+
+Protect personally identifiable information.
+
+---
+
+# PHASE 29 — Analytics
+
+Design analytics for mobile rather than copying desktop charts.
+
+Dashboard:
+
+```text
+Today
+7 Days
+30 Days
+90 Days
+Year
+```
+
+Show:
+
+- Views
+- Visitors
+- Top articles
+- Categories
+- Traffic trends
+- Devices
+- Search activity where available
+
+Charts must remain readable in RTL and on small screens.
+
+---
+
+# PHASE 30 — Push Notifications
+
+This is another major advantage of having an Android/iOS admin application.
+
+Consider notifications for:
+
+```text
+Article submitted for review
+
+New comment requires moderation
+
+Article successfully published
+
+Scheduled article failed to publish
+
+Unusual login detected
+```
+
+Allow administrators to control notification categories.
+
+Do NOT send notifications for every trivial event.
+
+---
+
+# PHASE 31 — Deep Links
+
+Notifications should open the relevant screen.
+
+Example:
+
+```text
+Notification:
+
+"Article awaiting review"
+
+Tap
+ ↓
+GuelmaHistory Admin
+ ↓
+Article #427
+```
+
+Support secure deep links.
+
+Authentication must still be verified before displaying protected content.
+
+---
+
+# PHASE 32 — Global Search
+
+Provide a global search interface.
+
+Search:
+
+```text
+Articles
+Media
+Timeline
+Authors
+Categories
+```
+
+Recent searches can optionally be stored locally.
+
+---
+
+# PHASE 33 — Settings
+
+Organize settings into:
+
+### Account
+
+- Profile
+- Password
+- Sessions
+
+### Application
+
+- Language
+- Theme
+- Notifications
+
+### Website
+
+For authorized users:
+
+- Site settings
+- Social links
+- Content defaults
+
+### Security
+
+- Active sessions
+- Biometric unlock
+- Logout all devices if supported
+
+---
+
+# PHASE 34 — Dark Mode
+
+Support:
+
+```text
+Light
+Dark
+System
+```
+
+Do not simply invert colors.
+
+Check:
+
+- Historical photographs
+- Editor
+- Dialogs
+- Cards
+- Inputs
+- Charts
+- Status colors
+- Contrast
+
+---
+
+# PHASE 35 — Accessibility
+
+Test:
+
+- [ ] TalkBack
+- [ ] VoiceOver
+- [ ] Large font sizes
+- [ ] Dynamic text
+- [ ] Keyboard navigation on tablets where applicable
+- [ ] Touch target sizes
+- [ ] Contrast
+- [ ] Screen-reader labels
+- [ ] Form errors
+- [ ] RTL
+
+Do not rely exclusively on color.
+
+---
+
+# PHASE 36 — Flutter Performance
+
+Profile using release/profile builds.
+
+Watch:
+
+- Unnecessary widget rebuilds
+- Huge images
+- Memory usage
+- Long article rendering
+- Media-grid performance
+- Scroll performance
+- JSON parsing
+- Network requests
+- Startup time
+
+Target smooth scrolling on realistic mid-range Android devices, not only an emulator or flagship phone.
+
+---
+
+# PHASE 37 — Image Performance
+
+Historical images may be extremely large.
+
+Never load a 15 MB archival photograph into a tiny list thumbnail unnecessarily.
+
+Use:
+
+```text
+Original Archive
+      ↓
+Server
+      ├── Thumbnail
+      ├── Small
+      ├── Medium
+      ├── Large
+      └── Original
+```
+
+The app requests the appropriate version for each UI.
+
+---
+
+# PHASE 38 — Error Handling
+
+Create standardized errors.
+
+Example:
+
+```text
+Could not save article
+
+Your draft is safe on this device.
+
+Check your internet connection and try again.
+
+[Retry]
+```
+
+This is far better than:
+
+```text
+Exception: SocketException...
+```
+
+Handle:
+
+- No connection
+- Timeout
+- API failure
+- Validation
+- Permission denied
+- Session expired
+- Upload failed
+- Server unavailable
+- Conflict
+
+---
+
+# PHASE 39 — Loading & Empty States
+
+Never leave blank screens.
+
+Examples:
+
+```text
+No drafts yet.
+
+Start writing your first article.
+
+[New Article]
+```
+
+And:
+
+```text
+No comments require moderation.
+
+You're all caught up.
+```
+
+Use skeletons where they improve perceived performance.
+
+---
+
+# PHASE 40 — Destructive Actions
+
+Use confirmation dialogs for important destructive actions.
+
+Example:
+
+```text
+Delete this photograph?
+
+"Place Saint-Augustin, 1923"
+
+This photograph is currently used by
+3 articles.
+
+It cannot be deleted until those
+references are removed.
+
+[View Articles]
+[Cancel]
+```
+
+Do not use confirmation dialogs for every harmless action.
+
+---
+
+# PHASE 41 — Audit Trail
+
+Record sensitive operations server-side.
+
+Examples:
+
+```text
+Ahmed published article #421
+Admin changed user role
+Sara deleted comment #920
+Ahmed updated article #302
+Admin uploaded archive image #731
+```
+
+The Flutter application can display this information, but the authoritative log should exist on the backend.
+
+---
+
+# PHASE 42 — Android Integration
+
+Test specifically:
+
+- [ ] Back gesture
+- [ ] Predictive back
+- [ ] Status/navigation bars
+- [ ] Keyboard behavior
+- [ ] Photo picker
+- [ ] File picker
+- [ ] Camera
+- [ ] Notifications
+- [ ] Deep links
+- [ ] Secure storage
+- [ ] App lifecycle
+- [ ] Background/resume
+- [ ] Different screen densities
+
+Test physical Android devices where possible.
+
+---
+
+# PHASE 43 — iOS Integration
+
+Test specifically:
+
+- [ ] iPhone safe areas
+- [ ] iPad
+- [ ] Keyboard
+- [ ] Photo library
+- [ ] Camera
+- [ ] File picker
+- [ ] Notifications
+- [ ] Deep links
+- [ ] Keychain storage
+- [ ] Face ID/Touch ID if implemented
+- [ ] App lifecycle
+- [ ] Background/resume
+
+Do not assume something working on Android automatically works correctly on iOS.
+
+---
+
+# PHASE 44 — App Lifecycle Protection
+
+The editor must correctly handle:
+
+```text
+User writing
+    ↓
+Phone call
+    ↓
+App backgrounded
+    ↓
+OS potentially kills process
+    ↓
+App reopened
+    ↓
+Draft recovered
+```
+
+Test this intentionally.
+
+---
+
+# PHASE 45 — Testing Strategy
+
+## Unit Tests
+
+Prioritize:
+
+- Repositories
+- Controllers
+- Validation
+- Permissions
+- Date handling
+- Draft logic
+
+## Widget Tests
+
+Test:
+
+- Login
+- Article cards
+- Forms
+- Editor controls
+- Error states
+- RTL rendering
+
+## Integration Tests
+
+Critical flow:
+
+```text
+LOGIN
+  ↓
+DASHBOARD
+  ↓
+NEW ARTICLE
+  ↓
+WRITE ARABIC ARTICLE
+  ↓
+ADD HISTORICAL IMAGE
+  ↓
+ADD SOURCE
+  ↓
+SAVE
+  ↓
+PREVIEW
+  ↓
+PUBLISH
+  ↓
+VERIFY
+```
+
+Also test:
+
+```text
+Login
+→ Moderate Comment
+→ Approve
+```
+
+and:
+
+```text
+Login
+→ Upload Historical Photo
+→ Add Metadata
+→ Attach to Article
+```
+
+---
+
+# PHASE 46 — Security Review
+
+Before release:
+
+- [ ] No database credentials in Flutter
+- [ ] No backend secrets in Flutter
+- [ ] HTTPS everywhere
+- [ ] Secure token storage
+- [ ] Server-side permissions
+- [ ] Token expiration
+- [ ] Session revocation
+- [ ] Upload validation
+- [ ] Rate limiting
+- [ ] Input sanitization
+- [ ] API validation
+- [ ] No sensitive debug logging
+- [ ] Production logging reviewed
+- [ ] Dependencies reviewed
+- [ ] Android release configuration reviewed
+- [ ] iOS release configuration reviewed
+
+Remember:
+
+**Anything shipped inside a mobile application should eventually be considered discoverable.**
+
+Never embed server secrets in Flutter.
+
+---
+
+# PHASE 47 — Android Release
+
+Prepare:
+
+- App name
+- Application ID
+- App icon
+- Adaptive icon
+- Splash screen
+- Release signing
+- Production API
+- Versioning
+- Privacy policy
+- Play Store screenshots
+- Store description
+- Internal testing
+
+Release sequence:
+
+```text
+Development
+    ↓
+Internal Test
+    ↓
+Closed Test
+    ↓
+Production
+```
+
+---
+
+# PHASE 48 — iOS Release
+
+Prepare:
+
+- Bundle identifier
+- Signing
+- App icon
+- Launch screen
+- Privacy declarations
+- Production API
+- App Store screenshots
+- Store description
+- TestFlight
+
+Release sequence:
+
+```text
+Development
+    ↓
+TestFlight
+    ↓
+Internal Testing
+    ↓
+App Review
+    ↓
+Production
+```
+
+---
+
+# PHASE 49 — Production Monitoring
+
+After release monitor:
+
+- Crashes
+- API failures
+- Authentication failures
+- Failed uploads
+- Failed publishing
+- Performance
+- App versions
+- Backend health
+
+Prioritize errors that risk content loss.
+
+---
+
+# PHASE 50 — Final Polish Pass
+
+Do not stop when everything merely "works."
+
+Review every screen.
+
+## Visual
+
+- [ ] Consistent spacing
+- [ ] Typography
+- [ ] Icons
+- [ ] Alignment
+- [ ] Cards
+- [ ] Animations
+- [ ] Arabic appearance
+- [ ] Dark mode
+
+## UX
+
+- [ ] Loading states
+- [ ] Error states
+- [ ] Empty states
+- [ ] Success feedback
+- [ ] Offline states
+- [ ] Confirmation
+- [ ] Draft protection
+- [ ] Keyboard behavior
+
+## Android
+
+- [ ] Back gesture
+- [ ] Keyboard
+- [ ] Notifications
+- [ ] Photo picker
+- [ ] Multiple device sizes
+
+## iOS
+
+- [ ] Swipe-back behavior
+- [ ] Keyboard
+- [ ] Safe areas
+- [ ] Notifications
+- [ ] Photo picker
+- [ ] Multiple iPhone sizes
+- [ ] iPad
+
+---
+
+# Definition of Done
+
+A Flutter feature is NOT finished because the happy path works.
+
+It is complete when:
+
+```text
+✓ Functionality works
+✓ API integration works
+✓ Authentication works
+✓ Authorization works
+✓ Validation works
+✓ Loading state exists
+✓ Empty state exists
+✓ Error state exists
+✓ Offline behavior considered
+✓ Success feedback exists
+✓ RTL works
+✓ Arabic works
+✓ Android works
+✓ iOS works
+✓ Phone works
+✓ Tablet considered
+✓ Accessibility checked
+✓ Tests pass
+✓ No important analyzer warnings
+✓ No console errors
+✓ UI matches design system
+```
+
+---
+
+# Recommended Development Order
+
+## MILESTONE 1 — Foundation
+
+Build only:
+
+- Flutter architecture
+- Environment configuration
+- Networking
+- Authentication
+- Secure storage
+- Routing
+- Permissions
+- Design system
+- Arabic/RTL
+
+Do not build the entire CMS yet.
+
+---
+
+## MILESTONE 2 — Editorial MVP
+
+Build:
+
+- Dashboard
+- Article list
+- Article editor
+- Categories
+- Authors
+- Save draft
+- Publish
+- Article preview
+
+At the end, an administrator must be able to:
+
+```text
+LOGIN
+  ↓
+CREATE ARTICLE
+  ↓
+WRITE
+  ↓
+SAVE
+  ↓
+PREVIEW
+  ↓
+PUBLISH
+```
+
+This should work beautifully before moving forward.
+
+---
+
+## MILESTONE 3 — Historical Archive
+
+Build:
+
+- Media library
+- Camera/gallery/file uploads
+- Historical image metadata
+- References
+- Timeline
+- Historical periods
+
+This turns the application from a generic CMS into the **GuelmaHistory CMS**.
+
+---
+
+## MILESTONE 4 — Reliability
+
+Build:
+
+- Autosave
+- Local draft recovery
+- Offline protection
+- Conflict detection
+- Better error handling
+- Retry mechanisms
+- Upload recovery
+
+---
+
+## MILESTONE 5 — Community
+
+Build:
+
+- Comments
+- Moderation
+- Subscribers
+- Authors/users
+- Roles
+
+---
+
+## MILESTONE 6 — Intelligence & Growth
+
+Build:
+
+- Analytics
+- SEO
+- Global search
+- Push notifications
+- Deep links
+
+---
+
+## MILESTONE 7 — Production
+
+Complete:
+
+- Security audit
+- Performance profiling
+- Accessibility
+- Android testing
+- iOS testing
+- Crash monitoring
+- Integration tests
+- Store preparation
+
+---
+
+## MILESTONE 8 — Polish
+
+Perform a dedicated product-quality pass.
+
+Fix:
+
+- Awkward animations
+- Poor Arabic layout
+- Keyboard problems
+- Inconsistent spacing
+- Confusing forms
+- Weak empty states
+- Bad error messages
+- Unnecessary taps
+- Slow screens
+- Large image memory usage
+- Tablet layout problems
+
+Do not add new features during this phase unless they solve a serious usability problem.
+
+---
+
+# Instructions for the AI Coding Agent
+
+## 1. Inspect Before Coding
+
+Before modifying a feature:
+
+1. Inspect existing related files.
+2. Understand existing architecture.
+3. Understand the API.
+4. Understand data models.
+5. Identify reusable components.
+6. Create an implementation plan.
+7. Then code.
+
+Never blindly generate large amounts of Flutter code.
+
+---
+
+## 2. Work One Milestone at a Time
+
+Do not attempt 50 phases simultaneously.
+
+Complete:
+
+```text
+Implement
+   ↓
+Analyze
+   ↓
+Test
+   ↓
+Fix
+   ↓
+Polish
+   ↓
+Commit
+   ↓
+Next feature
+```
+
+---
+
+## 3. Never Sacrifice Existing Functionality
+
+After each significant change:
+
+```text
+flutter analyze
+flutter test
+```
+
+Then manually verify the affected workflow.
+
+Fix regressions before moving forward.
+
+---
+
+## 4. No Fake Implementations
+
+Do not pretend features work.
+
+Never use permanent:
+
+```text
+Future.delayed(...)
+```
+
+to simulate APIs.
+
+Never generate fake analytics and present them as real.
+
+Never mark uploads successful before server confirmation.
+
+Never silently replace real APIs with mock data.
+
+Mocks are acceptable only in clearly isolated development/tests.
+
+---
+
+## 5. Keep Widgets Manageable
+
+Avoid enormous screen widgets.
+
+Prefer:
+
+```text
+ArticleEditorScreen
+├── ArticleTitleSection
+├── EditorToolbar
+├── ArticleBodyEditor
+├── SaveStatus
+└── ArticleSettings
+```
+
+But do not create dozens of meaningless one-line widgets merely to increase abstraction.
+
+---
+
+## 6. Protect Content Above Everything
+
+This application manages historical research and potentially irreplaceable writing.
+
+Prioritize:
+
+```text
+DATA SAFETY
+    >
+CORRECTNESS
+    >
+SECURITY
+    >
+USABILITY
+    >
+PERFORMANCE
+    >
+VISUAL POLISH
+```
+
+Never risk article or archival-data loss for a smoother animation or simpler implementation.
+
+---
+
+# Final Product Vision
+
+The GuelmaHistory Admin application should allow an editor to take:
+
+```text
+Historical Research
+        ↓
+Archive Material
+        ↓
+Historical Photographs
+        ↓
+Sources & References
+        ↓
+Arabic Article
+        ↓
+Editorial Review
+        ↓
+Publication
+        ↓
+GuelmaHistory.com
+```
+
+from a phone or tablet.
+
+The final application should feel like a purpose-built **mobile historical publishing studio for Guelma**, not a generic admin panel converted into Flutter.
