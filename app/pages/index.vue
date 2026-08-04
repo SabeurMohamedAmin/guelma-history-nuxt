@@ -176,10 +176,10 @@ const readMoreIcon = computed(() =>
       >
         <h2 class="text-title-medium text-md-headline-small font-weight-bold mb-2">
           <v-icon
-            icon="mdi-email-outline me-2"
+            icon="mdi-email-outline"
             size="default"
             color="primary"
-            class="mb-3"
+            class="mb-3 me-2"
           />
           {{ t('newsletter.title') }}
         </h2>
