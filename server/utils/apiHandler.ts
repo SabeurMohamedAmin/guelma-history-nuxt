@@ -44,8 +44,8 @@ export function defineVersionedApiHandler<T>(handler: VersionedApiHandler<T>) {
       // stable response contract and do not need noisy logs. Never serialize
       // the request body, headers, bearer token, password, or refresh token.
       if (descriptor.statusCode >= 500) {
-        const errorDetails =
-          typeof error === 'object' && error !== null
+        const errorDetails
+          = typeof error === 'object' && error !== null
             ? error as Record<string, unknown>
             : null
 
