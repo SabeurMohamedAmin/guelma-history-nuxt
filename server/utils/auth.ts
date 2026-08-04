@@ -190,6 +190,14 @@ export async function requireRole(event: H3Event, minRole: Role): Promise<Sessio
     throw unauthorized('Session expired. Please log in again.')
   }
 
+  // Admin and author routes must never accept an unfinished account, even if
+  // stale cookie data claims a privileged role. The decision uses the current
+  // database row and therefore takes effect immediately.
+  if (minRole !== 'user' && !account.profileCompleted) {
+    await clearUserSession(event)
+    throw unauthorized('Authentication required.')
+  }
+
   // Authenticated, but the (current, DB-backed) role is not high enough.
   if (!hasRole(account.role, minRole)) {
     throw forbidden('You do not have permission to perform this action.')
