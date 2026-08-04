@@ -688,16 +688,16 @@ Notes:
 
 ## Local verification
 
-- [ ] Run lint locally
-- [ ] Run typecheck locally
-- [ ] Run relevant unit/integration tests locally
+- [x] Run lint locally
+- [x] Run typecheck locally
+- [x] Run relevant unit/integration tests locally
 - [ ] Manually test Nuxt web admin
 - [ ] Manually test Flutter against development/staging API
 - [ ] No pipeline is required for this workflow
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Security review is in progress. Versioned routes already return standardized errors with request IDs and private no-store headers. Legacy error conversion now logs unexpected failures server-side while returning a generic production message, preventing database/provider details from leaking. Route rules prevent caching authentication responses and legacy admin/author responses; versioned handlers already apply private no-store headers. Unexpected versioned API failures are correlated by safe request ID and log only method, path, and error class—never request bodies, headers, credentials, or token values. Mobile autosaves are additionally rate-limited to 120 requests per five minutes, capped at a 2.1 MB JSON request, disallow multipart uploads, and limit each localized body to one million characters. This bounds write and parsing load while supporting normal editor cadence. Remaining authentication, authorization, migration, reliability, production alerting, and local verification checks are still open.
+Notes: Security review is in progress. Local lint, Nuxt typecheck, and the relevant automated test suite passed on 2026-08-04 without a pipeline. Versioned routes already return standardized errors with request IDs and private no-store headers. Legacy error conversion now logs unexpected failures server-side while returning a generic production message, preventing database/provider details from leaking. Route rules prevent caching authentication responses and legacy admin/author responses; versioned handlers already apply private no-store headers. Unexpected versioned API failures are correlated by safe request ID and log only method, path, and error class—never request bodies, headers, credentials, or token values. Mobile autosaves are additionally rate-limited to 120 requests per five minutes, capped at a 2.1 MB JSON request, disallow multipart uploads, and limit each localized body to one million characters. This bounds write and parsing load while supporting normal editor cadence. Remaining authentication, authorization, migration, reliability, production alerting, and local verification checks are still open.
 
 ---
 
