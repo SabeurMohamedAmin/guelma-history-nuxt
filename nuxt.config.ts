@@ -56,6 +56,18 @@ export default defineNuxtConfig({
   runtimeConfig: {
     resendFromEmail: 'Guelma History <onboarding@resend.dev>',
 
+    // nuxt-auth-utils sealed web session. The password remains server-only and
+    // is supplied through NUXT_SESSION_PASSWORD. Secure is disabled only for
+    // local HTTP development; production cookies require HTTPS.
+    session: {
+      cookie: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+      },
+    },
+
     // Flutter admin authentication. These values are server-only and must
     // never be moved into runtimeConfig.public.
     mobileAuth: {
