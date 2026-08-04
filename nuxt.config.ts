@@ -60,6 +60,9 @@ export default defineNuxtConfig({
     // is supplied through NUXT_SESSION_PASSWORD. Secure is disabled only for
     // local HTTP development; production cookies require HTTPS.
     session: {
+      // Empty only as a repository-safe default. Production and development
+      // must provide NUXT_SESSION_PASSWORD through the environment.
+      password: '',
       cookie: {
         httpOnly: true,
         sameSite: 'lax' as const,
