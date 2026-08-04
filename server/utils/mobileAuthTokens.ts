@@ -22,11 +22,17 @@ export function getMobileAuthConfig(): MobileAuthConfig {
     throw new Error('The current and previous mobile signing keys must be different.')
   }
 
+  const issuer = String(config.issuer || '').trim()
+  const audience = String(config.audience || '').trim()
+  if (!issuer || !audience) {
+    throw new Error('Mobile access-token issuer and audience must not be empty.')
+  }
+
   return {
     signingKey,
     previousSigningKey: previousSigningKey || undefined,
-    issuer: String(config.issuer),
-    audience: String(config.audience),
+    issuer,
+    audience,
     accessTokenTtlSeconds: positiveInteger(config.accessTokenTtlSeconds, 900),
     refreshTokenTtlDays: positiveInteger(config.refreshTokenTtlDays, 30),
     maxActiveDevices: positiveInteger(config.maxActiveDevices, 5),
@@ -89,6 +95,9 @@ export function verifyMobileAccessToken(
     if (!claims.sub || !claims.sid || !claims.jti) return null
     if (!Number.isInteger(claims.iat) || !Number.isInteger(claims.exp)) return null
     if (claims.iat > now + 30 || claims.exp <= now) return null
+    // Reject correctly signed tokens with a widened or malformed lifetime.
+    // Tokens created by this service always use this exact relationship.
+    if (claims.exp !== claims.iat + config.accessTokenTtlSeconds) return null
 
     return claims
   }

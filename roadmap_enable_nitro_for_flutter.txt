@@ -658,7 +658,7 @@ Notes:
 ## Authentication and authorization
 
 - [ ] Cookie security reviewed
-- [ ] Access/refresh-token security reviewed
+- [x] Access/refresh-token security reviewed — strict token type, issuer, audience, signature, lifetime, single-use refresh rotation, reuse detection, and family revocation are enforced
 - [x] Signing-key storage and rotation reviewed — server-only current/previous keys support zero-downtime rotation; new tokens use only the current key
 - [ ] Every protected route has a server-side guard
 - [ ] Role changes take effect immediately
