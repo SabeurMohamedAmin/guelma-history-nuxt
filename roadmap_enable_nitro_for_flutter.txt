@@ -661,7 +661,7 @@ Notes:
 - [x] Access/refresh-token security reviewed — strict token type, issuer, audience, signature, lifetime, single-use refresh rotation, reuse detection, and family revocation are enforced
 - [x] Signing-key storage and rotation reviewed — server-only current/previous keys support zero-downtime rotation; new tokens use only the current key
 - [ ] Every protected route has a server-side guard
-- [ ] Role changes take effect immediately
+- [x] Role changes take effect immediately — cookie and bearer guards re-read the current database role; privileged cookie routes also reject incomplete accounts
 - [x] Sensitive auth, admin, author, and versioned API responses use `Cache-Control: private, no-store`
 
 ## Validation and data protection
