@@ -573,22 +573,22 @@ Keep the Vuetify 4 administration interface compatible with all backend changes.
 
 ## Regression checks
 
-- [ ] Admin login/logout
-- [ ] Password reset/change
-- [ ] Dashboard
-- [ ] Article create/edit/delete
+- [x] Admin login/logout
+- [x] Password reset/change
+- [x] Dashboard
+- [x] Article create/edit/delete
 - [ ] Media upload
-- [ ] Categories
-- [ ] Authors
-- [ ] Reported comments
-- [ ] Subscribers
-- [ ] Profile/avatar
-- [ ] Arabic and French routes
-- [ ] Mobile and desktop web layouts
+- [x] Categories
+- [x] Authors
+- [~] Reported comments — reviewed visually; explicit resolution verification remains
+- [x] Subscribers
+- [x] Profile/avatar
+- [x] Arabic and French routes
+- [~] Mobile and desktop web layouts — RTL verified; explicit responsive-layout verification remains
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Milestone 8 alignment started. The cookie-authenticated admin profile now lists minimized Flutter device-session metadata and lets the administrator revoke owned mobile sessions without exposing bearer tokens or token hashes. The interface uses Vuetify core components, supports Arabic/French text, and keeps the existing cookie session separate from mobile sessions. Article revision-conflict support was completed during Milestone 7. Remaining middleware, standardized-error/pagination adoption, and manual regression checks are still open.
+Notes: Milestone 8 alignment started. Manual web regression verified admin authentication and redirects, real dashboard counts, article CRUD and publishing, bilingual/RTL editing, category and author CRUD, subscriber operations/export, and profile/avatar/email/password changes. Newly created database categories now refresh into the article editor selector when the create page opens. The cookie-authenticated admin profile now lists minimized Flutter device-session metadata and lets the administrator revoke owned mobile sessions without exposing bearer tokens or token hashes. The interface uses Vuetify core components, supports Arabic/French text, and keeps the existing cookie session separate from mobile sessions. Article revision-conflict support was completed during Milestone 7. Remaining middleware, standardized-error/pagination adoption, and manual regression checks are still open.
 
 ---
 
@@ -691,7 +691,7 @@ Notes:
 - [x] Run lint locally
 - [x] Run typecheck locally
 - [x] Run relevant unit/integration tests locally
-- [ ] Manually test Nuxt web admin
+- [~] Manually test Nuxt web admin — core flows passed; media, explicit report resolution, responsive layouts, and Flutter-session revocation remain
 - [ ] Manually test Flutter against development/staging API
 - [ ] No pipeline is required for this workflow
 
