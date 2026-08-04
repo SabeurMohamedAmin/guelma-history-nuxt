@@ -83,7 +83,7 @@ export class MobileAuthSessionRepository {
         where: eq(mobileAdminSessions.tokenHash, input.currentTokenHash),
       })
 
-      if (!current || current.expiresAt <= new Date()) return { status: 'invalid' }
+      if (!current || current.expiresAt <= new Date()) return { status: 'invalid' as const }
 
       if (current.revokedAt || current.replacedBySessionId) {
         return { status: 'reuse-detected' as const, tokenFamilyId: current.tokenFamilyId }
