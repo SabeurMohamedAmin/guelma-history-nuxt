@@ -179,7 +179,7 @@ export default defineNuxtConfig({
     '/api/auth/**': {
       headers: {
         'cache-control': 'private, no-store',
-        pragma: 'no-cache',
+        'pragma': 'no-cache',
       },
       security: {
         rateLimiter: {
@@ -192,7 +192,7 @@ export default defineNuxtConfig({
     '/api/v1/admin/auth/**': {
       headers: {
         'cache-control': 'private, no-store',
-        pragma: 'no-cache',
+        'pragma': 'no-cache',
       },
       security: {
         rateLimiter: {
@@ -206,13 +206,13 @@ export default defineNuxtConfig({
     '/api/admin/**': {
       headers: {
         'cache-control': 'private, no-store',
-        pragma: 'no-cache',
+        'pragma': 'no-cache',
       },
     },
     '/api/author/**': {
       headers: {
         'cache-control': 'private, no-store',
-        pragma: 'no-cache',
+        'pragma': 'no-cache',
       },
     },
 

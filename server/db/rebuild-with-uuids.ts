@@ -166,7 +166,7 @@ async function restoreBackup(sql: postgres.Sql): Promise<void> {
   const backup = JSON.parse(await readFile(backupPath, 'utf8')) as Backup
   const aliases = buildIdAliases(backup)
 
-  await sql.begin(async transaction => {
+  await sql.begin(async (transaction) => {
     for (const table of tableOrder) {
       const rows = backup.tables[table] || []
       let restoredCount = 0

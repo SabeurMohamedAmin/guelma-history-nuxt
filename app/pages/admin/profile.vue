@@ -296,14 +296,23 @@ definePageMeta({
         type="list-item-two-line@2"
       />
 
-      <v-list v-else-if="mobileSessions.length" lines="three">
-        <template v-for="(session, index) in mobileSessions" :key="session.id">
+      <v-list
+        v-else-if="mobileSessions.length"
+        lines="three"
+      >
+        <template
+          v-for="(session, index) in mobileSessions"
+          :key="session.id"
+        >
           <v-list-item
             :prepend-icon="session.platform === 'ios' ? 'mdi-apple' : 'mdi-android'"
             :title="session.deviceName || t('profile.mobileSessions.unknownDevice')"
           >
             <v-list-item-subtitle>
-              {{ session.platform }}<template v-if="session.appVersion"> · v{{ session.appVersion }}</template>
+              {{ session.platform }}
+              <template v-if="session.appVersion">
+                · v{{ session.appVersion }}
+              </template>
             </v-list-item-subtitle>
             <v-list-item-subtitle>
               {{ t('profile.mobileSessions.lastUsed', { date: formatDateTime(session.lastUsedAt, localeCode) }) }}

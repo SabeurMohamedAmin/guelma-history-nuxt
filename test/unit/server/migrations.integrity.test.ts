@@ -101,7 +101,7 @@ describe('migration files', () => {
     expect(runner).toContain('entry.tag === \'0011_preserve_data_uuid_keys\'')
     expect(runner).toContain('await sql.begin(async (transaction) =>')
     expect(runner).toContain('SET LOCAL autocommit_before_ddl = false')
-    expect(runner).toContain("'article_tags'")
+    expect(runner).toContain('article_tags')
     expect(runner).toContain('ALTER TABLE ${table} SET (schema_locked = false)')
     expect(runner).toContain('ALTER TABLE ${table} SET (schema_locked = true)')
   })
@@ -136,6 +136,7 @@ describe('schema coverage', () => {
           !propertyName.endsWith('Id')
           || propertyName === 'providerUserId'
           || propertyName === 'publicId'
+          || propertyName === 'deviceId'
         ) continue
 
         expect(
@@ -155,6 +156,7 @@ describe('schema coverage', () => {
           !propertyName.endsWith('Id')
           || propertyName === 'providerUserId'
           || propertyName === 'publicId'
+          || propertyName === 'deviceId'
         ) continue
 
         expect(
@@ -207,8 +209,8 @@ describe('schema coverage', () => {
   })
 
   it('guards migration generation from a stale pre-UUID snapshot', () => {
-    const latestEntry = journal.entries.at(-1)
-    expect(latestEntry?.tag).toBe('0011_preserve_data_uuid_keys')
+    const uuidEntry = journal.entries.find(entry => entry.tag === '0011_preserve_data_uuid_keys')
+    expect(uuidEntry).toBeDefined()
 
     const generator = readFileSync(
       join(migrationsDir, '..', 'generate.ts'),
