@@ -78,7 +78,7 @@ export class MobileAuthSessionRepository {
    * concurrency gate: only one request can claim an active token.
    */
   async rotate(input: RotateMobileSessionInput): Promise<RotateMobileSessionResult> {
-    return db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const current = await tx.query.mobileAdminSessions.findFirst({
         where: eq(mobileAdminSessions.tokenHash, input.currentTokenHash),
       })
@@ -86,13 +86,7 @@ export class MobileAuthSessionRepository {
       if (!current || current.expiresAt <= new Date()) return { status: 'invalid' }
 
       if (current.revokedAt || current.replacedBySessionId) {
-        await tx.update(mobileAdminSessions)
-          .set({ revokedAt: new Date() })
-          .where(and(
-            eq(mobileAdminSessions.tokenFamilyId, current.tokenFamilyId),
-            isNull(mobileAdminSessions.revokedAt),
-          ))
-        return { status: 'reuse-detected' }
+        return { status: 'reuse-detected' as const, tokenFamilyId: current.tokenFamilyId }
       }
 
       const [claimed] = await tx.update(mobileAdminSessions)
@@ -105,13 +99,7 @@ export class MobileAuthSessionRepository {
         .returning()
 
       if (!claimed) {
-        await tx.update(mobileAdminSessions)
-          .set({ revokedAt: new Date() })
-          .where(and(
-            eq(mobileAdminSessions.tokenFamilyId, current.tokenFamilyId),
-            isNull(mobileAdminSessions.revokedAt),
-          ))
-        return { status: 'reuse-detected' }
+        return { status: 'reuse-detected' as const, tokenFamilyId: current.tokenFamilyId }
       }
 
       const [next] = await tx.insert(mobileAdminSessions).values({
@@ -131,8 +119,17 @@ export class MobileAuthSessionRepository {
         .set({ replacedBySessionId: next.id })
         .where(eq(mobileAdminSessions.id, current.id))
 
-      return { status: 'rotated', session: next }
+      return { status: 'rotated' as const, session: next }
     })
+
+    if (result.status === 'reuse-detected') {
+      // Use a fresh transaction snapshot. During concurrent rotation, the
+      // losing transaction may not see the replacement inserted by the winner.
+      await this.revokeFamily(result.tokenFamilyId)
+      return { status: 'reuse-detected' }
+    }
+
+    return result
   }
 
   async listActiveForUser(userId: string) {
