@@ -213,13 +213,18 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     },
   })
 
-  const { data: rawCategories } = useFetch<SelectOption[]>(() => config.value.categoriesUrl, {
+  const { data: rawCategories, refresh: refreshCategories } = useFetch<SelectOption[]>(() => config.value.categoriesUrl, {
     default: () => [],
   })
 
-  const { data: rawAuthors } = useFetch<SelectOption[]>(() => config.value.authorsUrl, {
+  const { data: rawAuthors, refresh: refreshAuthors } = useFetch<SelectOption[]>(() => config.value.authorsUrl, {
     default: () => [],
   })
+
+  /** Reload selectors so newly created database records appear in the editor. */
+  async function refreshOptions() {
+    await Promise.all([refreshCategories(), refreshAuthors()])
+  }
 
   const categories = computed<SelectOption[]>(() =>
     Array.isArray(rawCategories.value) ? rawCategories.value : [],
@@ -569,6 +574,7 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     listPath,
     categories,
     authors,
+    refreshOptions,
     configureFlow,
     submit,
     loadArticle,
