@@ -44,11 +44,23 @@ export function defineVersionedApiHandler<T>(handler: VersionedApiHandler<T>) {
       // stable response contract and do not need noisy logs. Never serialize
       // the request body, headers, bearer token, password, or refresh token.
       if (descriptor.statusCode >= 500) {
+        const errorDetails =
+          typeof error === 'object' && error !== null
+            ? error as Record<string, unknown>
+            : null
+
         console.error('[api] Unexpected versioned API failure', {
           requestId,
           method: event.method,
           path: event.path,
           errorName: error instanceof Error ? error.name : 'UnknownError',
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorCode: errorDetails?.code
+            ? String(errorDetails.code)
+            : undefined,
+          errorConstraint: errorDetails?.constraint
+            ? String(errorDetails.constraint)
+            : undefined,
         })
       }
 
