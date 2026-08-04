@@ -283,7 +283,10 @@ definePageMeta({
     >
       <v-card-item>
         <template #prepend>
-          <v-icon icon="mdi-cellphone-lock" color="primary" />
+          <v-icon
+            icon="mdi-cellphone-lock"
+            color="primary"
+          />
         </template>
         <v-card-title>{{ t('profile.mobileSessions.title') }}</v-card-title>
         <v-card-subtitle>{{ t('profile.mobileSessions.subtitle') }}</v-card-subtitle>
