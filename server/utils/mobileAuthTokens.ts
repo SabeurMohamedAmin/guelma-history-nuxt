@@ -10,13 +10,21 @@ const MINIMUM_SIGNING_KEY_LENGTH = 32
 export function getMobileAuthConfig(): MobileAuthConfig {
   const config = useRuntimeConfig().mobileAuth
   const signingKey = String(config.signingKey || '')
+  const previousSigningKey = String(config.previousSigningKey || '')
 
   if (signingKey.length < MINIMUM_SIGNING_KEY_LENGTH) {
     throw new Error('NUXT_MOBILE_AUTH_SIGNING_KEY must contain at least 32 characters.')
   }
+  if (previousSigningKey && previousSigningKey.length < MINIMUM_SIGNING_KEY_LENGTH) {
+    throw new Error('NUXT_MOBILE_AUTH_PREVIOUS_SIGNING_KEY must contain at least 32 characters.')
+  }
+  if (previousSigningKey && previousSigningKey === signingKey) {
+    throw new Error('The current and previous mobile signing keys must be different.')
+  }
 
   return {
     signingKey,
+    previousSigningKey: previousSigningKey || undefined,
     issuer: String(config.issuer),
     audience: String(config.audience),
     accessTokenTtlSeconds: positiveInteger(config.accessTokenTtlSeconds, 900),
@@ -63,8 +71,12 @@ export function verifyMobileAccessToken(
   const [header, payload, signature] = parts
   if (!header || !payload || !signature) return null
 
-  const expectedSignature = sign(`${header}.${payload}`, config.signingKey)
-  if (!safeEqual(signature, expectedSignature)) return null
+  const signedValue = `${header}.${payload}`
+  const validCurrentSignature = safeEqual(signature, sign(signedValue, config.signingKey))
+  const validPreviousSignature = config.previousSigningKey
+    ? safeEqual(signature, sign(signedValue, config.previousSigningKey))
+    : false
+  if (!validCurrentSignature && !validPreviousSignature) return null
 
   try {
     const parsedHeader = decodeJson<{ alg?: string, typ?: string }>(header)
