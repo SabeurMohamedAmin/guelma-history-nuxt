@@ -614,6 +614,17 @@
     "passwordError": "تعذّر تغيير كلمة المرور",
     "emailUpdated": "تم تحديث البريد",
     "emailError": "تعذّر تغيير البريد",
+    "mobileSessions": {
+      "title": "جلسات Flutter",
+      "subtitle": "اعرض الأجهزة المتصلة بتطبيق الهاتف وألغِ جلساتها.",
+      "unknownDevice": "جهاز بلا اسم",
+      "lastUsed": "آخر نشاط: {date}",
+      "revoke": "إلغاء الجلسة",
+      "revoked": "تم إلغاء جلسة الهاتف",
+      "revokeError": "تعذّر إلغاء جلسة الهاتف",
+      "empty": "لا توجد جلسات هاتف نشطة",
+      "emptyHint": "ستظهر هنا الأجهزة المتصلة بتطبيق Flutter."
+    },
     "deleteAccount": {
       "title": "منطقة الخطر",
       "description": "احذف حسابك وجميع البيانات المرتبطة به نهائياً.",

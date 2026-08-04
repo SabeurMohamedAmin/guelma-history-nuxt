@@ -596,6 +596,17 @@
     "passwordError": "Échec du changement de mot de passe",
     "emailUpdated": "E-mail mis à jour",
     "emailError": "Échec du changement d'e-mail",
+    "mobileSessions": {
+      "title": "Sessions Flutter",
+      "subtitle": "Consultez et révoquez les appareils connectés à l'application mobile.",
+      "unknownDevice": "Appareil sans nom",
+      "lastUsed": "Dernière activité : {date}",
+      "revoke": "Révoquer",
+      "revoked": "Session mobile révoquée",
+      "revokeError": "Impossible de révoquer la session mobile",
+      "empty": "Aucune session mobile active",
+      "emptyHint": "Les appareils connectés à l'application Flutter apparaîtront ici."
+    },
     "deleteAccount": {
       "title": "Zone de danger",
       "description": "Supprimez définitivement votre compte et toutes les données qui lui sont associées.",

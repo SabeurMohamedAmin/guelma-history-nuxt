@@ -563,9 +563,9 @@ Keep the Vuetify 4 administration interface compatible with all backend changes.
 - [ ] Verify all admin middleware
 - [ ] Use standardized API errors in web composables
 - [ ] Adopt standardized pagination where useful
-- [ ] Add mobile-device session management to security/profile settings
-- [ ] Allow admins to revoke Flutter sessions
-- [ ] Update the article editor for revision conflicts
+- [x] Add mobile-device session management to security/profile settings
+- [x] Allow admins to revoke Flutter sessions
+- [x] Update the article editor for revision conflicts
 - [ ] Preserve Arabic, French, and RTL behavior
 - [ ] Prefer Vuetify 4 core components and utility classes
 - [ ] Keep custom CSS readable, small, and scoped
@@ -587,8 +587,8 @@ Keep the Vuetify 4 administration interface compatible with all backend changes.
 - [ ] Mobile and desktop web layouts
 
 Completed:
-Commit/MR:
-Notes:
+Commit/MR: tracked in the `dev` branch
+Notes: Milestone 8 alignment started. The cookie-authenticated admin profile now lists minimized Flutter device-session metadata and lets the administrator revoke owned mobile sessions without exposing bearer tokens or token hashes. The interface uses Vuetify core components, supports Arabic/French text, and keeps the existing cookie session separate from mobile sessions. Article revision-conflict support was completed during Milestone 7. Remaining middleware, standardized-error/pagination adoption, and manual regression checks are still open.
 
 ---
 
