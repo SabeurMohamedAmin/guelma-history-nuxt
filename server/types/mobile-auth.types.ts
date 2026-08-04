@@ -1,5 +1,6 @@
 export interface MobileAuthConfig {
   signingKey: string
+  previousSigningKey?: string
   issuer: string
   audience: string
   accessTokenTtlSeconds: number

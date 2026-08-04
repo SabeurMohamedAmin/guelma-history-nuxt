@@ -60,6 +60,10 @@ export default defineNuxtConfig({
     // never be moved into runtimeConfig.public.
     mobileAuth: {
       signingKey: '',
+      // Temporary fallback for zero-downtime key rotation. Set the old key via
+      // NUXT_MOBILE_AUTH_PREVIOUS_SIGNING_KEY, then remove it after the access
+      // token TTL has elapsed. New tokens are always signed by signingKey.
+      previousSigningKey: '',
       issuer: 'guelma-history-api',
       audience: 'guelma-history-flutter-admin',
       accessTokenTtlSeconds: 15 * 60,
