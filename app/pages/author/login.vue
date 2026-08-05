@@ -56,7 +56,7 @@ async function onLogin() {
     await navigateTo(getSafeAuthorRedirect())
   }
   catch (error) {
-    errorMessage.value = getErrorMessage(error, t('auth.loginError'))
+    errorMessage.value = getApiErrorMessage(error, t('auth.loginError'))
   }
   finally {
     loading.value = false
@@ -75,15 +75,6 @@ function goBack() {
   }
 
   return navigateTo(localePath('/'))
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error && typeof error === 'object' && 'data' in error) {
-    const data = (error as { data?: { message?: string } }).data
-    if (data?.message) return data.message
-  }
-
-  return fallback
 }
 
 definePageMeta({
