@@ -43,9 +43,20 @@ export async function processAvatarImage(input: Buffer): Promise<ProcessedAvatar
   }
 
   try {
-    const data = await sharp(input)
+    const image = sharp(input, {
+      failOn: 'error',
+      limitInputPixels: 40_000_000,
+      sequentialRead: true,
+    })
+    const metadata = await image.metadata()
+
+    if (!metadata.format || !['jpeg', 'png', 'webp', 'gif'].includes(metadata.format)) {
+      throw new Error('Unsupported avatar format')
+    }
+
+    const data = await image
       .rotate() // honor EXIF orientation before resizing
-      .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: 'fill' })
+      .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: 'cover' })
       .webp({ quality: AVATAR_QUALITY })
       .toBuffer()
 
@@ -53,9 +64,9 @@ export async function processAvatarImage(input: Buffer): Promise<ProcessedAvatar
   }
   catch {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
-      message: 'The uploaded file is not a valid image.',
+      statusCode: 415,
+      statusMessage: 'Unsupported Media Type',
+      message: 'The uploaded file must be a valid JPEG, PNG, WebP, or GIF image.',
     })
   }
 }
