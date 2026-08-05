@@ -22,9 +22,20 @@ const submit = async () => {
     form.section = ''
     form.message = ''
   }
-  catch (error: unknown) {
-    const e = error as { data?: { message?: string, statusMessage?: string }, message?: string }
-    errorMessage.value = e?.data?.message || e?.data?.statusMessage || e?.message || (isFrench.value ? 'Impossible d’envoyer la demande.' : 'تعذر إرسال الطلب.')
+  catch (error) {
+    // A 429 comes from the route rate limit and carries no readable body, so we
+    // keep our own localized wording rather than an English HTTP label.
+    if (getApiErrorStatus(error) === 429) {
+      errorMessage.value = isFrench.value
+        ? 'Trop de tentatives. Réessayez dans quelques minutes.'
+        : 'محاولات كثيرة. يرجى إعادة المحاولة بعد بضع دقائق.'
+      return
+    }
+
+    errorMessage.value = getApiErrorMessage(
+      error,
+      isFrench.value ? 'Impossible d’envoyer la demande.' : 'تعذر إرسال الطلب.',
+    )
   }
   finally {
     loading.value = false

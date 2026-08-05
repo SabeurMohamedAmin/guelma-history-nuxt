@@ -87,3 +87,25 @@ export function getApiFieldErrors(error: unknown): Record<string, string[]> {
 export function getApiRequestId(error: unknown): string | null {
   return getErrorBody(error)?.error?.requestId ?? null
 }
+
+/**
+ * The HTTP status of a failed call, or null when the request never reached the
+ * server (a network failure has no status).
+ *
+ * Useful for the responses that carry no readable body of their own — a 429
+ * from the route rate limiter, for instance — where the page should supply its
+ * own localized wording instead of an English HTTP label.
+ *
+ * `statusCode` is what ofetch's FetchError and H3 errors expose; `status` is
+ * checked as a fallback for a raw Response-like object.
+ */
+export function getApiErrorStatus(error: unknown): number | null {
+  if (!error || typeof error !== 'object') return null
+
+  const candidate = error as { statusCode?: unknown, status?: unknown }
+  const status = typeof candidate.statusCode === 'number'
+    ? candidate.statusCode
+    : candidate.status
+
+  return typeof status === 'number' ? status : null
+}
