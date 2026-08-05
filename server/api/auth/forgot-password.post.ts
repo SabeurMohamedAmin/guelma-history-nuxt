@@ -1,11 +1,9 @@
-import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { users } from '~~/server/db/schema/users'
 import { createResetToken } from '~~/server/utils/passwordReset'
 import { sendPasswordResetEmail } from '~~/server/utils/email/password-reset'
-
-const emailSchema = z.string().trim().toLowerCase().email().max(254)
+import { forgotPasswordSchema } from '~~/server/validators/admin-auth.validator'
 
 const GENERIC_MESSAGE = 'If that email belongs to an account, a reset link has been sent.'
 
@@ -17,17 +15,13 @@ const GENERIC_MESSAGE = 'If that email belongs to an account, a reset link has b
  * email exists, to prevent account enumeration.
  */
 export default defineEventHandler(async (event) => {
-  const { email } = await readBody<{ email?: string }>(event)
-
-  // Reject malformed emails, but with the same generic response as a
-  // non-existent account so we never reveal which emails are registered.
-  const parsed = emailSchema.safeParse(email)
-  if (!parsed.success) {
-    return { message: GENERIC_MESSAGE }
-  }
+  // Keep malformed input indistinguishable from an unknown account while
+  // still applying a strict request schema and rejecting extra fields.
+  const parsed = forgotPasswordSchema.safeParse(await readBody(event))
+  if (!parsed.success) return { message: GENERIC_MESSAGE }
 
   const user = await db.query.users.findFirst({
-    where: eq(users.email, parsed.data),
+    where: eq(users.email, parsed.data.email),
   })
 
   if (user) {
