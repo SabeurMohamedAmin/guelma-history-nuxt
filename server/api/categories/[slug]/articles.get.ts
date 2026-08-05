@@ -50,6 +50,13 @@ function parseDate(value: unknown): Date | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+// Defensive ceiling on one category response. The category page renders every
+// published article of a category and paginates client-side, so the contract
+// stays a plain array — but without any LIMIT a single request would grow with
+// the whole archive forever. 500 is far above the realistic size of one
+// category on this site while bounding the worst-case response cost.
+const MAX_CATEGORY_ARTICLES = 500
+
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
 
@@ -108,6 +115,7 @@ export default defineEventHandler(async (event) => {
     .leftJoin(authors, eq(articles.authorId, authors.id))
     .where(and(...conditions))
     .orderBy(order(orderColumn))
+    .limit(MAX_CATEGORY_ARTICLES)
 
   return {
     category: {
