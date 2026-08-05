@@ -613,6 +613,8 @@ These features are not required to enable the first Flutter release. Implement t
 
 - [ ] Add real moderation states separately from reports/flags
 - [ ] Record moderation actor, time, and reason
+- [ ] Decide whether unauthenticated guest comments may stay auto-approved — `POST /api/articles/comments` inserts with `status: 'approved'` and no session, so only a rate limit stands between a script and published comment text
+- [ ] Converge the two comment write paths — the guest insert stores the Zod-validated message directly while the session path in `server/utils/comments.ts` has `sanitizeComment()`; confirm the difference is intended and that both are safe for how the client renders them
 
 ## Historical references
 
@@ -684,6 +686,7 @@ Notes:
 - [ ] Concurrent editing tested
 - [~] External provider failures handled — article image uploads clean up successfully created Cloudinary assets after partial failures; remaining email/provider paths require review
 - [~] Pagination sizes capped — article and comment list schemas enforce bounded page sizes and now reject unknown query parameters; remaining list domains require review
+- [~] Public write endpoints are rate-limited — newsletter subscribe/confirm/unsubscribe, article correction requests, and guest article comments now carry explicit route limits instead of relying on the global 150-per-minute budget; guest comments share their path with the GET that renders the comment list, so route rules cannot make that one method-specific
 - [ ] N+1 database queries removed
 - [ ] Only required columns selected
 - [ ] Evidence-based indexes added
