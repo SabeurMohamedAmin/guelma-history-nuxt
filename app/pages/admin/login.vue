@@ -52,7 +52,14 @@ async function onLogin(credentials: { username: string, password: string }) {
 }
 
 function goBack() {
-  navigateTo(localePath('/admin/login'))
+  // navigateTo() only accepts routes, so step back through the browser and fall
+  // back to the public home page when there is no history to return to.
+  if (import.meta.client && window.history.length > 1) {
+    window.history.back()
+    return
+  }
+
+  return navigateTo(localePath('/'))
 }
 
 function goHome() {
@@ -83,7 +90,7 @@ const backIcon = computed(() =>
 
 <template>
   <div class="admin-login-page">
-    <section class="d-flex justify-space-between items-center">
+    <section class="d-flex justify-space-between align-center">
       <v-btn
         variant="text"
         :icon="backIcon"
@@ -111,22 +118,5 @@ const backIcon = computed(() =>
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.admin-login-page__actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.admin-login-page__link {
-  border: none;
-  background: transparent;
-  padding: 0;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  text-decoration: underline;
 }
 </style>

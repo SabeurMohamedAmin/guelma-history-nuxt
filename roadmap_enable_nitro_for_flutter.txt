@@ -559,15 +559,15 @@ Keep the Vuetify 4 administration interface compatible with all backend changes.
 
 ## Tasks
 
-- [ ] Preserve cookie-based web authentication
-- [ ] Verify all admin middleware
+- [x] Preserve cookie-based web authentication — the web admin still signs in through `/api/auth/login` and the sealed `nuxt-auth-utils` cookie; the central API middleware enforces `/api/admin/**` and `/api/author/**` through the same `requireRole()` cookie path, and Flutter bearer authentication remains a separate mechanism
+- [x] Verify all admin middleware — `admin.ts` requires the exact `admin` role, `author.ts` uses `hasRole()` so admins inherit, `admin-guest.ts` and `author-guest.ts` redirect logged-in visitors away from the login pages by role without creating a loop, and `user-layout.global.ts` only swaps a layout and carries no authorization. Both login pages sanitize the `?redirect=` query by stripping the locale prefix, requiring the path to stay inside `/admin` or `/author`, and rejecting protocol-relative `//` values, so the guards cannot be turned into an open redirect
 - [ ] Use standardized API errors in web composables
 - [ ] Adopt standardized pagination where useful
 - [x] Add mobile-device session management to security/profile settings
 - [x] Allow admins to revoke Flutter sessions
 - [x] Update the article editor for revision conflicts
 - [ ] Preserve Arabic, French, and RTL behavior
-- [ ] Prefer Vuetify 4 core components and utility classes
+- [~] Prefer Vuetify 4 core components and utility classes — the admin login page's non-Vuetify `items-center` class was replaced with `align-center` and its dead scoped rules removed; a full sweep of the admin pages remains
 - [ ] Keep custom CSS readable, small, and scoped
 - [ ] Keep SFC order: `<script setup lang="ts">`, `<template>`, `<style scoped>`
 
