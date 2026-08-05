@@ -115,10 +115,13 @@ describe('tier table safety', () => {
   it('never lists a privileged prefix as public', () => {
     const publicPatterns = PUBLIC_ROUTES.map(route => route.split(' ')[1] ?? '')
 
+    // isPathInside respects segment boundaries, so the privileged
+    // /api/author (singular) prefix cannot swallow the public /api/authors
+    // (plural) routes the way a bare startsWith() would.
     const privileged = publicPatterns.filter(pattern =>
-      pattern.startsWith('/api/admin')
-      || pattern.startsWith('/api/author')
-      || (pattern.startsWith('/api/v1/admin') && !pattern.startsWith('/api/v1/admin/auth/')),
+      isPathInside(pattern, '/api/admin')
+      || isPathInside(pattern, '/api/author')
+      || (isPathInside(pattern, '/api/v1/admin') && !isPathInside(pattern, '/api/v1/admin/auth')),
     )
 
     expect(privileged).toEqual([])
