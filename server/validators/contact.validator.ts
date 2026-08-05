@@ -21,6 +21,12 @@ export const contactSchema = z.object({
       .trim()
       .min(1)
       .max(255)
+      // Control characters, DEL and path separators are rejected on purpose:
+      // the filename reaches email MIME headers and the filesystem, where a
+      // newline or a slash would let a sender forge headers or escape the
+      // upload directory. The control range IS the check here, so the ESLint
+      // rule is disabled rather than the guard weakened.
+      // eslint-disable-next-line no-control-regex
       .refine(name => !/[\u0000-\u001F\u007F/\\]/.test(name), 'Invalid attachment filename'),
     contentType: z.string().trim().min(1).max(255),
     content: z.string().min(1).max(Math.ceil(MAX_TOTAL_ATTACHMENT_BYTES * 4 / 3) + 4),

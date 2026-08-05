@@ -1,4 +1,4 @@
-import { getRequestURL, type H3Event } from 'h3'
+import { getRequestURL } from 'h3'
 
 const publicMobileAdminRoutes = new Set([
   '/api/v1/admin/auth/login',
