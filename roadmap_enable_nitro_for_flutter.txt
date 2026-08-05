@@ -669,8 +669,9 @@ Notes:
 
 - [~] Every write endpoint uses Zod validation — legacy authentication, newsletter, category, author, subscriber-status, article, and comment writes now use strict schemas with bounded fields and collections; empty article/category updates are rejected; remaining write routes require a complete audit
 - [~] Upload content and size validation reviewed — article media and contact attachments verify declared MIME against file signatures; web/mobile avatar limits are synchronized and decoded images are format/pixel bounded; attachment names, compound extensions, fields, and sizes are validated; avatar/contact uploads are rate-limited; endpoint integration coverage remains
+- [ ] Decide the user avatar upload limit — `/api/auth/user/profile/avatar` has no request-size route rule, so it inherits the 2 MB nuxt-security default while the admin and Flutter avatar routes allow 21 MB; a typical phone photo is larger than 2 MB, so this is a functional decision rather than a security gap
 - [x] Subscriber/device data and mobile article save metadata use explicit minimization; internal save-actor UUIDs are not serialized to Flutter
-- [x] Public article routes never return unpublished content — `GET /api/articles` forces `status=published` so a client cannot list drafts, and `GET /api/articles/:slug` answers 404 for a draft unless the caller is the admin or its owning author; minimizing the remaining public response fields (full bodies, `lastSavedByUserId`) is still open
+- [x] Public article routes never return unpublished content — `GET /api/articles` forces `status=published` so a client cannot list drafts, and `GET /api/articles/:slug` answers 404 for a draft unless the caller is the admin or its owning author; the internal `lastSavedByUserId` actor UUID is now stripped from both public article responses, leaving only the bilingual content the public page renders
 - [x] Versioned API failure logs exclude bodies, headers, passwords, tokens, and sensitive content; broader provider-log review remains part of operations
 - [x] Production errors do not expose stack traces or unexpected internal error messages
 - [ ] Database migrations tested against realistic data
@@ -686,7 +687,7 @@ Notes:
 - [ ] N+1 database queries removed
 - [ ] Only required columns selected
 - [ ] Evidence-based indexes added
-- [~] Authentication, save, upload, and provider failures monitored — safe server failure logging and bounded auth/article-upload/avatar/contact/autosave rates exist; production alerting remains
+- [~] Authentication, save, upload, and provider failures monitored — safe server failure logging and bounded auth/article-upload/avatar/contact/autosave rates exist; the strict credential limit no longer applies to four exact authenticated session paths (own avatar, profile view, display-name, logout) that a normal browsing session could previously exhaust; production alerting remains
 
 ## Local verification
 

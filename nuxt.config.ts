@@ -207,6 +207,29 @@ export default defineNuxtConfig({
         },
       },
     },
+    // Session-scoped reads live under /api/auth/** but are NOT brute-force
+    // targets: they need an authenticated session already. Under the strict
+    // limit above, a member browsing a handful of pages in five minutes could
+    // exhaust a budget meant for credential stuffing and be locked out of
+    // ordinary navigation — including logout.
+    //
+    // Only these EXACT paths are relaxed. Every credential endpoint (all the
+    // logins, register, forgot/reset password, verify-email, and the
+    // password/email profile changes that verify the current password) keeps
+    // the strict limit from the broad rule above.
+    '/api/auth/user/avatar': {
+      security: { rateLimiter: { tokensPerInterval: 60, interval: 300000 } },
+    },
+    '/api/auth/user/profile': {
+      security: { rateLimiter: { tokensPerInterval: 60, interval: 300000 } },
+    },
+    '/api/auth/user/profile/display-name': {
+      security: { rateLimiter: { tokensPerInterval: 60, interval: 300000 } },
+    },
+    '/api/auth/logout': {
+      security: { rateLimiter: { tokensPerInterval: 30, interval: 300000 } },
+    },
+
     // Flutter credentials and refresh tokens receive the same strict limit.
     '/api/v1/admin/auth/**': {
       headers: {

@@ -30,7 +30,9 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
-      data: result.data,
+      // Drop the internal editor account id from every listed article, for the
+      // same reason as the article detail route.
+      data: result.data.map(({ lastSavedByUserId: _actorId, ...article }) => article),
       pagination: result.pagination,
     }
   }
