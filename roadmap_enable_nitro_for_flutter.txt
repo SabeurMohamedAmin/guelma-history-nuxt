@@ -666,7 +666,7 @@ Notes:
 
 ## Validation and data protection
 
-- [~] Every write endpoint uses Zod validation — legacy admin login, forgot-password, and reset-password now use strict centralized schemas; remaining write routes require a complete audit
+- [~] Every write endpoint uses Zod validation — legacy authentication uses strict centralized schemas; category and author writes now reject unknown fields, empty updates, and oversized text/URL values; remaining write routes require a complete audit
 - [ ] Upload content and size validation reviewed
 - [x] Subscriber/device data and mobile article save metadata use explicit minimization; internal save-actor UUIDs are not serialized to Flutter
 - [x] Versioned API failure logs exclude bodies, headers, passwords, tokens, and sensitive content; broader provider-log review remains part of operations
