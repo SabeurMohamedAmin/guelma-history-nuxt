@@ -270,6 +270,14 @@ export default defineNuxtConfig({
         },
       },
     },
+    '/api/admin/profile/avatar': {
+      security: {
+        requestSizeLimiter: {
+          maxRequestSizeInBytes: 21_000_000,
+          maxUploadFileRequestInBytes: 21_000_000,
+        },
+      },
+    },
     '/api/v1/admin/profile/avatar': {
       security: {
         requestSizeLimiter: {
