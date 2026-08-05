@@ -96,6 +96,21 @@ export default defineNuxtConfig({
       },
     },
 
+    // Deny-by-default switch for the central /api route classification in
+    // server/middleware/privileged-api-auth.ts.
+    //
+    // false (default) = AUDIT mode: privileged prefixes are enforced, while
+    //   session-tier and unclassified routes are only logged as [security]
+    //   warnings. Nothing is blocked, so a wrong classification cannot break a
+    //   page.
+    // true = ENFORCE mode: session-tier routes require a signed-in account and
+    //   an unclassified /api route is rejected with 401.
+    //
+    // Roll it out by setting NUXT_ENFORCE_API_ROUTE_TIERS=true in DEVELOPMENT
+    // first, exercising the app, and enabling it in production only once no
+    // [security] warning appears. Server-only: never move this to public.
+    enforceApiRouteTiers: process.env.NUXT_ENFORCE_API_ROUTE_TIERS === 'true',
+
     // Destination inbox for verified contact messages
     // (override via NUXT_CONTACT_OWNER_EMAIL).
     contactOwnerEmail: '',

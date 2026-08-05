@@ -18,14 +18,18 @@ import {
  * which is pure and unit tested. This file only enforces and logs.
  *
  * ---------------------------------------------------------------------------
- * AUDIT MODE
+ * AUDIT vs ENFORCE
  * ---------------------------------------------------------------------------
- * Privileged prefixes are enforced, exactly as before. Session-tier and
- * unclassified routes are only LOGGED, so this file cannot break a page while
- * the classification is verified against real traffic.
+ * Privileged prefixes are ALWAYS enforced. What the runtime flag
+ * `enforceApiRouteTiers` (NUXT_ENFORCE_API_ROUTE_TIERS) controls is the rest:
  *
- * To switch to deny-by-default, replace the two `warnOnce(...)` calls below
- * with `throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })`.
+ * - false (default): session-tier and unclassified routes are only LOGGED, so
+ *   a wrong classification cannot break a page.
+ * - true: session-tier routes require a signed-in account, and an unclassified
+ *   `/api` route is rejected with 401.
+ *
+ * Enable it in development first and watch for `[security]` warnings before
+ * turning it on in production.
  */
 export default defineEventHandler(async (event) => {
   // Preflight carries no credentials; CORS handles it.
@@ -49,12 +53,30 @@ export default defineEventHandler(async (event) => {
   // ── Audited tiers ───────────────────────────────────────────────────
   if (matchesAnyRoute(PUBLIC_ROUTES, event.method, pathname)) return
 
+  const { enforceApiRouteTiers } = useRuntimeConfig(event)
+
   if (matchesAnyRoute(SESSION_ROUTES, event.method, pathname)) {
+    if (enforceApiRouteTiers) {
+      // 'user' and NOT requireCompleteUser: the reading list must keep working
+      // for an OAuth sign-up that has not finished onboarding yet. Handlers
+      // still apply their own stricter guard where they need one.
+      await requireRole(event, 'user')
+      return
+    }
+
     const session = await getUserSession(event)
     if (!session?.user) {
       warnOnce(`session route reached without a session: ${event.method} ${pathname}`)
     }
     return
+  }
+
+  if (enforceApiRouteTiers) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      message: 'Authentication required.',
+    })
   }
 
   warnOnce(`unclassified API route: ${event.method} ${pathname}`)
