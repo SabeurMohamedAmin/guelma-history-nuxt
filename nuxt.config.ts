@@ -320,6 +320,39 @@ export default defineNuxtConfig({
         },
       },
     },
+
+    // Public writes that cost money, reach a third party, or publish content.
+    // Without an explicit rule these fell back to the global 150/minute budget.
+    //
+    // Subscribe emails whatever address is posted, so an unlimited endpoint is
+    // an email-bombing amplifier: it burns the Resend quota and the domain's
+    // sending reputation, which breaks delivery for real subscribers.
+    '/api/newsletter/subscribe': {
+      security: { rateLimiter: { tokensPerInterval: 5, interval: 300000 } },
+    },
+
+    // Both act on a token, so the limit also slows down guessing one.
+    '/api/newsletter/confirm': {
+      security: { rateLimiter: { tokensPerInterval: 20, interval: 300000 } },
+    },
+    '/api/newsletter/unsubscribe': {
+      security: { rateLimiter: { tokensPerInterval: 20, interval: 300000 } },
+    },
+
+    '/api/articles/correction-requests': {
+      security: { rateLimiter: { tokensPerInterval: 5, interval: 300000 } },
+    },
+
+    // Guest comments are inserted already approved, so this endpoint writes
+    // straight onto public article pages. It cannot be as strict as the others:
+    // route rules cannot distinguish methods, and this same path serves the GET
+    // that renders the comment list on every article page. 60 per 5 minutes
+    // leaves normal reading untouched while cutting the spam ceiling from about
+    // 750 to 60 per five minutes. Real protection needs moderation states
+    // (Milestone 9), not a rate limit.
+    '/api/articles/comments': {
+      security: { rateLimiter: { tokensPerInterval: 60, interval: 300000 } },
+    },
   }, compatibilityDate: '2025-07-15',
 
   /* ------------------------------------------------------------------ */
