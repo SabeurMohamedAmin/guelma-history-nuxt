@@ -272,6 +272,7 @@ export default defineNuxtConfig({
     },
     '/api/admin/profile/avatar': {
       security: {
+        rateLimiter: { tokensPerInterval: 10, interval: 300000 },
         requestSizeLimiter: {
           maxRequestSizeInBytes: 21_000_000,
           maxUploadFileRequestInBytes: 21_000_000,
@@ -280,6 +281,7 @@ export default defineNuxtConfig({
     },
     '/api/v1/admin/profile/avatar': {
       security: {
+        rateLimiter: { tokensPerInterval: 10, interval: 300000 },
         requestSizeLimiter: {
           maxRequestSizeInBytes: 21_000_000,
           maxUploadFileRequestInBytes: 21_000_000,
@@ -288,6 +290,7 @@ export default defineNuxtConfig({
     },
     '/api/contact/submit': {
       security: {
+        rateLimiter: { tokensPerInterval: 5, interval: 300000 },
         requestSizeLimiter: {
           maxRequestSizeInBytes: 55_000_000,
           maxUploadFileRequestInBytes: 55_000_000,
