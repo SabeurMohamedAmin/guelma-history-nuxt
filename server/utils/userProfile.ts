@@ -3,6 +3,7 @@ import { db } from '~~/server/db'
 import { users } from '~~/server/db/schema/users'
 import type { Role } from '~~/shared/auth/roles'
 import { createPasswordHash, verifyPasswordHash } from './password'
+import { isUniqueViolation } from './db-errors'
 
 /**
  * User profile domain logic.
@@ -167,6 +168,18 @@ export async function changeUserEmail(
     throw createError({ statusCode: 409, statusMessage: 'Conflict', message: 'Email is already in use.' })
   }
 
-  await db.update(users).set({ email }).where(eq(users.id, userId))
+  // The `taken` check above races with concurrent changes; the unique index
+  // on users.email is the real guarantee. Translate the losing request's
+  // unique violation into the same friendly 409.
+  try {
+    await db.update(users).set({ email }).where(eq(users.id, userId))
+  }
+  catch (error) {
+    if (isUniqueViolation(error)) {
+      throw createError({ statusCode: 409, statusMessage: 'Conflict', message: 'Email is already in use.' })
+    }
+    throw error
+  }
+
   return getUserProfile(userId)
 }
