@@ -670,6 +670,7 @@ Notes:
 - [~] Every write endpoint uses Zod validation — legacy authentication, newsletter, category, author, subscriber-status, article, and comment writes now use strict schemas with bounded fields and collections; empty article/category updates are rejected; remaining write routes require a complete audit
 - [~] Upload content and size validation reviewed — article media and contact attachments verify declared MIME against file signatures; web/mobile avatar limits are synchronized and decoded images are format/pixel bounded; attachment names, compound extensions, fields, and sizes are validated; avatar/contact uploads are rate-limited; endpoint integration coverage remains
 - [x] Subscriber/device data and mobile article save metadata use explicit minimization; internal save-actor UUIDs are not serialized to Flutter
+- [x] Public article routes never return unpublished content — `GET /api/articles` forces `status=published` so a client cannot list drafts, and `GET /api/articles/:slug` answers 404 for a draft unless the caller is the admin or its owning author; minimizing the remaining public response fields (full bodies, `lastSavedByUserId`) is still open
 - [x] Versioned API failure logs exclude bodies, headers, passwords, tokens, and sensitive content; broader provider-log review remains part of operations
 - [x] Production errors do not expose stack traces or unexpected internal error messages
 - [ ] Database migrations tested against realistic data
