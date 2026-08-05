@@ -93,12 +93,12 @@ export const autosaveArticleSchema = z.object({
 )
 
 export const articlesQuerySchema = z.object({
-  page: z.coerce.number().int().positive().optional(),
+  page: z.coerce.number().int().positive().max(1_000_000).optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
-  search: z.string().optional(),
+  search: z.string().trim().max(200).optional(),
   categoryId: databaseUuidSchema.optional(),
   // Category *slug* filter (the home/article pages pass a slug, not an id).
-  category: z.string().optional(),
+  category: z.string().trim().max(255).optional(),
   authorId: databaseUuidSchema.optional(),
   tagId: databaseUuidSchema.optional(),
   // featured=true → published articles only (used by hero sections).
@@ -106,7 +106,7 @@ export const articlesQuerySchema = z.object({
   status: z.enum(['published', 'draft', 'all']).default('all'),
   sortBy: z.enum(['createdAt', 'updatedAt', 'publishedAt', 'title']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
-})
+}).strict()
 
 export type CreateArticleInput = z.infer<typeof createArticleSchema>
 export type UpdateArticleInput = z.infer<typeof updateArticleSchema>
