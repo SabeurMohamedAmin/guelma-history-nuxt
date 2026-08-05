@@ -690,7 +690,7 @@ Notes:
 
 - [x] Run lint locally
 - [x] Run typecheck locally
-- [x] Run relevant unit/integration tests locally
+- [~] Run relevant unit/integration tests locally — existing suite passed on 2026-08-04; new security-validator tests were added and still require local execution
 - [~] Manually test Nuxt web admin — core flows passed; media, explicit report resolution, responsive layouts, and Flutter-session revocation remain
 - [ ] Manually test Flutter against development/staging API
 - [ ] No pipeline is required for this workflow
