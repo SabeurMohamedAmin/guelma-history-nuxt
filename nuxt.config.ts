@@ -326,6 +326,21 @@ export default defineNuxtConfig({
         },
       },
     },
+    // The regular user avatar upload. Without an explicit rule it inherited
+    // nuxt-security's 2 MB default, which rejected a typical phone photo
+    // before the endpoint's own 20 MiB cap (processAvatarImage) ever ran.
+    // 21 MB = the endpoint cap plus multipart overhead, synchronized with the
+    // admin and Flutter avatar routes above. The rate limit matches theirs and
+    // stays as strict as the surrounding /api/auth/** credential budget.
+    '/api/auth/user/profile/avatar': {
+      security: {
+        rateLimiter: { tokensPerInterval: 10, interval: 300000 },
+        requestSizeLimiter: {
+          maxRequestSizeInBytes: 21_000_000,
+          maxUploadFileRequestInBytes: 21_000_000,
+        },
+      },
+    },
     '/api/contact/submit': {
       security: {
         rateLimiter: { tokensPerInterval: 5, interval: 300000 },
