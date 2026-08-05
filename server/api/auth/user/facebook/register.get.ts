@@ -15,8 +15,13 @@ import { facebookPictureUrl, storeRemoteAvatar } from '~~/server/utils/remoteAva
  *   account. findOrLinkOauthUser only auto-links when the provider email is
  *   asserted verified; otherwise it raises a conflict and we send the visitor
  *   to log in to the existing account and link from there.
- * - New -> create an incomplete, UNVERIFIED account and send them to finish the
- *   profile form (choose username + password) and verify their email.
+ * - New -> create an INCOMPLETE account (no password yet) and send them to the
+ *   profile form to choose a username + password. Its email IS stamped
+ *   verified at creation, because Facebook only returns an address it verified
+ *   for that identity. Do not remove that stamp to "harden" this flow:
+ *   authenticate() requires emailVerifiedAt, so these accounts would then never
+ *   be able to sign in with a password. It does not relax the auto-link guard
+ *   above, which is governed by the separate emailVerified flag.
  *
  * Avatar: the Facebook profile picture is downloaded and stored as BYTES in the
  * users table (avatarData/avatarMimeType/avatarUpdatedAt), exactly like the
