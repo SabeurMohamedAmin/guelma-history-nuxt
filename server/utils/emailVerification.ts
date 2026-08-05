@@ -65,8 +65,30 @@ export async function verifyEmailToken(rawToken: string): Promise<string | null>
 
   if (!tokenRow) return null
 
-  await db.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, tokenRow.userId))
-  await db.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, tokenRow.id))
+  // Claim the token first, conditionally, inside the transaction — the same
+  // shape as resetPasswordWithToken(). Without the condition two concurrent
+  // requests both pass the read above and both proceed, and without the
+  // transaction a failure after the first write leaves the token reusable.
+  return db.transaction(async (tx) => {
+    const claimedAt = new Date()
 
-  return tokenRow.userId
+    const [claimedToken] = await tx
+      .update(passwordResetTokens)
+      .set({ usedAt: claimedAt })
+      .where(and(
+        eq(passwordResetTokens.id, tokenRow.id),
+        isNull(passwordResetTokens.usedAt),
+        gt(passwordResetTokens.expiresAt, claimedAt),
+      ))
+      .returning({ id: passwordResetTokens.id })
+
+    if (!claimedToken) return null
+
+    await tx
+      .update(users)
+      .set({ emailVerifiedAt: claimedAt })
+      .where(eq(users.id, tokenRow.userId))
+
+    return tokenRow.userId
+  })
 }
