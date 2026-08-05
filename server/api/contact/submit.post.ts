@@ -2,6 +2,7 @@ import { contactSchema, isBlockedAttachmentName } from '~~/server/validators/con
 import { createPendingMessage } from '~~/server/utils/contact'
 import { sendContactVerificationEmail } from '~~/server/utils/email/contact-verify'
 import { toH3Error } from '~~/server/utils/handleError'
+import { validateContactAttachment } from '~~/server/utils/contactAttachmentValidation'
 
 const MAX_TOTAL_ATTACHMENT_BYTES = 50 * 1024 * 1024
 const MAX_ATTACHMENT_COUNT = 5
@@ -39,6 +40,8 @@ export default defineEventHandler(async (event) => {
       if (isBlockedAttachmentName(part.filename)) {
         throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Executable files are not allowed.' })
       }
+
+      validateContactAttachment(part.data, part.type)
 
       return {
         filename: part.filename,

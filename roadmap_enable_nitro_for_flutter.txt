@@ -667,7 +667,7 @@ Notes:
 ## Validation and data protection
 
 - [~] Every write endpoint uses Zod validation — legacy authentication, newsletter, category, author, subscriber-status, article, and comment writes now use strict schemas with bounded fields and collections; empty article/category updates are rejected; remaining write routes require a complete audit
-- [~] Upload content and size validation reviewed — article-media routes share byte-signature/MIME validation and cleanup; web/mobile avatar route limits are synchronized and decoded images are format/pixel bounded; contact attachments reject control/path characters, dangerous compound extensions, unknown fields, and size mismatches; endpoint integration coverage and deeper attachment content inspection remain
+- [~] Upload content and size validation reviewed — article media and contact attachments now verify declared MIME against file signatures; web/mobile avatar limits are synchronized and decoded images are format/pixel bounded; attachment names, compound extensions, fields, and sizes are validated; endpoint integration coverage remains
 - [x] Subscriber/device data and mobile article save metadata use explicit minimization; internal save-actor UUIDs are not serialized to Flutter
 - [x] Versioned API failure logs exclude bodies, headers, passwords, tokens, and sensitive content; broader provider-log review remains part of operations
 - [x] Production errors do not expose stack traces or unexpected internal error messages
