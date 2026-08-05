@@ -30,9 +30,14 @@ export default defineEventHandler(async (event) => {
       await assertMayReadDraft(event, article.id, slug)
     }
 
+    // `lastSavedByUserId` is the internal id of the editor account that saved
+    // last. The public page never uses it and it must not expose a user UUID
+    // to every visitor, so it is dropped from the public payload.
+    const { lastSavedByUserId: _actorId, ...publicArticle } = article
+
     return {
       success: true,
-      data: article,
+      data: publicArticle,
     }
   }
   catch (error) {
