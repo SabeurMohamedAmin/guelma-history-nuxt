@@ -20,12 +20,12 @@ export const paginationSchema = z.object({
 })
 
 export const createAdminAuthorSchema = z.object({
-  nameAr: z.string().trim().min(1, 'Arabic name is required'),
-  nameFr: z.string().trim().min(1, 'French name is required'),
-  bioAr: z.string().trim().nullable().optional(),
-  bioFr: z.string().trim().nullable().optional(),
-  avatar: z.string().trim().nullable().optional(),
-})
+  nameAr: z.string().trim().min(1, 'Arabic name is required').max(200),
+  nameFr: z.string().trim().min(1, 'French name is required').max(200),
+  bioAr: z.string().trim().max(20_000).nullable().optional(),
+  bioFr: z.string().trim().max(20_000).nullable().optional(),
+  avatar: z.string().trim().max(2_048).nullable().optional(),
+}).strict()
 
 export const updateAdminAuthorSchema = createAdminAuthorSchema.partial().refine(
   value => Object.keys(value).length > 0,
