@@ -1,5 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
-import { and, eq, gt, lte } from 'drizzle-orm'
+import { and, eq, gt, lte, sql } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { newsletterArticleEmails } from '~~/server/db/schema/newsletter-article-emails'
 import { subscribers } from '~~/server/db/schema/subscribers'
@@ -107,34 +107,35 @@ export async function requestSubscription(email: string): Promise<RequestSubscri
  * unsubscribe token hash if the row does not already have one.
  */
 export async function confirmSubscription(rawToken: string): Promise<boolean> {
-  const row = await db.query.subscribers.findFirst({
-    where: and(
-      eq(subscribers.status, 'pending'),
-      eq(subscribers.tokenHash, hashToken(rawToken)),
-      gt(subscribers.tokenExpiresAt, new Date()),
-    ),
-  })
-
-  if (!row) return false
-
   const now = new Date()
-  const unsubscribeTokenHash = row.unsubscribeTokenHash ?? hashToken(createRawToken())
 
-  await db
+  // Generated up front; the COALESCE below keeps an existing hash, so a
+  // repeat confirmation can never rotate a subscriber's unsubscribe token.
+  const newUnsubscribeTokenHash = hashToken(createRawToken())
+
+  // Single conditional UPDATE: the WHERE clause validates AND claims the
+  // token in one atomic statement, so a concurrent confirmation (or a token
+  // rotated by a re-subscribe between a read and a write) can never activate
+  // a stale state. Zero updated rows = invalid, expired, or already used.
+  const updated = await db
     .update(subscribers)
     .set({
       status: 'active',
       confirmedAt: now,
       tokenHash: null,
       tokenExpiresAt: null,
-      confirmationSentAt: row.confirmationSentAt,
-      unsubscribeTokenHash,
+      unsubscribeTokenHash: sql`coalesce(${subscribers.unsubscribeTokenHash}, ${newUnsubscribeTokenHash})`,
       unsubscribedAt: null,
       updatedAt: now,
     })
-    .where(eq(subscribers.id, row.id))
+    .where(and(
+      eq(subscribers.status, 'pending'),
+      eq(subscribers.tokenHash, hashToken(rawToken)),
+      gt(subscribers.tokenExpiresAt, now),
+    ))
+    .returning({ id: subscribers.id })
 
-  return true
+  return updated.length > 0
 }
 
 /** Mark an active subscriber as unsubscribed using a signed unsubscribe token. */
@@ -142,27 +143,25 @@ export async function unsubscribe(rawToken: string): Promise<boolean> {
   const subscriberId = verifyUnsubscribeToken(rawToken)
   if (!subscriberId) return false
 
-  const row = await db.query.subscribers.findFirst({
-    where: and(
-      eq(subscribers.id, subscriberId),
-      eq(subscribers.status, 'active'),
-    ),
-  })
-
-  if (!row) return false
-
   const now = new Date()
 
-  await db
+  // One conditional UPDATE instead of read-then-write: the status check in
+  // the WHERE clause makes concurrent unsubscribes idempotent (one claims
+  // the row, the other simply updates nothing).
+  const updated = await db
     .update(subscribers)
     .set({
       status: 'unsubscribed',
       unsubscribedAt: now,
       updatedAt: now,
     })
-    .where(eq(subscribers.id, row.id))
+    .where(and(
+      eq(subscribers.id, subscriberId),
+      eq(subscribers.status, 'active'),
+    ))
+    .returning({ id: subscribers.id })
 
-  return true
+  return updated.length > 0
 }
 
 /** Delete pending subscriptions whose confirmation token expired. */

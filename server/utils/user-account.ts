@@ -5,6 +5,7 @@ import { users } from '~~/server/db/schema/users'
 import { userOauthAccounts } from '~~/server/db/schema/user-oauth-accounts'
 import type { PROVIDERS } from '~~/server/db/schema/user-oauth-accounts'
 import { createPasswordHash } from './password'
+import { isUniqueViolation } from './db-errors'
 import { toSessionUser, type SessionUser } from './auth'
 import { createEmailVerificationToken } from './emailVerification'
 import { sendEmailVerificationEmail } from './email/email-verification'
@@ -108,18 +109,30 @@ export async function registerUser(input: {
 
   const passwordHash = await createPasswordHash(input.password)
 
-  const created = firstOrThrow(
-    await db.insert(users).values({
-      username: input.username,
-      email: input.email,
-      passwordHash,
-      role: 'user',
-      profileCompleted: true,
-      passwordChangedAt: new Date(),
-    })
-      .returning(),
-    'Failed to create user account',
-  )
+  // The uniqueness check above races with concurrent registrations; the
+  // unique indexes on username/email are the real guarantee. Translate the
+  // losing request's unique violation into the same friendly conflict.
+  let created
+  try {
+    created = firstOrThrow(
+      await db.insert(users).values({
+        username: input.username,
+        email: input.email,
+        passwordHash,
+        role: 'user',
+        profileCompleted: true,
+        passwordChangedAt: new Date(),
+      })
+        .returning(),
+      'Failed to create user account',
+    )
+  }
+  catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new AccountConflictError('That email or username is already in use.')
+    }
+    throw error
+  }
 
   const rawToken = await createEmailVerificationToken(created.id)
   await sendEmailVerificationEmail(created.email, `${input.verifyUrlBase}?token=${rawToken}`)
@@ -246,15 +259,26 @@ export async function completeProfile(
 
   const passwordHash = await createPasswordHash(input.password)
 
-  const updated = firstOrThrow(
-    await db.update(users).set({
-      username: input.username,
-      passwordHash,
-      profileCompleted: true,
-      passwordChangedAt: new Date(),
-    }).where(eq(users.id, userId)).returning(),
-    'Failed to update user profile',
-  )
+  // Same race note as registerUser: the username clash check above is only
+  // a friendly fast path; the unique index settles concurrent writers.
+  let updated
+  try {
+    updated = firstOrThrow(
+      await db.update(users).set({
+        username: input.username,
+        passwordHash,
+        profileCompleted: true,
+        passwordChangedAt: new Date(),
+      }).where(eq(users.id, userId)).returning(),
+      'Failed to update user profile',
+    )
+  }
+  catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new AccountConflictError('That username is already taken.')
+    }
+    throw error
+  }
 
   return toSessionUser(updated)
 }
