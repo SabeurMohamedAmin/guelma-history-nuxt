@@ -17,7 +17,11 @@ export const contactSchema = z.object({
   email: z.string().trim().toLowerCase().email('Invalid email address').max(254),
   message: z.string().trim().min(10, 'Message is too short').max(5000),
   attachments: z.array(z.object({
-    filename: z.string().trim().min(1).max(255),
+    filename: z.string()
+      .trim()
+      .min(1)
+      .max(255)
+      .refine(name => !/[\u0000-\u001F\u007F/\\]/.test(name), 'Invalid attachment filename'),
     contentType: z.string().trim().min(1).max(255),
     content: z.string().min(1).max(Math.ceil(MAX_TOTAL_ATTACHMENT_BYTES * 4 / 3) + 4),
     size: z.number().int().positive().max(MAX_TOTAL_ATTACHMENT_BYTES),
@@ -56,6 +60,9 @@ export const contactSchema = z.object({
 export type ContactPayload = z.infer<typeof contactSchema>
 
 export function isBlockedAttachmentName(filename: string): boolean {
-  const lowerName = filename.toLowerCase()
-  return BLOCKED_ATTACHMENT_EXTENSIONS.some(extension => lowerName.endsWith(extension))
+  const lowerName = filename.trim().toLowerCase()
+  const parts = lowerName.split('.').slice(1)
+  return BLOCKED_ATTACHMENT_EXTENSIONS.some(extension =>
+    parts.includes(extension.slice(1)),
+  )
 }
