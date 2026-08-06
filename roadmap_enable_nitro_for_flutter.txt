@@ -541,7 +541,7 @@ Prevent Nuxt and Flutter editors from silently overwriting each other.
 - [!] Normal update increments revision — an opt-in database integration test verifies the atomic increment; execution is blocked pending `NUXT_TEST_DATABASE_URL`
 - [!] Two clients edit the same revision — an opt-in database test races both edits and requires exactly one success; execution is blocked pending `NUXT_TEST_DATABASE_URL`
 - [!] Stale update returns 409 — repository conflict behavior is database-covered and service mapping is unit-covered; execution is blocked pending `NUXT_TEST_DATABASE_URL`
-- [!] Retry does not duplicate effects — persisted claims protect completed and post-commit failure paths; blocked pending save-idempotency database coverage
+- [!] Retry does not duplicate effects — an opt-in database test verifies one concurrent save claim, persisted replay responses, and rejection of key reuse for a different payload; execution is blocked pending `NUXT_TEST_DATABASE_URL`
 - [!] Autosave does not publish — database coverage verifies a published row cannot be autosaved or modified; execution is blocked pending `NUXT_TEST_DATABASE_URL`
 - [!] Arabic and French content survive save/recovery — database coverage verifies both localized titles and bodies; execution is blocked pending `NUXT_TEST_DATABASE_URL`
 
