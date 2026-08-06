@@ -267,23 +267,22 @@ const stats = computed(() => [
       <v-card
         flat
         rounded="lg"
-        class="pa-8 text-center cta-card"
+        class="pa-2 py-4 text-center cta-card"
       >
-        <v-icon
-          icon="mdi-email-outline"
-          size="40"
-          color="primary"
-          class="mb-3"
-        />
-        <h2 class="text-headline-small font-weight-bold mb-2">
-          {{ t('newsletter.heading') }}
-        </h2>
-        <p class="text-body-2 text-medium-emphasis mb-5 mx-auto">
+        <section class="d-flex flex-row ga-2 align-center justify-center">
+          <v-icon
+            icon="mdi-email-outline"
+            color="primary"
+            class="text-title-large text-sm-headline-medium align-self-center self-sm-center"
+          />
+          <h2 class="text-title-medium text-sm-headline-small my-0">
+            {{ t('newsletter.heading') }}
+          </h2>
+        </section>
+        <p class="text-body-medium text-sm-body-large text-medium-emphasis mb-5 mx-auto">
           {{ t('newsletter.subheading') }}
         </p>
-        <div class="mx-auto">
-          <NewsletterForm />
-        </div>
+        <NewsletterForm />
       </v-card>
     </section>
   </div>
