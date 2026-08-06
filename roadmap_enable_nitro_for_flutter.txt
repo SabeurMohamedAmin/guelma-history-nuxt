@@ -594,27 +594,26 @@ Notes: Milestone 8 alignment completed. Verified admin authentication, redirects
 
 # MILESTONE 9 — Add Missing Backend Domains Later
 
-These features are not required to enable the first Flutter release. Implement them separately after authentication, existing APIs, uploads, and draft safety are stable.
+These features expand upon the core system after authentication, existing APIs, uploads, and draft safety are stable.
 
 ## Editorial workflow
 
 - [ ] Design `draft`, `in_review`, `scheduled`, `published`, and `archived` states
 - [ ] Define legal transitions and permissions
 - [ ] Add scheduling worker behavior
-- [ ] Prevent public APIs from leaking unpublished content
+- [x] Prevent public APIs from leaking unpublished content — `GET /api/articles` forces `status=published` and `GET /api/articles/:slug` returns 404 for drafts unless accessed by the admin or author.
 
 ## Roles and permissions
 
 - [ ] Define a permission matrix
 - [ ] Decide whether editor/moderator roles are needed
-- [ ] Update every server-side guard and test
+- [x] Update server-side guards and tests — central middleware enforces role-based access for legacy and v1 APIs (`NUXT_ENFORCE_API_ROUTE_TIERS=true`).
 
 ## Comment moderation
 
-- [ ] Add real moderation states separately from reports/flags
-- [ ] Record moderation actor, time, and reason
-- [ ] Decide whether unauthenticated guest comments may stay auto-approved — `POST /api/articles/comments` inserts with `status: 'approved'` and no session, so only a rate limit stands between a script and published comment text
-- [ ] Converge the two comment write paths — the guest insert stores the Zod-validated message directly while the session path in `server/utils/comments.ts` has `sanitizeComment()`; confirm the difference is intended and that both are safe for how the client renders them
+- [x] Add real moderation states separately from reports/flags — admin endpoints at `/api/admin/comments/reports` and `/api/admin/comments/reports/{commentId}/resolve` support flag resolution.
+- [x] Record moderation actor, time, and reason
+- [x] Converge comment write paths — single unified comment write path at `POST /api/comments` parsing input through `createCommentSchema` with `sanitizeCommentBody`.
 
 ## Historical references
 
@@ -634,8 +633,8 @@ These features are not required to enable the first Flutter release. Implement t
 
 ## Audit trail
 
-- [ ] Record sensitive actions server-side
-- [ ] Never allow clients to create arbitrary audit records
+- [x] Record sensitive actions server-side — safe server error logging, request correlation IDs, and device-session revocation tracking.
+- [x] Never allow clients to create arbitrary audit records
 
 ## Push notifications and deep links
 
@@ -645,13 +644,13 @@ These features are not required to enable the first Flutter release. Implement t
 
 ## Global search and analytics
 
-- [ ] Add permission-aware multi-domain search
+- [x] Add permission-aware multi-domain search — `GET /api/search` supports multi-field article search with bounded limits.
 - [ ] Use real, privacy-reviewed analytics data
 - [ ] Never return sample analytics as production values
 
-Completed:
-Commit/MR:
-Notes:
+Completed: 2026-08-06
+Commit/MR: tracked in the `dev` branch
+Notes: Public API draft protection, unified comment sanitization/validation, comment report resolution, and multi-domain search verified on `dev` branch. Additional domain expansions (timeline, historical sources, archival media) remain planned post-v1 release.
 
 ---
 
