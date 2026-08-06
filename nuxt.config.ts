@@ -387,8 +387,9 @@ export default defineNuxtConfig({
 
   experimental: {
     appManifest: process.env.NODE_ENV === 'production',
-  }, compatibilityDate: '2025-07-15',
+  },
 
+  compatibilityDate: '2025-07-15',
   /* ------------------------------------------------------------------ */
   /* Nitro (server engine)                                               */
   /* ------------------------------------------------------------------ */
