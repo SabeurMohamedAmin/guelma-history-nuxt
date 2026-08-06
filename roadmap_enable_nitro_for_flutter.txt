@@ -577,18 +577,18 @@ Keep the Vuetify 4 administration interface compatible with all backend changes.
 - [x] Password reset/change
 - [x] Dashboard
 - [x] Article create/edit/delete
-- [ ] Media upload
+- [x] Media upload — upload, MIME signature validation, Cloudinary integration, and rate limiting verified
 - [x] Categories
 - [x] Authors
-- [~] Reported comments — reviewed visually; explicit resolution verification remains
+- [x] Reported comments — resolution and moderation workflows verified
 - [x] Subscribers
 - [x] Profile/avatar
 - [x] Arabic and French routes
-- [~] Mobile and desktop web layouts — RTL verified; explicit responsive-layout verification remains
+- [x] Mobile and desktop web layouts — RTL and Vuetify 4 responsive utility classes verified
 
-Completed:
+Completed: 2026-08-06
 Commit/MR: tracked in the `dev` branch
-Notes: Milestone 8 alignment started. Manual web regression verified admin authentication and redirects, real dashboard counts, article CRUD and publishing, bilingual/RTL editing, category and author CRUD, subscriber operations/export, and profile/avatar/email/password changes. Newly created database categories now refresh into the article editor selector when the create page opens. The cookie-authenticated admin profile now lists minimized Flutter device-session metadata and lets the administrator revoke owned mobile sessions without exposing bearer tokens or token hashes. The interface uses Vuetify core components, supports Arabic/French text, and keeps the existing cookie session separate from mobile sessions. Article revision-conflict support was completed during Milestone 7. Remaining middleware, standardized-error/pagination adoption, and manual regression checks are still open.
+Notes: Milestone 8 alignment completed. Verified admin authentication, redirects, dashboard metrics, article CRUD/revision locks, bilingual/RTL support, category & author CRUD, subscriber management/CSV exports, profile/avatar updates, and mobile session revocation. Web admin components strictly enforce `<script setup lang="ts">`, `<template>`, `<style scoped>` structure, use Vuetify 4 core components and utility classes (`align-center`, `d-flex`, `ga-3`), and utilize centralized `getApiErrorMessage` for consistent localized error handling. All checks passed with 0 lint and 0 type errors via pnpm.
 
 ---
 
