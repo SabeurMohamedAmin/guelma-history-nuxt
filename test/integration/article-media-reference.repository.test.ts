@@ -52,6 +52,10 @@ describeWithDatabase('ArticleRepository media references', () => {
 
   afterAll(async () => {
     if (!sql) return
+    // Delete media explicitly, then the article, because article ownership uses
+    // RESTRICT and must never be bypassed by test cleanup assumptions.
+    await sql`DELETE FROM article_media WHERE id = ${mediaId}`
+    await sql`DELETE FROM articles WHERE id = ${articleId}`
     await sql`DELETE FROM users WHERE id = ${userId}`
     await sql.end()
   })

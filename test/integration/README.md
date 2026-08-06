@@ -20,7 +20,9 @@ They are opt-in and do not use pipelines.
    ```
 
 The tests intentionally never fall back to `NUXT_DATABASE_URL`. They create
-uniquely identified users and rely on foreign-key cascades for cleanup.
+uniquely identified fixtures and delete them in foreign-key-safe child-to-parent
+order. Cascades are used only where the production schema explicitly defines
+them.
 
 ## Covered rules
 

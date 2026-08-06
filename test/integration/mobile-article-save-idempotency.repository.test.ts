@@ -42,6 +42,8 @@ describeWithDatabase('MobileArticleSaveIdempotencyRepository', () => {
 
   afterAll(async () => {
     if (!sql) return
+    // Removing the article first also cascade-cleans its save-idempotency rows.
+    await sql`DELETE FROM articles WHERE id = ${articleId}`
     await sql`DELETE FROM users WHERE id = ${userId}`
     await sql.end()
   })

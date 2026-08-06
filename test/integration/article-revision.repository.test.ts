@@ -41,6 +41,10 @@ describeWithDatabase('ArticleRepository revisions', () => {
 
   afterAll(async () => {
     if (!sql) return
+    // Articles intentionally restrict owner deletion, so remove the child
+    // fixture before its user instead of relying on a cascade that does not
+    // exist for this relationship.
+    await sql`DELETE FROM articles WHERE id = ${articleId}`
     await sql`DELETE FROM users WHERE id = ${userId}`
     await sql.end()
   })
