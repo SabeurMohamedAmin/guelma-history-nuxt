@@ -680,7 +680,7 @@ Notes: Public API draft protection, unified comment sanitization/validation, com
 - [x] Versioned API failure logs exclude bodies, headers, passwords, tokens, and sensitive content; broader provider-log review remains part of operations
 - [x] Production errors do not expose stack traces or unexpected internal error messages
 - [x] Database migrations tested against realistic data (migrations 0000..0016 integrity test verified)
-- [ ] Backup and restore procedures verified
+- [!] Backup and restore procedures verified — blocked pending access to the production/staging database provider, backup destination, retention policy, and an owner-approved destructive restore test environment
 
 ## Reliability and performance
 
@@ -701,7 +701,7 @@ Notes: Public API draft protection, unified comment sanitization/validation, com
 - [x] Run typecheck locally (passed via `pnpm nuxt typecheck` / `vue-tsc --noEmit`)
 - [x] Run relevant unit/integration tests locally (passed 181 tests across 35 test files via `pnpm vitest run`)
 - [x] Manually test Nuxt web admin — core flows verified
-- [ ] Manually test Flutter against development/staging API
+- [!] Manually test Flutter against development/staging API — blocked pending a Flutter client build, reachable development/staging API URL, test administrator account, and device/emulator access
 - [x] No pipeline is required for this workflow
 
 Completed: 2026-08-06
@@ -732,7 +732,7 @@ Complete only this scope first:
 
 Do not block the first release on new roles, editorial workflow, timeline, historical references, analytics, push notifications, or a full archival media library.
 
-Release status: Backend security & implementation completed and verified on `dev` branch. All unit tests, type checks, and ESLint checks pass with zero errors using pnpm. No pipeline is required.
+Release status: Backend security and implementation are complete on `dev`. Repository-level unit tests, type checks, and ESLint checks passed locally with zero errors using pnpm. Production readiness still requires the explicitly blocked PostgreSQL concurrency/integration checks, backup/restore drill, and manual Flutter-to-staging validation. No pipeline is required.
 
 # Recommended Order
 
