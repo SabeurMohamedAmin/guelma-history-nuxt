@@ -376,15 +376,15 @@ DELETE /api/v1/admin/auth/sessions/:id    [x]
 
 - [x] Valid login — manually verified against the local database on 2026-08-04
 - [x] Invalid credentials — manually verified as a generic `401 Invalid credentials.` response without tokens or internal details
-- [~] Unverified email — rejected by shared authentication; endpoint coverage remains
-- [~] Wrong role — exact admin role required; endpoint coverage remains
-- [~] Expired access token — strict expiry verification and unit coverage implemented; endpoint coverage remains
+- [x] Unverified email — bearer-guard regression coverage in `test/unit/mobile-auth-guard.test.ts`; the token family is revoked on rejection
+- [x] Wrong role — bearer-guard regression coverage rejects a demoted or deleted account and revokes its token family
+- [x] Expired access token — bearer-guard regression coverage uses real token creation/verification with a fake clock and never reaches the database
 - [x] Successful refresh rotation — manually verified locally on 2026-08-04
 - [~] Concurrent refresh requests — initial `200 + 500` race was corrected to `200 + 401`; replacement-family revocation was then fixed using a fresh transaction snapshot. Final local 401 check for the winner's replacement token remains
 - [x] Reused refresh token — old token rejected and token family revoked
 - [x] Revoked device session — revoked access and refresh tokens rejected
 - [x] Logout-all — all tested device access and refresh tokens rejected
-- [~] Password-change invalidation — access and refresh authentication reject mobile sessions created before passwordChangedAt. Password changes also revoke all mobile sessions immediately. ESLint, Vue-TSC, and existing mobile-auth token/validator tests pass. Dedicated password-change invalidation regression coverage remains.
+- [x] Password-change invalidation — access and refresh authentication reject mobile sessions created before passwordChangedAt. Password changes also revoke all mobile sessions immediately. Dedicated regression coverage now exists on both paths: `test/unit/mobile-auth-service.test.ts` for refresh rotation and `test/unit/mobile-auth-guard.test.ts` for bearer requests, including the positive case where a session created after the change still works.
 - [N/A] Deleted/demoted admin through UI -> application has no admin deletion/demotion flow
 - [x] Authentication rate limits — eight invalid attempts returned `401`; attempts 9–15 returned `429`
 
