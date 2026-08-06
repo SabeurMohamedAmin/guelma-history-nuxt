@@ -60,10 +60,13 @@ export default defineOAuthFacebookEventHandler({
         // prevents silent auto-linking to (and takeover of) an existing local
         // account.
         emailVerified: false,
-        // ...but a BRAND-NEW Facebook account owns the address Facebook returns,
-        // so stamp email_verified_at at creation. This only affects new
-        // accounts and never relaxes the auto-link guard above.
-        markEmailVerified: true,
+        // A brand-new Facebook account does NOT get emailVerifiedAt stamped
+        // at creation. The user must verify their inbox after completing their
+        // profile (username + password). This closes the gap where a provider
+        // identity could create a verified local account for an address whose
+        // owner never visited this site.
+        // The auto-link guard above (emailVerified: false) is unaffected.
+        markEmailVerified: false,
         displayName: typeof fbUser.name === 'string' ? fbUser.name : null,
         firstName: typeof fbUser.first_name === 'string' ? fbUser.first_name : null,
         lastName: typeof fbUser.last_name === 'string' ? fbUser.last_name : null,

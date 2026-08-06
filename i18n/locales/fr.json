@@ -334,7 +334,10 @@
     "verifying": "Vérification de votre e-mail…",
     "verifySuccess": "Votre e-mail a été vérifié",
     "verifyError": "Ce lien est invalide ou a expiré",
-    "verifyMissingToken": "Lien de vérification manquant"
+    "verifyMissingToken": "Lien de vérification manquant",
+    "verifyEmailTitle": "Vérifiez votre adresse e-mail",
+    "verifyEmailHint": "Nous avons envoyé un lien de confirmation à votre adresse e-mail. Cliquez sur le lien pour activer votre compte et vous connecter.",
+    "verifyEmailSentNotice": "Lien de confirmation envoyé. Vérifiez votre boîte de réception."
   },
   "adminNav": {
     "dashboard": "Tableau de bord",
