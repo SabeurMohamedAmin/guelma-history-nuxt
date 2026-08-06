@@ -44,6 +44,10 @@ export default defineNuxtConfig({
     layoutTransition: { name: 'layout', mode: 'out-in' },
   },
 
+  experimental: {
+    appManifest: process.env.NODE_ENV === 'production',
+  },
+
   css: ['~/assets/css/main.css'],
 
   /* ------------------------------------------------------------------ */
