@@ -20,6 +20,7 @@
     "test:integration": "vitest run --project integration",
     "db:generate": "tsx server/db/generate.ts",
     "db:migrate": "tsx server/db/migrate.ts",
+    "db_test:migrate": "tsx server/db/migrate-test.ts",
     "db:uuid:rebuild": "tsx server/db/rebuild-with-uuids.ts",
     "db:migrate:kit": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
