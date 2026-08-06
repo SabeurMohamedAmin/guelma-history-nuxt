@@ -44,10 +44,6 @@ function goBack() {
   navigateTo(localePath('/'))
 }
 
-function goHome() {
-  navigateTo(localePath('/'))
-}
-
 const isRtl = computed(() =>
   ['ar', 'he', 'fa', 'ur'].includes(locale.value),
 )
@@ -69,7 +65,7 @@ const backIcon = computed(() =>
         variant="text"
         icon="mdi-home-outline"
         class="rounded-lg"
-        @click="goHome"
+        @click="$localePath('/')"
       />
     </section>
 
