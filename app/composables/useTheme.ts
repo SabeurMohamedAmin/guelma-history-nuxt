@@ -1,10 +1,16 @@
 import { useTheme as useVuetifyTheme } from 'vuetify'
 
+export function useThemeCookie() {
+  return useCookie<'light' | 'dark'>('guelma-theme', {
+    default: () => 'light',
+    decode: val => (val === 'dark' ? 'dark' : 'light'),
+    encode: val => val,
+  })
+}
+
 export const useTheme = () => {
   const vuetifyTheme = useVuetifyTheme()
-  const themeCookie = useCookie<'light' | 'dark'>('guelma-theme', {
-    default: () => 'light',
-  })
+  const themeCookie = useThemeCookie()
 
   // Read the current theme name reactively from the theme instance
   const isDark = computed(() => vuetifyTheme.global.current.value.dark)
@@ -26,3 +32,4 @@ export const useTheme = () => {
 
   return { isDark, toggleTheme, setTheme }
 }
+

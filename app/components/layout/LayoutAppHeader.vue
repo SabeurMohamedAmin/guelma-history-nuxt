@@ -24,7 +24,7 @@ const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const vuetifyTheme = useTheme()
-const themeCookie = useCookie<'light' | 'dark'>('guelma-theme', { default: () => 'light' })
+const themeCookie = useThemeCookie()
 const uiStore = useUiStore()
 
 const drawer = ref(false)

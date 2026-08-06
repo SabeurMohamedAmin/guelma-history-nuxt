@@ -3,7 +3,7 @@
 // an SSR mismatch (the server has no way to know the system preference, so it
 // always renders the cookie value or the 'light' default).
 export default defineNuxtPlugin((nuxtApp) => {
-  const themeCookie = useCookie('guelma-theme')
+  const themeCookie = useThemeCookie()
 
   nuxtApp.hook('app:mounted', () => {
     // Only auto-detect when the user has no persisted preference yet
