@@ -17,6 +17,7 @@
     "test:coverage": "vitest --coverage",
     "test:unit": "vitest --project unit",
     "test:nuxt": "vitest --project nuxt",
+    "test:integration": "vitest run --project integration",
     "db:generate": "tsx server/db/generate.ts",
     "db:migrate": "tsx server/db/migrate.ts",
     "db:uuid:rebuild": "tsx server/db/rebuild-with-uuids.ts",

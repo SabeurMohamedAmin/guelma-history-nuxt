@@ -380,7 +380,7 @@ DELETE /api/v1/admin/auth/sessions/:id    [x]
 - [x] Wrong role — bearer-guard regression coverage rejects a demoted or deleted account and revokes its token family
 - [x] Expired access token — bearer-guard regression coverage uses real token creation/verification with a fake clock and never reaches the database
 - [x] Successful refresh rotation — manually verified locally on 2026-08-04
-- [!] Concurrent refresh requests — implementation returns `200 + 401` and revokes the replacement family from a fresh transaction snapshot; blocked pending a PostgreSQL-backed concurrent integration run confirming the winner's replacement token returns `401`
+- [!] Concurrent refresh requests — implementation returns `200 + 401`; an opt-in database integration test now races two rotations and verifies the winning replacement family is revoked. Execution remains blocked pending `NUXT_TEST_DATABASE_URL` for an isolated, migrated test database
 - [x] Reused refresh token — old token rejected and token family revoked
 - [x] Revoked device session — revoked access and refresh tokens rejected
 - [x] Logout-all — all tested device access and refresh tokens rejected
