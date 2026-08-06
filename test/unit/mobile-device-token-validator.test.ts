@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { registerDeviceTokenSchema } from '~~/server/validators/mobile-device-token.validator'
+import { registerDeviceTokenSchema } from '../../server/validators/mobile-device-token.validator'
 
 describe('mobile device push token validation', () => {
   it('accepts valid FCM push tokens', () => {
