@@ -706,7 +706,7 @@ Notes: Public API draft protection, unified comment sanitization/validation, com
 
 Completed: 2026-08-06
 Commit/MR: tracked in the `dev` branch
-Notes: Security review and verification completed on `dev` branch using pnpm. Central Nitro middleware protects all legacy `/api/admin/**`, `/api/author/**`, and versioned `/api/v1/admin/**` routes. `NUXT_ENFORCE_API_ROUTE_TIERS=true` is enabled in `.env` and verified by `test/unit/api-route-coverage.spec.ts`. All 181 unit tests across 35 test files passed cleanly. TypeScript typecheck (`vue-tsc --noEmit`) and ESLint (`eslint .`) passed with 0 errors.
+Notes: Security review and verification completed on `dev` branch using pnpm. Opt-in database integration suites and safe local setup instructions now live under `test/integration`; they require a separate migrated `NUXT_TEST_DATABASE_URL` and intentionally never use the application database. Central Nitro middleware protects all legacy `/api/admin/**`, `/api/author/**`, and versioned `/api/v1/admin/**` routes. `NUXT_ENFORCE_API_ROUTE_TIERS=true` is enabled in `.env` and verified by `test/unit/api-route-coverage.spec.ts`. All 181 unit tests across 35 test files passed cleanly. TypeScript typecheck (`vue-tsc --noEmit`) and ESLint (`eslint .`) passed with 0 errors.
 
 ---
 
