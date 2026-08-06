@@ -504,7 +504,7 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 - [x] Invalid MIME/type mismatch — unit covered in the validator and again inside the upload service
 - [x] Oversized upload — service rejects with 413 before any provider call; the nuxt-security route rule stays synchronized at ~110 MiB
 - [x] Unauthenticated upload — the route is bearer-only through the central middleware, covered by `test/unit/mobile-auth-guard.test.ts` and `test/unit/api-route-coverage.spec.ts`
-- [ ] Duplicate retry — idempotency claims are database backed, so this needs the remaining integration coverage
+- [!] Duplicate retry — an opt-in database integration test now verifies exactly one concurrent claim, stored-response replay data, and rejection of key reuse for different bytes; execution is blocked pending `NUXT_TEST_DATABASE_URL`
 - [x] Cloudinary failure — partially uploaded variants and the original are destroyed before the error is rethrown
 - [!] Attempt to delete referenced media — the 409 guard is implemented; blocked pending PostgreSQL-backed integration coverage
 
