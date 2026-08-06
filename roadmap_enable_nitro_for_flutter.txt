@@ -384,7 +384,7 @@ DELETE /api/v1/admin/auth/sessions/:id    [x]
 - [x] Reused refresh token — old token rejected and token family revoked
 - [x] Revoked device session — revoked access and refresh tokens rejected
 - [x] Logout-all — all tested device access and refresh tokens rejected
-- [~] Password-change invalidation — implementation complete; automated coverage remains
+- [~] Password-change invalidation — access and refresh authentication reject mobile sessions created before passwordChangedAt. Password changes also revoke all mobile sessions immediately. ESLint, Vue-TSC, and existing mobile-auth token/validator tests pass. Dedicated password-change invalidation regression coverage remains.
 - [N/A] Deleted/demoted admin through UI -> application has no admin deletion/demotion flow
 - [x] Authentication rate limits — eight invalid attempts returned `401`; attempts 9–15 returned `429`
 

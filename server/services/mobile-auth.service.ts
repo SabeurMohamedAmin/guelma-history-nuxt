@@ -91,10 +91,14 @@ export class MobileAuthService {
     }
     if (result.status === 'invalid') throw unauthorized('Invalid or expired refresh token.')
 
-    // The account is re-read during every refresh. Deleted, unverified, or
-    // demoted accounts cannot obtain a new access token.
-    const admin = await this.findActiveAdmin(result.session.userId)
+    // Re-read the account before issuing another access token. In addition to
+    // checking the current authorization state, findActiveAdmin() rejects
+    // sessions that predate the user's latest password change.
+    const admin = await this.findActiveAdmin(result.session.userId, result.session.createdAt)
+
     if (!admin) {
+      // Revoke the whole refresh-token family so this stale session cannot be
+      // retried with another token from the same rotation chain.
       await mobileAuthSessionRepository.revokeFamily(result.session.tokenFamilyId)
       throw unauthorized('Account is no longer authorized.')
     }
@@ -102,12 +106,44 @@ export class MobileAuthService {
     return this.createTokenResponse(admin, result.session.id, nextToken.rawToken, nextToken.expiresAt)
   }
 
-  private async findActiveAdmin(userId: string) {
+  private async findActiveAdmin(userId: string, sessionCreatedAt: Date) {
     const { db } = await import('~~/server/db')
     const { users } = await import('~~/server/db/schema')
     const { eq } = await import('drizzle-orm')
-    const row = await db.query.users.findFirst({ where: eq(users.id, userId) })
-    if (!row || row.role !== 'admin' || !row.emailVerifiedAt || !row.profileCompleted) return null
+
+    const row = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    })
+
+    // Refresh tokens must never restore access for an account that is no
+    // longer allowed to use the mobile admin API. We re-read the account
+    // instead of trusting the state captured when the session was created.
+
+    if (
+      !row
+      || row.role !== 'admin'
+      || !row.emailVerifiedAt
+      || !row.profileCompleted
+    ) {
+      return null
+    }
+
+    // A password change invalidates every mobile session created before it.
+    //
+    // AdminProfileService.changePassword() already revokes all mobile
+    // sessions immediately. This timestamp check is intentional
+    // defense-in-depth: it also protects the refresh path from races,
+    // incomplete revocation, or future code paths that change the password
+    // without explicitly revoking sessions.
+    //
+    // Keep this rule consistent with requireMobileAdmin(), which performs
+    // the same check for access-token authentication.
+    if (
+      row.passwordChangedAt
+      && row.passwordChangedAt > sessionCreatedAt
+    ) {
+      return null
+    }
 
     const { toSessionUser } = await import('~~/server/utils/auth')
     return toSessionUser(row)
