@@ -1,10 +1,11 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 
 const email = ref('')
 const loading = ref(false)
-const message = ref <string | null> (null)
-const errorMessage = ref <string | null> (null)
+const message = ref<string | null>(null)
+const errorMessage = ref<string | null>(null)
 
 const canSubmit = computed(() => email.value.trim().length > 0 && !loading.value)
 
@@ -17,14 +18,12 @@ async function onSubmit() {
   try {
     const res = await $fetch('/api/auth/forgot-password', {
       method: 'POST',
-      // Emails are case-insensitive and stored lowercased, so normalize here to
-      // match the server and avoid any client/server mismatch.
       body: { email: email.value.trim().toLowerCase() },
     })
     message.value = res.message
   }
-  catch {
-    errorMessage.value = t('auth.resetRequestError')
+  catch (error) {
+    errorMessage.value = getApiErrorMessage(error, t('auth.resetRequestError'))
   }
   finally {
     loading.value = false
@@ -42,11 +41,11 @@ function goBack() {
     return
   }
 
-  navigateTo('/')
+  navigateTo(localePath('/'))
 }
 
 function goHome() {
-  navigateTo('/')
+  navigateTo(localePath('/'))
 }
 
 const isRtl = computed(() =>
@@ -59,7 +58,7 @@ const backIcon = computed(() =>
 
 <template>
   <v-form @submit.prevent="onSubmit">
-    <section class="d-flex justify-space-between items-center">
+    <section class="d-flex justify-space-between align-center">
       <v-btn
         variant="text"
         :icon="backIcon"
