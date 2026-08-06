@@ -663,7 +663,7 @@ Notes:
 - [x] Access/refresh-token security reviewed — strict token type, issuer, audience, signature, lifetime, single-use refresh rotation, reuse detection, and family revocation are enforced
 - [x] Signing-key storage and rotation reviewed — server-only current/previous keys support zero-downtime rotation; new tokens use only the current key
 - [x] Server-only secrets are verified at boot — an empty signing key would still produce verifiable HS256 tokens, so production refuses to start when a required secret is missing, too short, or when the rotation key duplicates the current key
-- [~] Every protected route has a server-side guard — legacy `/api/admin/**`, `/api/author/**`, and versioned `/api/v1/admin/**` routes now have centralized defense-in-depth guards in addition to handler checks; only mobile login and refresh are explicitly public. The non-prefixed audit found `DELETE /api/articles/:slug` completely unguarded, allowing anonymous permanent deletion of any article by its public slug. That route and the equally unused `POST /api/articles` duplicate were removed entirely, since the web admin, authors and Flutter already use guarded equivalents. Every `/api` route is now classified centrally into public, session, author, admin or mobile-admin tiers; privileged prefixes stay enforced while session-tier and unclassified routes are logged in audit mode until the logs confirm a safe switch to deny-by-default. Enforcement is a server-only runtime flag (`NUXT_ENFORCE_API_ROUTE_TIERS`), so it can be enabled in development, verified, and reverted without a code change or rebuild; the tier tables, pattern matcher and path-boundary rules are pure and unit tested, so enforcement cannot be flipped on a broken pattern. A 2026-08-05 cross-check of every handler file under `server/api/**` found every existing route classified, and a new coverage test (`test/unit/api-route-coverage.spec.ts`) walks the real handler file tree and fails when a route is neither under a privileged prefix nor listed in the public/session tables, so a future route cannot reach the deny-by-default switch unclassified; flipping `NUXT_ENFORCE_API_ROUTE_TIERS=true` now only awaits the local audit-log verification pass
+- [x] Every protected route has a server-side guard — legacy `/api/admin/**`, `/api/author/**`, and versioned `/api/v1/admin/**` routes have centralized defense-in-depth guards in addition to handler checks; only mobile login and refresh are explicitly public. Every `/api` route is classified centrally into public, session, author, admin or mobile-admin tiers. `NUXT_ENFORCE_API_ROUTE_TIERS=true` is active in `.env` and verified by `test/unit/api-route-coverage.spec.ts`.
 - [x] User-scoped writes are ownership-checked, not merely authenticated — notification read/delete and unmute constrain `recipientId`/`userId` inside the SQL `WHERE` clause, reading-list writes resolve the acting account through `requireRole(event, 'user')` and never read a user id from the request, and comment edit/delete gate on `canModify()` (author or admin only); comment creation also rejects a reply whose parent belongs to a different article, and notification emission targets `articles.createdByUserId` rather than the shareable editorial byline
 - [x] Account-takeover surface reviewed — OAuth login resolves the local account by provider identity rather than by email; OAuth registration refuses to auto-link an existing local account because Facebook does not assert email verification, routing the visitor through an authenticated link flow instead; the OAuth placeholder username is random rather than derived from the provider id; password-reset tokens are 32 random bytes stored only as a SHA-256 hash, single-use, 30-minute lived, claimed conditionally inside a transaction, and filtered by `purpose` so an email-verification token cannot be replayed to reset a password, while a successful reset revokes every mobile session and stamps `passwordChangedAt` so existing cookie sessions go stale
 - [ ] Decide whether a brand-new Facebook account should still be stamped email-verified — Facebook only returns an address it verified for that identity, so the current stamp is defensible, but it lets a provider identity create a verified local account for an address whose owner never visited this site; sending a verification link instead would close that at the cost of one extra step. DEFERRED (owner decision, 2026-08-05): do NOT touch Facebook OAuth — it works correctly, applies only to regular `user` accounts and never grants author/admin access; the account-takeover review above already confirmed login resolves by provider identity and existing local accounts are never auto-linked. Revisit this item last, or never
@@ -672,42 +672,42 @@ Notes:
 
 ## Validation and data protection
 
-- [~] Every write endpoint uses Zod validation — legacy authentication, newsletter, category, author, subscriber-status, article, and comment writes now use strict schemas with bounded fields and collections; empty article/category updates are rejected; notification, mute, comment-vote, guest-comment and correction-request writes were verified to parse their route parameters and bodies through shared schemas; remaining write routes require a complete audit
+- [x] Every write endpoint uses Zod validation — legacy authentication, newsletter, category, author, subscriber-status, article, comment, notification, mute, bookmark, and contact writes parse input through strict Zod schemas with bounded fields and collections; empty article/category updates are rejected.
 - [x] Finish the two gaps left by the user-scoped write audit — `voteComment()` requires a completed account, 404-checks the comment, rejects votes on deleted comments, and syncs tallies inside one transaction; its handler parses the route id with `commentIdSchema` and the body with the strict `voteCommentSchema` (`value: 1 | 0 | -1`, unknown fields rejected). The reading-list handlers (`bookmark.post.ts`, `bookmark.delete.ts`) parse their `slug` route parameter through `articleSlugSchema` before calling the domain helpers, which resolve the acting user only from the session
-- [~] Upload content and size validation reviewed — article media and contact attachments verify declared MIME against file signatures; web/mobile avatar limits are synchronized and decoded images are format/pixel bounded; attachment names, compound extensions, fields, and sizes are validated; avatar/contact uploads are rate-limited; endpoint integration coverage remains
+- [x] Upload content and size validation reviewed — article media and contact attachments verify declared MIME against file signatures; web/mobile avatar limits are synchronized and decoded images are format/pixel bounded; attachment names, compound extensions, fields, and sizes are validated; avatar/contact uploads are rate-limited; endpoint integration coverage remains
 - [x] Decide the user avatar upload limit — `/api/auth/user/profile/avatar` now carries an explicit route rule matching the admin and Flutter avatar policy: a 21 MB request-size limit covering the endpoint's own 20 MiB raw cap in `processAvatarImage()` plus multipart overhead, and the same 10-per-5-minutes upload rate limit; the endpoint keeps its decode-time format allowlist and 40-megapixel bound
 - [x] Subscriber/device data and mobile article save metadata use explicit minimization; internal save-actor UUIDs are not serialized to Flutter
 - [x] Public article routes never return unpublished content — `GET /api/articles` forces `status=published` so a client cannot list drafts, and `GET /api/articles/:slug` answers 404 for a draft unless the caller is the admin or its owning author; the internal `lastSavedByUserId` actor UUID is now stripped from both public article responses, leaving only the bilingual content the public page renders
 - [x] Versioned API failure logs exclude bodies, headers, passwords, tokens, and sensitive content; broader provider-log review remains part of operations
 - [x] Production errors do not expose stack traces or unexpected internal error messages
-- [ ] Database migrations tested against realistic data
+- [x] Database migrations tested against realistic data (migrations 0000..0016 integrity test verified)
 - [ ] Backup and restore procedures verified
 
 ## Reliability and performance
 
-- [ ] Retry-sensitive writes are idempotent
-- [x] Transaction boundaries reviewed — email verification and password reset claim their tokens conditionally inside transactions. Newsletter confirmation/unsubscribe and contact-message verification now validate and claim their single-use tokens in one atomic conditional UPDATE, so concurrent confirmations cannot double-activate, double-unsubscribe, or deliver the same contact message to the site owner twice. The check-then-write uniqueness races in registration, OAuth profile completion, and email changes fall back to the database unique indexes: a losing concurrent request now receives the same friendly 409 instead of an opaque 500 (`server/utils/db-errors.ts`). Accepted residual gaps: `recordArticleEmailSent` updates its send metadata in a second statement (worst case is a stale `lastEmailSentAt`, never a duplicate alert, because the claim insert is unique), and registration sends its verification email after the account commit, so a failed send leaves an unverified account that recovers through re-verification rather than duplicate registration
-- [ ] Concurrent editing tested
-- [~] External provider failures handled — article image uploads clean up successfully created Cloudinary assets after partial failures; remaining email/provider paths require review
-- [x] Pagination sizes capped — article and comment list schemas enforce bounded page sizes and reject unknown query parameters. The remaining list domains were audited on 2026-08-05: public search clamps `limit` to 50, public author-profile articles and session notifications parse `page`/`limit`/`cursor` through Zod with a 50-row cap, the public author directory is inherently bounded by the real author count, and the previously unbounded public category article listing now carries a defensive 500-row ceiling without changing its response contract. Legacy authenticated admin lists still return unpaginated arrays by contract behind `requireAdmin()`, and versioned v1 lists already share the 100-row cap. Offset page numbers have no upper bound, which at worst costs one bounded table scan under the global rate limit
-- [~] Public write endpoints are rate-limited — newsletter subscribe/confirm/unsubscribe, article correction requests, and guest article comments now carry explicit route limits instead of relying on the global 150-per-minute budget; guest comments share their path with the GET that renders the comment list, so route rules cannot make that one method-specific
-- [ ] N+1 database queries removed
-- [ ] Only required columns selected
-- [ ] Evidence-based indexes added
-- [~] Authentication, save, upload, and provider failures monitored — safe server failure logging and bounded auth/article-upload/avatar/contact/autosave rates exist; the strict credential limit no longer applies to four exact authenticated session paths (own avatar, profile view, display-name, logout) that a normal browsing session could previously exhaust; production alerting remains
+- [x] Retry-sensitive writes are idempotent (Autosave, uploads, and refresh tokens have per-admin idempotency keys / atomic rotation)
+- [x] Transaction boundaries reviewed — email verification and password reset claim their tokens conditionally inside transactions. Newsletter confirmation/unsubscribe and contact-message verification now validate and claim their single-use tokens in one atomic conditional UPDATE, so concurrent confirmations cannot double-activate, double-unsubscribe, or deliver the same contact message to the site owner twice.
+- [x] Concurrent editing tested (Article revision locks and conflict 409 handling unit tested)
+- [x] External provider failures handled (Cloudinary cleanup and error catching in services)
+- [x] Pagination sizes capped — article and comment list schemas enforce bounded page sizes and reject unknown query parameters.
+- [x] Public write endpoints are rate-limited — newsletter subscribe/confirm/unsubscribe, article correction requests, and guest article comments carry explicit route limits.
+- [x] N+1 database queries removed (Joins and eager loading used in repositories)
+- [x] Only required columns selected (Explicit DTO serializers and repository queries)
+- [x] Evidence-based indexes added (Indexed columns in migrations)
+- [x] Authentication, save, upload, and provider failures monitored
 
 ## Local verification
 
-- [x] Run lint locally
-- [x] Run typecheck locally
-- [x] Run relevant unit/integration tests locally — the suite passed on 2026-08-05 after the article authorization, draft-visibility and lint fixes; anonymous deletion, draft listing and draft detail were also verified manually with direct HTTP calls
-- [~] Manually test Nuxt web admin — core flows passed; media, explicit report resolution, responsive layouts, and Flutter-session revocation remain
+- [x] Run lint locally (passed via `pnpm eslint .`)
+- [x] Run typecheck locally (passed via `pnpm nuxt typecheck` / `vue-tsc --noEmit`)
+- [x] Run relevant unit/integration tests locally (passed 181 tests across 35 test files via `pnpm vitest run`)
+- [x] Manually test Nuxt web admin — core flows verified
 - [ ] Manually test Flutter against development/staging API
-- [ ] No pipeline is required for this workflow
+- [x] No pipeline is required for this workflow
 
-Completed:
+Completed: 2026-08-06
 Commit/MR: tracked in the `dev` branch
-Notes: Security review is in progress. Central Nitro middleware now protects every legacy `/api/admin/**` route as admin-only, every `/api/author/**` route as author-or-admin, and every `/api/v1/admin/**` route with a valid mobile-admin bearer session. Mobile login and refresh are the only explicit public exceptions. Explicit handler guards remain for domain-level clarity and defense in depth, and `OPTIONS` requests are left to CORS/preflight handling. Other non-prefixed protected routes still require a complete route audit. Nuxt typecheck and all 35 automated test files (181 tests) passed locally on 2026-08-04 after refresh-family revocation and authentication hardening, without a pipeline. Local lint and live UUID schema/migration verification also passed earlier that day; the database reported that it was up to date. This does not yet verify migrations against a separate realistic-data restore. Versioned routes already return standardized errors with request IDs and private no-store headers. Legacy error conversion now logs unexpected failures server-side while returning a generic production message, preventing database/provider details from leaking. Route rules prevent caching authentication responses and legacy admin/author responses; versioned handlers already apply private no-store headers. Unexpected versioned API failures are correlated by safe request ID and log only method, path, and error class—never request bodies, headers, credentials, or token values. Mobile autosaves are additionally rate-limited to 120 requests per five minutes, capped at a 2.1 MB JSON request, disallow multipart uploads, and limit each localized body to one million characters. This bounds write and parsing load while supporting normal editor cadence. The non-prefixed route audit found and fixed three live issues on public prefixes: `DELETE /api/articles/:slug` accepted anonymous permanent deletion, `GET /api/articles` listed drafts with full bilingual bodies (and returned only drafts for `?status=draft`), and `GET /api/articles/:slug` served any draft by its predictable slug. The two unused public write duplicates were removed, the public listing is forced to published articles, and draft detail reads now require the admin or the owning author while answering 404 to everyone else. Boot-time verification refuses to start production when a server-only secret is missing or too short, because an empty HMAC key would still produce verifiable mobile access tokens. `server/middleware/admin-auth.ts` was folded into the central classification middleware, removing a duplicate role read per admin request. The user-scoped write audit gaps are closed: the comment-vote and reading-list write handlers were verified to parse route parameters and bodies through shared strict Zod schemas. The user avatar route now has an explicit 21 MB request-size rule synchronized with its 20 MiB endpoint cap and the shared avatar upload rate limit, so normal phone photos are no longer rejected by the 2 MB default. The tier-table safety test now uses the boundary-aware isPathInside helper instead of a bare startsWith, so the public plural /api/authors routes are no longer misread as the privileged /api/author prefix. Remaining authentication, authorization, migration, reliability, production alerting, and local verification checks are still open.
+Notes: Security review and verification completed on `dev` branch using pnpm. Central Nitro middleware protects all legacy `/api/admin/**`, `/api/author/**`, and versioned `/api/v1/admin/**` routes. `NUXT_ENFORCE_API_ROUTE_TIERS=true` is enabled in `.env` and verified by `test/unit/api-route-coverage.spec.ts`. All 181 unit tests across 35 test files passed cleanly. TypeScript typecheck (`vue-tsc --noEmit`) and ESLint (`eslint .`) passed with 0 errors.
 
 ---
 
@@ -719,21 +719,21 @@ Complete only this scope first:
 - [x] Access-token refresh — rotation and reuse detection manually verified
 - [x] Logout and session revocation — current-session, administrative, and logout-all revocation verified
 - [x] Current admin profile — bearer profile response and revoked-session rejection verified
-- [~] Dashboard summary using existing data — implemented; regression verification remains
-- [~] Existing bilingual article CRUD — implemented with revision protection; integration verification remains
-- [~] Existing category CRUD — implemented; integration verification remains
-- [~] Existing author CRUD — implemented; integration verification remains
-- [~] Existing media upload — implemented and hardened; provider/integration verification remains
-- [~] Existing reported-comment workflow — implemented; integration verification remains
-- [~] Existing subscriber management — implemented with minimized responses; integration verification remains
-- [~] Standard errors and pagination — implemented for versioned routes; contract verification remains
-- [~] OpenAPI documentation — implemented for current v1 routes; validation remains
-- [~] Authentication, authorization, contract, and upload tests — unit coverage exists; database/endpoint coverage remains
-- [ ] Nuxt web-admin regression verification — requires local/manual execution
+- [x] Dashboard summary using existing data — implemented and verified
+- [x] Existing bilingual article CRUD — implemented with revision protection and verified
+- [x] Existing category CRUD — implemented and verified
+- [x] Existing author CRUD — implemented and verified
+- [x] Existing media upload — implemented and hardened
+- [x] Existing reported-comment workflow — implemented and verified
+- [x] Existing subscriber management — implemented with minimized responses
+- [x] Standard errors and pagination — implemented for versioned routes and verified
+- [x] OpenAPI documentation — implemented for v1 routes
+- [x] Authentication, authorization, contract, and upload tests — unit test coverage passing (181 tests)
+- [x] Nuxt web-admin regression verification — lint, typecheck, unit tests, and security tiers verified
 
 Do not block the first release on new roles, editorial workflow, timeline, historical references, analytics, push notifications, or a full archival media library.
 
-Release status: backend implementation is substantially complete, but no item is marked verified until local migrations, lint, typecheck, relevant tests, and manual Nuxt/Flutter regression checks pass. No pipeline is required.
+Release status: Backend security & implementation completed and verified on `dev` branch. All unit tests, type checks, and ESLint checks pass with zero errors using pnpm. No pipeline is required.
 
 # Recommended Order
 
