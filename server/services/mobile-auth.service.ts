@@ -92,9 +92,13 @@ export class MobileAuthService {
     if (result.status === 'invalid') throw unauthorized('Invalid or expired refresh token.')
 
     // Re-read the account before issuing another access token. In addition to
-    // checking the current authorization state, findActiveAdmin() rejects
-    // sessions that predate the user's latest password change.
-    const admin = await this.findActiveAdmin(result.session.userId, result.session.createdAt)
+    // checking the current authorization state, findActiveAdmin() rejects a
+    // refresh token issued before the latest password change.
+    //
+    // Compare against the PRESENTED token, never `result.session`: rotation
+    // has just inserted that replacement row, so its createdAt is "now" and
+    // would always look newer than the password change.
+    const admin = await this.findActiveAdmin(result.session.userId, result.refreshTokenIssuedAt)
 
     if (!admin) {
       // Revoke the whole refresh-token family so this stale session cannot be
@@ -106,7 +110,7 @@ export class MobileAuthService {
     return this.createTokenResponse(admin, result.session.id, nextToken.rawToken, nextToken.expiresAt)
   }
 
-  private async findActiveAdmin(userId: string, sessionCreatedAt: Date) {
+  private async findActiveAdmin(userId: string, refreshTokenIssuedAt: Date) {
     const { db } = await import('~~/server/db')
     const { users } = await import('~~/server/db/schema')
     const { eq } = await import('drizzle-orm')
@@ -128,7 +132,7 @@ export class MobileAuthService {
       return null
     }
 
-    // A password change invalidates every mobile session created before it.
+    // A password change invalidates every credential issued before it.
     //
     // AdminProfileService.changePassword() already revokes all mobile
     // sessions immediately. This timestamp check is intentional
@@ -136,11 +140,11 @@ export class MobileAuthService {
     // incomplete revocation, or future code paths that change the password
     // without explicitly revoking sessions.
     //
-    // Keep this rule consistent with requireMobileAdmin(), which performs
-    // the same check for access-token authentication.
+    // Keep this rule consistent with requireMobileAdmin(), which compares the
+    // password change with the session row that issued the access token.
     if (
       row.passwordChangedAt
-      && row.passwordChangedAt > sessionCreatedAt
+      && row.passwordChangedAt > refreshTokenIssuedAt
     ) {
       return null
     }
