@@ -171,8 +171,8 @@ async function submit() {
     dialog.value = false
     await fetchAll()
   }
-  catch {
-    notify(t('admin.categories.saveFailed'), 'error')
+  catch (err) {
+    notify(getApiErrorMessage(err, t('admin.categories.saveFailed')), 'error')
   }
   finally {
     saving.value = false
@@ -187,8 +187,8 @@ async function confirmDelete() {
     notify(t('admin.categories.deleted'))
     await fetchAll()
   }
-  catch {
-    notify(t('admin.categories.deleteFailed'), 'error')
+  catch (err) {
+    notify(getApiErrorMessage(err, t('admin.categories.deleteFailed')), 'error')
   }
   finally {
     deleting.value = false

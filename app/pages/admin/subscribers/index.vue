@@ -77,8 +77,8 @@ async function confirmDelete() {
     deleteDialog.value = false
     toDelete.value = null
   }
-  catch {
-    notify(error.value || t('admin.subscribers.deleteFailed'), 'error')
+  catch (err) {
+    notify(getApiErrorMessage(err, t('admin.subscribers.deleteFailed')), 'error')
   }
   finally {
     deleting.value = false
@@ -95,8 +95,8 @@ async function setEmailDelivery(item: AdminSubscriber, enabled: boolean) {
     notify(enabled ? t('admin.subscribers.deliveryEnabled') : t('admin.subscribers.deliveryDisabled'))
     await fetchAll()
   }
-  catch {
-    notify(error.value || t('admin.subscribers.deliveryUpdateFailed'), 'error')
+  catch (err) {
+    notify(getApiErrorMessage(err, t('admin.subscribers.deliveryUpdateFailed')), 'error')
   }
   finally {
     updatingStatusId.value = null
