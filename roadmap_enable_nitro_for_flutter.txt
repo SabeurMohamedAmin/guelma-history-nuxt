@@ -638,9 +638,9 @@ These features expand upon the core system after authentication, existing APIs, 
 
 ## Push notifications and deep links
 
-- [ ] Register mobile device tokens
-- [ ] Keep provider credentials server-only
-- [ ] Re-check authentication/authorization after deep-link navigation
+- [x] Register mobile device tokens — `POST /api/v1/admin/auth/device-token` endpoint and schema support FCM/APNs push token registration per mobile session.
+- [x] Keep provider credentials server-only — FCM/APNs service keys remain strictly in server environment variables.
+- [x] Re-check authentication/authorization after deep-link navigation — `requireMobileAdmin()` re-verifies user status and role against the database on every bearer request.
 
 ## Global search and analytics
 

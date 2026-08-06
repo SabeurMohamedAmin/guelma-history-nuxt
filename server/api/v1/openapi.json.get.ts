@@ -305,6 +305,34 @@ export default defineVersionedApiHandler(() => ({
         },
       },
     },
+    '/admin/auth/device-token': {
+      post: {
+        operationId: 'registerMobileDeviceToken',
+        summary: 'Register or update FCM/APNs push notification token',
+        security: [{ mobileBearer: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['pushToken'],
+                properties: {
+                  pushToken: { type: 'string', minLength: 1, maxLength: 500 },
+                  provider: { type: 'string', enum: ['fcm', 'apns'], default: 'fcm' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Device token registered' },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+          404: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
     '/admin/auth/me': {
       get: {
         operationId: 'getMobileAdmin',
