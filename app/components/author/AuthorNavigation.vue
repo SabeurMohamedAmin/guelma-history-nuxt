@@ -61,7 +61,11 @@ onMounted(() => {
 const isDesktop = computed(() => !mounted.value || width.value >= 1280)
 const drawer = ref(true)
 const rail = ref(false)
-const pinned = useCookie<boolean>('guelma-author-nav-pinned', { default: () => false })
+const pinned = useCookie<boolean>('guelma-author-nav-pinned', {
+  default: () => false,
+  decode: val => val === 'true',
+  encode: val => String(val),
+})
 
 watchEffect(() => {
   if (mounted.value) {
