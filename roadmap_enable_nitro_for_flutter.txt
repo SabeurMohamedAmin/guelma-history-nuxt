@@ -538,12 +538,12 @@ Prevent Nuxt and Flutter editors from silently overwriting each other.
 
 ## Tests
 
-- [!] Normal update increments revision — repository implementation and request-schema coverage are complete; blocked pending PostgreSQL-backed integration coverage
-- [!] Two clients edit the same revision — blocked pending a PostgreSQL-backed concurrency test
-- [!] Stale update returns 409 — conditional update and conflict mapping are implemented; blocked pending PostgreSQL-backed integration coverage
-- [!] Retry does not duplicate effects — persisted claims protect completed and post-commit failure paths; blocked pending PostgreSQL-backed integration coverage
-- [!] Autosave does not publish — restricted schema and atomic unpublished-row condition are implemented; blocked pending endpoint integration coverage
-- [!] Arabic and French content survive save/recovery — validator coverage is complete; blocked pending database recovery coverage
+- [!] Normal update increments revision — an opt-in database integration test verifies the atomic increment; execution is blocked pending `NUXT_TEST_DATABASE_URL`
+- [!] Two clients edit the same revision — an opt-in database test races both edits and requires exactly one success; execution is blocked pending `NUXT_TEST_DATABASE_URL`
+- [!] Stale update returns 409 — repository conflict behavior is database-covered and service mapping is unit-covered; execution is blocked pending `NUXT_TEST_DATABASE_URL`
+- [!] Retry does not duplicate effects — persisted claims protect completed and post-commit failure paths; blocked pending save-idempotency database coverage
+- [!] Autosave does not publish — database coverage verifies a published row cannot be autosaved or modified; execution is blocked pending `NUXT_TEST_DATABASE_URL`
+- [!] Arabic and French content survive save/recovery — database coverage verifies both localized titles and bodies; execution is blocked pending `NUXT_TEST_DATABASE_URL`
 
 Completed:
 Commit/MR: tracked in the `dev` branch
