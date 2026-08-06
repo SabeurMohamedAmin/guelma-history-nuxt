@@ -65,7 +65,7 @@ const backIcon = computed(() =>
         variant="text"
         icon="mdi-home-outline"
         class="rounded-lg"
-        @click="$localePath('/')"
+        :to="$localePath('/')"
       />
     </section>
 

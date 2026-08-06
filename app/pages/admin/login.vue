@@ -52,18 +52,12 @@ async function onLogin(credentials: { username: string, password: string }) {
 }
 
 function goBack() {
-  // navigateTo() only accepts routes, so step back through the browser and fall
-  // back to the public home page when there is no history to return to.
   if (import.meta.client && window.history.length > 1) {
     window.history.back()
     return
   }
 
   return navigateTo(localePath('/'))
-}
-
-function goHome() {
-  navigateTo(localePath('/'))
 }
 
 definePageMeta({
@@ -92,7 +86,7 @@ const backIcon = computed(() =>
         variant="text"
         icon="mdi-home-outline"
         class="rounded-lg"
-        @click="goHome"
+        :to="$localePath('/')"
       />
     </section>
 
