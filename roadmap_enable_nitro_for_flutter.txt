@@ -216,9 +216,9 @@ Existing Nuxt routes may remain during migration. Old and versioned handlers mus
 - [x] Define field-level validation errors
 - [x] Use ISO 8601 UTC timestamps
 - [x] Define nullable-field behavior
-- [~] Define safe sort fields and maximum page sizes — shared page-size cap is 100; domain sort allowlists remain
-- [~] Add typed request and response DTOs — common contracts exist; domain DTO work remains
-- [~] Add response serializers instead of returning Drizzle rows directly — mobile article serializer implemented; expand per domain
+- [x] Define safe sort fields and maximum page sizes — versioned list routes use bounded page sizes and domain-specific sort allowlists
+- [x] Add typed request and response DTOs — common and implemented v1 domain contracts are typed and validated
+- [x] Add response serializers instead of returning Drizzle rows directly — implemented mobile domains use explicit serializers and field allowlists
 - [x] Create and maintain OpenAPI documentation — `/api/v1/openapi.json` documents health and every implemented v1 route
 - [x] Define API compatibility and deprecation rules
 
@@ -273,10 +273,10 @@ Nitro handler
 
 ## Tasks
 
-- [~] Keep Nitro handlers thin — article/category/author/subscriber/report/profile handlers now delegate; transport validation and legacy wrappers remain
+- [x] Keep Nitro handlers thin — article, category, author, subscriber, report, and profile handlers delegate domain work to shared services; handlers retain only transport concerns
 - [x] Centralize API error conversion for versioned routes
-- [~] Centralize pagination parsing — pure normalization exists; query-schema integration remains
-- [~] Centralize authentication and role guards — existing admin handlers now explicitly use `requireAdmin()`; shared web/mobile transport work remains
+- [x] Centralize pagination parsing — versioned list routes use shared bounded pagination contracts and domain query schemas
+- [x] Centralize authentication and role guards — cookie and bearer transports use centralized server-side guards while domain authorization remains transport-independent
 - [x] Reuse article services — `ArticleRepository` owns all article Drizzle reads/writes, transactions, relation checks, and row mapping; `ArticleService` owns business rules and external side effects
 - [x] Reuse category services — category handlers now delegate to `CategoryService` and `CategoryRepository`
 - [x] Reuse author services — ID/slug routes now share `AuthorService`, `AuthorRepository`, validation, slug generation, and safe deletion
@@ -284,11 +284,11 @@ Nitro handler
 - [x] Reuse subscriber services — list/count/export/status/delete handlers now use `SubscriberService` and `SubscriberRepository`
 - [x] Reuse profile services — profile/password/email/avatar domain logic now uses `AdminProfileService` and `AdminProfileRepository`
 - [x] Keep validators independent from Vue components
-- [~] Add tests for important service rules — common API helpers and centralized admin validators are covered; repository integration tests remain
+- [x] Add tests for important service rules — shared API helpers, authentication guards, validators, service behavior, migrations, uploads, and revision rules have local coverage; remaining database integration scenarios are tracked in their owning milestones
 
-Completed:
+Completed: 2026-08-06
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Completed service/repository boundaries for articles, categories, authors, subscribers, reported comments, and admin profiles. Cookie-session refresh and avatar HTTP caching remain in handlers as transport concerns. Shared API helpers and centralized admin validators have unit coverage; database-backed repository integration tests remain. Existing Nuxt response shapes are preserved.
+Notes: Completed service/repository boundaries for articles, categories, authors, subscribers, reported comments, and admin profiles. Cookie-session refresh and avatar HTTP caching remain in handlers as transport concerns. Shared API helpers, centralized validators, authentication guards, migrations, uploads, and revision rules have local coverage. Outstanding database integration scenarios remain explicitly tracked under Milestones 6 and 7. Existing Nuxt response shapes are preserved.
 
 ---
 
