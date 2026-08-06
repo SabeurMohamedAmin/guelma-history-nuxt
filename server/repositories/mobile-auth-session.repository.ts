@@ -154,6 +154,21 @@ export class MobileAuthSessionRepository {
     return rows.length > 0
   }
 
+  async updatePushToken(sessionId: string, pushToken: string, provider: 'fcm' | 'apns' = 'fcm'): Promise<boolean> {
+    const rows = await db.update(mobileAdminSessions)
+      .set({
+        pushToken,
+        pushTokenProvider: provider,
+        lastUsedAt: new Date(),
+      })
+      .where(and(
+        eq(mobileAdminSessions.id, sessionId),
+        isNull(mobileAdminSessions.revokedAt),
+      ))
+      .returning({ id: mobileAdminSessions.id })
+    return rows.length > 0
+  }
+
   async revokeAllForUser(userId: string, exceptSessionId?: string): Promise<number> {
     const conditions = [
       eq(mobileAdminSessions.userId, userId),
