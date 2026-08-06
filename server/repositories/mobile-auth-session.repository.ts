@@ -19,8 +19,21 @@ export interface RotateMobileSessionInput {
   nextExpiresAt: Date
 }
 
+export interface RotatedMobileSession {
+  status: 'rotated'
+  /** The freshly inserted replacement row. Its `createdAt` is always "now". */
+  session: typeof mobileAdminSessions.$inferSelect
+  /**
+   * When the refresh token the client just presented was issued.
+   *
+   * Callers MUST use this, not `session.createdAt`, to decide whether a
+   * credential predates a security event such as a password change.
+   */
+  refreshTokenIssuedAt: Date
+}
+
 export type RotateMobileSessionResult
-  = | { status: 'rotated', session: typeof mobileAdminSessions.$inferSelect }
+  = | RotatedMobileSession
     | { status: 'invalid' }
     | { status: 'reuse-detected' }
 
@@ -119,7 +132,11 @@ export class MobileAuthSessionRepository {
         .set({ replacedBySessionId: next.id })
         .where(eq(mobileAdminSessions.id, current.id))
 
-      return { status: 'rotated' as const, session: next }
+      return {
+        status: 'rotated' as const,
+        session: next,
+        refreshTokenIssuedAt: current.createdAt,
+      }
     })
 
     if (result.status === 'reuse-detected') {
