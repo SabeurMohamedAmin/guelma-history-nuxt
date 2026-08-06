@@ -32,12 +32,16 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
 
-// Migrations run outside Nuxt, so load .env ourselves (like the seed scripts).
-try {
-  process.loadEnvFile?.()
-}
-catch {
-  // .env is optional — the URL may come from the shell instead.
+// Migrations run outside Nuxt, so load .env when the shell or the safe test
+// wrapper has not already selected a database. Explicit environment variables
+// must always win; otherwise `db_test:migrate` could reach the application DB.
+if (!process.env.NUXT_DATABASE_URL) {
+  try {
+    process.loadEnvFile?.()
+  }
+  catch {
+    // .env is optional — the URL may come from the shell instead.
+  }
 }
 
 const connectionString = process.env.NUXT_DATABASE_URL
