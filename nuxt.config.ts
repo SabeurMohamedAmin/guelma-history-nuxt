@@ -44,10 +44,6 @@ export default defineNuxtConfig({
     layoutTransition: { name: 'layout', mode: 'out-in' },
   },
 
-  experimental: {
-    appManifest: process.env.NODE_ENV === 'production',
-  },
-
   css: ['~/assets/css/main.css'],
 
   /* ------------------------------------------------------------------ */
@@ -387,6 +383,10 @@ export default defineNuxtConfig({
     '/api/articles/comments': {
       security: { rateLimiter: { tokensPerInterval: 60, interval: 300000 } },
     },
+  },
+
+  experimental: {
+    appManifest: process.env.NODE_ENV === 'production',
   }, compatibilityDate: '2025-07-15',
 
   /* ------------------------------------------------------------------ */

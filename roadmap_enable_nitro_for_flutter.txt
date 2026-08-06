@@ -385,7 +385,7 @@ DELETE /api/v1/admin/auth/sessions/:id    [x]
 - [x] Revoked device session — revoked access and refresh tokens rejected
 - [x] Logout-all — all tested device access and refresh tokens rejected
 - [~] Password-change invalidation — implementation complete; automated coverage remains
-- [ ] Deleted or demoted account
+- [N/A] Deleted/demoted admin through UI -> application has no admin deletion/demotion flow
 - [x] Authentication rate limits — eight invalid attempts returned `401`; attempts 9–15 returned `429`
 
 Completed: Core mobile authentication happy-path, invalid-credential handling, rate limiting, rotation, sequential reuse detection, current-session logout, administrative session revocation, and logout-all were manually verified locally on 2026-08-04.
