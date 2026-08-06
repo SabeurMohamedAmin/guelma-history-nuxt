@@ -499,13 +499,13 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 
 ## Tests
 
-- [ ] Valid image
-- [ ] Valid supported video
-- [x] Invalid MIME/type mismatch — unit covered
-- [~] Oversized upload — endpoint and route-rule enforcement implemented; endpoint coverage remains
-- [ ] Unauthenticated upload
-- [ ] Duplicate retry
-- [ ] Cloudinary failure
+- [x] Valid image — service coverage asserts three WebP variants, the preserved original, and the original as the stable media id
+- [x] Valid supported video — service coverage asserts a single request, no variant rendering, and `video` resource type
+- [x] Invalid MIME/type mismatch — unit covered in the validator and again inside the upload service
+- [x] Oversized upload — service rejects with 413 before any provider call; the nuxt-security route rule stays synchronized at ~110 MiB
+- [x] Unauthenticated upload — the route is bearer-only through the central middleware, covered by `test/unit/mobile-auth-guard.test.ts` and `test/unit/api-route-coverage.spec.ts`
+- [ ] Duplicate retry — idempotency claims are database backed, so this needs the remaining integration coverage
+- [x] Cloudinary failure — partially uploaded variants and the original are destroyed before the error is rethrown
 - [~] Attempt to delete referenced media — 409 guard implemented; database integration coverage remains
 
 Completed:
