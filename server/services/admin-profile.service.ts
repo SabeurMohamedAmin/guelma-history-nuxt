@@ -68,6 +68,12 @@ export class AdminProfileService {
     await this.verifyCurrentPassword(admin.passwordHash, currentPassword)
     const validPassword = passwordSchema.parse(newPassword)
     await adminProfileRepository.updatePassword(id, await createPasswordHash(validPassword))
+
+    // Password changes are a security boundary: revoke every existing mobile
+    // session immediately. The mobile access/refresh authentication paths also
+    // compare passwordChangedAt with session.createdAt as defense-in-depth.
+    // Do not remove either mechanism; explicit revocation and timestamp
+    // invalidation intentionally protect against different failure/race cases.
     await mobileAuthSessionRepository.revokeAllForUser(id)
   }
 
