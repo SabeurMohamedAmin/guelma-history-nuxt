@@ -380,7 +380,7 @@ DELETE /api/v1/admin/auth/sessions/:id    [x]
 - [x] Wrong role — bearer-guard regression coverage rejects a demoted or deleted account and revokes its token family
 - [x] Expired access token — bearer-guard regression coverage uses real token creation/verification with a fake clock and never reaches the database
 - [x] Successful refresh rotation — manually verified locally on 2026-08-04
-- [~] Concurrent refresh requests — initial `200 + 500` race was corrected to `200 + 401`; replacement-family revocation was then fixed using a fresh transaction snapshot. Final local 401 check for the winner's replacement token remains
+- [!] Concurrent refresh requests — implementation returns `200 + 401` and revokes the replacement family from a fresh transaction snapshot; blocked pending a PostgreSQL-backed concurrent integration run confirming the winner's replacement token returns `401`
 - [x] Reused refresh token — old token rejected and token family revoked
 - [x] Revoked device session — revoked access and refresh tokens rejected
 - [x] Logout-all — all tested device access and refresh tokens rejected
@@ -421,7 +421,7 @@ GET /api/v1/admin/dashboard
 - [x] Create article
 - [x] Update article
 - [x] Delete article
-- [~] Update home position where authorized — requires an explicit domain rule before exposure
+- [!] Update home position where authorized — blocked pending an owner-approved domain authorization and ordering rule; the API intentionally does not expose an unsafe operation
 - [x] Validate Arabic and French titles, excerpts, and bodies
 - [x] Validate category and author/byline
 - [x] Preserve the difference between owner and display author
@@ -506,7 +506,7 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 - [x] Unauthenticated upload — the route is bearer-only through the central middleware, covered by `test/unit/mobile-auth-guard.test.ts` and `test/unit/api-route-coverage.spec.ts`
 - [ ] Duplicate retry — idempotency claims are database backed, so this needs the remaining integration coverage
 - [x] Cloudinary failure — partially uploaded variants and the original are destroyed before the error is rethrown
-- [~] Attempt to delete referenced media — 409 guard implemented; database integration coverage remains
+- [!] Attempt to delete referenced media — the 409 guard is implemented; blocked pending PostgreSQL-backed integration coverage
 
 Completed:
 Commit/MR: tracked in the `dev` branch
@@ -538,12 +538,12 @@ Prevent Nuxt and Flutter editors from silently overwriting each other.
 
 ## Tests
 
-- [~] Normal update increments revision — repository implementation and request-schema coverage complete; database integration remains
-- [ ] Two clients edit the same revision
-- [~] Stale update returns 409 — conditional update and conflict mapping implemented; database integration remains
-- [~] Retry does not duplicate effects — persisted claims protect completed and post-commit failure paths; database integration coverage remains
-- [~] Autosave does not publish — restricted schema and atomic unpublished-row condition implemented; endpoint integration coverage remains
-- [~] Arabic and French content survive save/recovery — validator unit coverage complete; database recovery coverage remains
+- [!] Normal update increments revision — repository implementation and request-schema coverage are complete; blocked pending PostgreSQL-backed integration coverage
+- [!] Two clients edit the same revision — blocked pending a PostgreSQL-backed concurrency test
+- [!] Stale update returns 409 — conditional update and conflict mapping are implemented; blocked pending PostgreSQL-backed integration coverage
+- [!] Retry does not duplicate effects — persisted claims protect completed and post-commit failure paths; blocked pending PostgreSQL-backed integration coverage
+- [!] Autosave does not publish — restricted schema and atomic unpublished-row condition are implemented; blocked pending endpoint integration coverage
+- [!] Arabic and French content survive save/recovery — validator coverage is complete; blocked pending database recovery coverage
 
 Completed:
 Commit/MR: tracked in the `dev` branch
