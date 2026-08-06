@@ -48,7 +48,6 @@ const { ArticleMediaUploadService, MAX_ARTICLE_MEDIA_BYTES } = await import('~~/
 
 // Real file signatures, so the service validates them the way it would in
 // production.
-const PNG = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x08, ...Array.from({ length: 32 }, () => 0)])
 const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
 const MP4_BYTES = Buffer.from('0000ftypisom')
 const TEXT_BYTES = Buffer.from('definitely not media')
@@ -147,7 +146,7 @@ describe('ArticleMediaUploadService', () => {
       .mockResolvedValueOnce({ publicId: 'first-variant', url: 'https://cdn.example.com/first-variant' })
       .mockRejectedValueOnce(new Error('Cloudinary is unavailable'))
 
-    await expect(service().upload(PNG)).rejects.toThrow('Cloudinary is unavailable')
+    await expect(service().upload(PNG_BYTES)).rejects.toThrow('Cloudinary is unavailable')
 
     // The orphaned variant must not survive the failed upload.
     expect(mocks.destroyManyFromCloudinary).toHaveBeenCalledWith([
@@ -162,7 +161,7 @@ describe('ArticleMediaUploadService', () => {
       .mockResolvedValueOnce({ publicId: 'main-id', url: 'https://cdn.example.com/main-id' })
       .mockRejectedValueOnce(new Error('Original upload failed'))
 
-    await expect(service().upload(PNG)).rejects.toThrow('Original upload failed')
+    await expect(service().upload(PNG_BYTES)).rejects.toThrow('Original upload failed')
 
     expect(mocks.destroyManyFromCloudinary).toHaveBeenCalledWith([
       { publicId: 'thumbnail-id', type: 'image' },
