@@ -532,7 +532,7 @@ Prevent Nuxt and Flutter editors from silently overwriting each other.
 - [x] Ensure autosave cannot publish accidentally
 - [x] Add persisted per-admin idempotency for retry-sensitive autosaves
 - [x] Record last save time and actor for Flutter, Nuxt admin, and Nuxt author updates — assigned server-side from the authenticated principal
-- [ ] Decide whether full article revision history is required
+- [N/A] Full article revision history — not required for the current application; optimistic revision locking prevents overwrites without storing every historical copy. Reconsider only if rollback or version comparison is requested
 - [x] Update the Nuxt web editor to use revision checks
 - [x] Expose the same behavior to Flutter
 
@@ -562,7 +562,7 @@ Keep the Vuetify 4 administration interface compatible with all backend changes.
 - [x] Preserve cookie-based web authentication — the web admin still signs in through `/api/auth/login` and the sealed `nuxt-auth-utils` cookie; the central API middleware enforces `/api/admin/**` and `/api/author/**` through the same `requireRole()` cookie path, and Flutter bearer authentication remains a separate mechanism
 - [x] Verify all admin middleware — `admin.ts` requires the exact `admin` role, `author.ts` uses `hasRole()` so admins inherit, `admin-guest.ts` and `author-guest.ts` redirect logged-in visitors away from the login pages by role without creating a loop, and `user-layout.global.ts` only swaps a layout and carries no authorization. Both login pages sanitize the `?redirect=` query by stripping the locale prefix, requiring the path to stay inside `/admin` or `/author`, and rejecting protocol-relative `//` values, so the guards cannot be turned into an open redirect
 - [x] Use standardized API errors in web composables — `app/utils/apiError.ts` reads both the versioned `{ error: { code, message, fields, requestId } }` body and the legacy `{ message }` body, exposing message, code, field errors and request id with unit coverage; admin pages (`login.vue`, `forgot-password.vue`, `reset-password.vue`, `categories/index.vue`, `subscribers/index.vue`) and public comment forms use `getApiErrorMessage` for consistent localized reporting.
-- [ ] Adopt standardized pagination where useful
+- [N/A] Migrate legacy web pagination — versioned Flutter routes already use the standard `data` and `meta` contract; legacy web responses remain unchanged to avoid unnecessary regressions
 - [x] Add mobile-device session management to security/profile settings
 - [x] Allow admins to revoke Flutter sessions
 - [x] Update the article editor for revision conflicts
@@ -598,15 +598,15 @@ These features expand upon the core system after authentication, existing APIs, 
 
 ## Editorial workflow
 
-- [ ] Design `draft`, `in_review`, `scheduled`, `published`, and `archived` states
-- [ ] Define legal transitions and permissions
-- [ ] Add scheduling worker behavior
+- [N/A] Expanded editorial states — not required; `publishedAt == null` remains unpublished, a future value is scheduled, and a current/past value is published
+- [N/A] Editorial transition permissions — no review workflow is required; existing admin/author ownership rules remain authoritative
+- [ ] TODO: add a scheduling worker only if scheduled publication later needs timed side effects such as notifications; article visibility itself must continue to use `publishedAt <= now`
 - [x] Prevent public APIs from leaking unpublished content — `GET /api/articles` forces `status=published` and `GET /api/articles/:slug` returns 404 for drafts unless accessed by the admin or author.
 
 ## Roles and permissions
 
-- [ ] Define a permission matrix
-- [ ] Decide whether editor/moderator roles are needed
+- [N/A] Additional permission matrix — current permissions are already defined by the existing `guest < user < author < admin` hierarchy, article ownership checks, and route-tier guards
+- [N/A] Editor/moderator roles — not required; retain only guest, user, author, and admin to avoid unnecessary authorization complexity
 - [x] Update server-side guards and tests — central middleware enforces role-based access for legacy and v1 APIs (`NUXT_ENFORCE_API_ROUTE_TIERS=true`).
 
 ## Comment moderation
