@@ -140,7 +140,7 @@ const userName = computed(() => user.value?.displayName || user.value?.username 
 
 // ── Theme ────────────────────────────────────────
 const vuetifyTheme = useTheme()
-const themeCookie = useCookie<'light' | 'dark'>('guelma-theme', { default: () => 'light' })
+const themeCookie = useThemeCookie()
 const isDark = computed(() => vuetifyTheme.global.current.value.dark)
 
 function toggleTheme() {

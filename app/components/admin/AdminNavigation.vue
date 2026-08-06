@@ -67,7 +67,11 @@ const drawer = ref(true)
 const rail = ref(false)
 // Pin the drawer open on mobile so it stays persistent instead of closing as a
 // temporary overlay. Persisted so the choice survives navigation and reloads.
-const pinned = useCookie<boolean>('guelma-admin-nav-pinned', { default: () => false })
+const pinned = useCookie<boolean>('guelma-admin-nav-pinned', {
+  default: () => false,
+  decode: val => val === 'true',
+  encode: val => String(val),
+})
 
 watchEffect(() => {
   if (mounted.value) {
@@ -167,7 +171,7 @@ const userName = computed(() => user.value?.displayName || user.value?.username 
 
 // ── Theme ──────────────────────────────────────────────────────────────
 const vuetifyTheme = useTheme()
-const themeCookie = useCookie<'light' | 'dark'>('guelma-theme', { default: () => 'light' })
+const themeCookie = useThemeCookie()
 const isDark = computed(() => vuetifyTheme.global.current.value.dark)
 
 function toggleTheme() {

@@ -23,7 +23,7 @@ const nuxtIconSet: IconSet = {
 }
 
 export default defineNuxtPlugin((nuxtApp) => {
-  const themeCookie = useCookie('guelma-theme')
+  const themeCookie = useThemeCookie()
   const i18n = nuxtApp.$i18n as {
     locale: { value: string }
     locales: { value: Array<{ code: string, dir: string }> }
