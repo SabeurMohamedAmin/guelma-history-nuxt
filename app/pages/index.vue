@@ -160,7 +160,6 @@ const readMoreIcon = computed(() =>
              mobile it sits entirely below the fold, so this removes its
              hydration cost from startup (TBT). -->
         <LazyLayoutAppSidebar
-          hydrate-on-visible
           :recent-articles="recentArticles"
           :loading="pending"
         />
@@ -188,7 +187,7 @@ const readMoreIcon = computed(() =>
         </p>
         <div class="mx-auto">
           <!-- Bottom of the page: hydrate only when the visitor reaches it. -->
-          <LazyNewsletterForm hydrate-on-visible />
+          <LazyNewsletterForm />
         </div>
       </v-card>
     </section>

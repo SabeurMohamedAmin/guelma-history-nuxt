@@ -26,6 +26,6 @@ const uiStore = useUiStore()
 
     <!-- Below the fold: the server-rendered HTML stays in the page for
          SEO, the JS hydrates only when the footer scrolls into view. -->
-    <LazyLayoutAppFooter hydrate-on-visible />
+    <LazyLayoutAppFooter />
   </v-app>
 </template>
