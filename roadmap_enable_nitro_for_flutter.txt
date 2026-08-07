@@ -380,7 +380,7 @@ DELETE /api/v1/admin/auth/sessions/:id    [x]
 - [x] Wrong role — bearer-guard regression coverage rejects a demoted or deleted account and revokes its token family
 - [x] Expired access token — bearer-guard regression coverage uses real token creation/verification with a fake clock and never reaches the database
 - [x] Successful refresh rotation — manually verified locally on 2026-08-04
-- [!] Concurrent refresh requests — implementation returns `200 + 401`; an opt-in database integration test now races two rotations and verifies the winning replacement family is revoked. Execution remains blocked pending `NUXT_TEST_DATABASE_URL` for an isolated, migrated test database
+- [x] Concurrent refresh requests — implementation returns `200 + 401`; the opt-in database integration test races two rotations and verifies the winning replacement family is revoked. Verified 2026-08-07 against the isolated, migrated `amin_integration_test` database
 - [x] Reused refresh token — old token rejected and token family revoked
 - [x] Revoked device session — revoked access and refresh tokens rejected
 - [x] Logout-all — all tested device access and refresh tokens rejected
@@ -504,9 +504,9 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 - [x] Invalid MIME/type mismatch — unit covered in the validator and again inside the upload service
 - [x] Oversized upload — service rejects with 413 before any provider call; the nuxt-security route rule stays synchronized at ~110 MiB
 - [x] Unauthenticated upload — the route is bearer-only through the central middleware, covered by `test/unit/mobile-auth-guard.test.ts` and `test/unit/api-route-coverage.spec.ts`
-- [!] Duplicate retry — an opt-in database integration test now verifies exactly one concurrent claim, stored-response replay data, and rejection of key reuse for different bytes; execution is blocked pending `NUXT_TEST_DATABASE_URL`
+- [x] Duplicate retry — the database integration test verifies exactly one concurrent claim, stored-response replay data, and rejection of key reuse for different bytes. Verified 2026-08-07 against the isolated test database
 - [x] Cloudinary failure — partially uploaded variants and the original are destroyed before the error is rethrown
-- [!] Attempt to delete referenced media — an opt-in database test verifies referenced and unreferenced public-ID detection; the service-level 409 guard is implemented. Execution is blocked pending `NUXT_TEST_DATABASE_URL`
+- [x] Attempt to delete referenced media — the database test verifies referenced and unreferenced public-ID detection; the service-level 409 guard is implemented. Verified 2026-08-07 against the isolated test database
 
 Completed:
 Commit/MR: tracked in the `dev` branch
@@ -538,12 +538,12 @@ Prevent Nuxt and Flutter editors from silently overwriting each other.
 
 ## Tests
 
-- [!] Normal update increments revision — an opt-in database integration test verifies the atomic increment; execution is blocked pending `NUXT_TEST_DATABASE_URL`
-- [!] Two clients edit the same revision — an opt-in database test races both edits and requires exactly one success; execution is blocked pending `NUXT_TEST_DATABASE_URL`
-- [!] Stale update returns 409 — repository conflict behavior is database-covered and service mapping is unit-covered; execution is blocked pending `NUXT_TEST_DATABASE_URL`
-- [!] Retry does not duplicate effects — an opt-in database test verifies one concurrent save claim, persisted replay responses, and rejection of key reuse for a different payload; execution is blocked pending `NUXT_TEST_DATABASE_URL`
-- [!] Autosave does not publish — database coverage verifies a published row cannot be autosaved or modified; execution is blocked pending `NUXT_TEST_DATABASE_URL`
-- [!] Arabic and French content survive save/recovery — database coverage verifies both localized titles and bodies; execution is blocked pending `NUXT_TEST_DATABASE_URL`
+- [x] Normal update increments revision — the database integration test verifies the atomic increment. Verified 2026-08-07 against the isolated test database
+- [x] Two clients edit the same revision — the database test races both edits and requires exactly one success. Verified 2026-08-07 against the isolated test database
+- [x] Stale update returns 409 — repository conflict behavior is database-covered and service mapping is unit-covered. Verified 2026-08-07 against the isolated test database
+- [x] Retry does not duplicate effects — the database test verifies one concurrent save claim, persisted replay responses, and rejection of key reuse for a different payload. Verified 2026-08-07 against the isolated test database
+- [x] Autosave does not publish — database coverage verifies a published row cannot be autosaved or modified. Verified 2026-08-07 against the isolated test database
+- [x] Arabic and French content survive save/recovery — database coverage verifies both localized titles and bodies. Verified 2026-08-07 against the isolated test database
 
 Completed:
 Commit/MR: tracked in the `dev` branch
@@ -732,7 +732,7 @@ Complete only this scope first:
 
 Do not block the first release on new roles, editorial workflow, timeline, historical references, analytics, push notifications, or a full archival media library.
 
-Release status: Backend security and implementation are complete on `dev`. Repository-level unit tests, type checks, and ESLint checks passed locally with zero errors using pnpm. The backup/restore drill was completed and documented on 2026-08-07. Production readiness still requires the explicitly blocked PostgreSQL concurrency/integration checks and manual Flutter-to-staging validation. No pipeline is required.
+Release status: Backend security and implementation are complete on `dev`. Repository-level unit tests, type checks, and ESLint checks passed locally with zero errors using pnpm. The backup/restore drill was completed and documented on 2026-08-07. The opt-in database integration suite (11 tests across 5 files: refresh rotation, upload and article-save idempotency, revision locking, autosave-publication protection, bilingual persistence, referenced-media protection) passed on 2026-08-07 against an isolated `amin_integration_test` database on the same cluster, migrated through 0017 with `pnpm db_test:migrate`. Production readiness still requires manual Flutter-to-staging validation. No pipeline is required.
 
 # Recommended Order
 
