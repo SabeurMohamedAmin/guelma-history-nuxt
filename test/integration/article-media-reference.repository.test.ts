@@ -31,10 +31,10 @@ describeWithDatabase('ArticleRepository media references', () => {
     await sql`
       INSERT INTO articles (
         id, title_ar, title_fr, slug, body_ar, body_fr,
-        created_by_user_id, revision
+        created_by_user_id, revision, created_at, updated_at
       ) VALUES (
         ${articleId}, 'عنوان', 'Titre', ${`integration-${articleId}`},
-        'نص', 'Texte', ${userId}, 1
+        'نص', 'Texte', ${userId}, 1, now(), now()
       )
     `
     await sql`
