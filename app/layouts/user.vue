@@ -19,6 +19,6 @@ const uiStore = useUiStore()
       </v-container>
     </v-main>
 
-    <LazyLayoutAppFooter hydrate-on-visible />
+    <LazyLayoutAppFooter />
   </v-app>
 </template>

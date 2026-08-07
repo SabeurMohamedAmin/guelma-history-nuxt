@@ -155,12 +155,7 @@ const readMoreIcon = computed(() =>
         cols="12"
         md="4"
       >
-        <!-- Lazy hydration: the sidebar HTML is still server-rendered, but
-             its JavaScript only runs once it is scrolled into view. On
-             mobile it sits entirely below the fold, so this removes its
-             hydration cost from startup (TBT). -->
         <LazyLayoutAppSidebar
-          hydrate-on-visible
           :recent-articles="recentArticles"
           :loading="pending"
         />
@@ -176,10 +171,10 @@ const readMoreIcon = computed(() =>
       >
         <h2 class="text-title-medium text-md-headline-small font-weight-bold mb-2">
           <v-icon
-            icon="mdi-email-outline me-2"
+            icon="mdi-email-outline"
             size="default"
             color="primary"
-            class="mb-3"
+            class="mb-3 me-2"
           />
           {{ t('newsletter.title') }}
         </h2>
@@ -187,8 +182,7 @@ const readMoreIcon = computed(() =>
           {{ t('home.newsletterDesc') }}
         </p>
         <div class="mx-auto">
-          <!-- Bottom of the page: hydrate only when the visitor reaches it. -->
-          <LazyNewsletterForm hydrate-on-visible />
+          <LazyNewsletterForm />
         </div>
       </v-card>
     </section>
