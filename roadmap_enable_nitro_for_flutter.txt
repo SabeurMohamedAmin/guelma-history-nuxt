@@ -734,6 +734,8 @@ Do not block the first release on new roles, editorial workflow, timeline, histo
 
 Release status: Backend security and implementation are complete on `dev`. Repository-level unit tests, type checks, and ESLint checks passed locally with zero errors using pnpm. The backup/restore drill was completed and documented on 2026-08-07. The opt-in database integration suite (11 tests across 5 files: refresh rotation, upload and article-save idempotency, revision locking, autosave-publication protection, bilingual persistence, referenced-media protection) passed on 2026-08-07 against an isolated `amin_integration_test` database on the same cluster, migrated through 0017 with `pnpm db_test:migrate`. Production readiness still requires manual Flutter-to-staging validation. No pipeline is required.
 
+Housekeeping: the `amin_integration_test` database may be kept on the cluster for future integration runs — it holds no real data and the test wrapper refuses to run against the application database. The drill backup files stored in Cockroach userfile storage (`restore-drill` from the mistaken `defaultdb` attempt and `restore-drill-amin`) are no longer needed and can be deleted from the SQL shell when convenient. Re-run `pnpm db_test:migrate` before `pnpm test:integration` whenever a new migration lands, and remember `NUXT_TEST_DATABASE_URL` must be set in the shell — the vitest integration project does not read `.env`.
+
 # Recommended Order
 
 ```text
