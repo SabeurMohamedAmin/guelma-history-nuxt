@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * This component uses static content
+ * TODO: implement dynamique content to this component.
+*/
 import { formatDate } from '~/utils/date'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -151,72 +155,72 @@ function getCommentLink(comment: RecentComment): string | undefined {
 </template>
 
 <style scoped>
-/* Card border — Vuetify doesn't expose a single utility for rgba border */
-.sidebar-card {
-  border: 1px solid rgb(var(--v-border-color) / 0.12);
-}
-
-/* ── Comment row ─────────────────────────────────────────────────────────── */
-.comment-item {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  transition: background-color 0.18s ease;
-
-  /* Thin accent bar — pure CSS trick, no Vuetify equivalent */
-  &::before {
-    content: '';
-    position: absolute;
-    inset-inline-start: 0;
-    top: 50%;
-    width: 3px;
-    height: 60%;
-    border-radius: 3px;
-    background-color: rgb(var(--v-theme-primary));
-    transform: translateY(-50%) scaleY(0);
-    transform-origin: center;
-    transition: transform 0.18s ease;
+  /* Card border — Vuetify doesn't expose a single utility for rgba border */
+  .sidebar-card {
+    border: 1px solid rgb(var(--v-border-color) / 0.12);
   }
 
-  & + & { margin-top: 2px; }
+  /* ── Comment row ─────────────────────────────────────────────────────────── */
+  .comment-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: background-color 0.18s ease;
 
-  &:hover {
-    background-color: rgb(var(--v-theme-primary) / 0.05);
+    /* Thin accent bar — pure CSS trick, no Vuetify equivalent */
+    &::before {
+      content: '';
+      position: absolute;
+      inset-inline-start: 0;
+      top: 50%;
+      width: 3px;
+      height: 60%;
+      border-radius: 3px;
+      background-color: rgb(var(--v-theme-primary));
+      transform: translateY(-50%) scaleY(0);
+      transform-origin: center;
+      transition: transform 0.18s ease;
+    }
 
-    &::before { transform: translateY(-50%) scaleY(1); }
+    & + & { margin-top: 2px; }
 
-    .comment-item__target { color: rgb(var(--v-theme-primary)); }
+    &:hover {
+      background-color: rgb(var(--v-theme-primary) / 0.05);
+
+      &::before { transform: translateY(-50%) scaleY(1); }
+
+      .comment-item__target { color: rgb(var(--v-theme-primary)); }
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgb(var(--v-theme-primary));
+      outline-offset: 2px;
+    }
   }
 
-  &:focus-visible {
-    outline: 2px solid rgb(var(--v-theme-primary));
-    outline-offset: 2px;
+  /* ── Text body ───────────────────────────────────────────────────────────── */
+  .comment-item__text {
+    font-size: 0.8125rem;   /* 13px — between Vuetify's text-body-2 (12px) and text-body-1 (14px) */
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0 0 4px;
   }
-}
 
-/* ── Text body ───────────────────────────────────────────────────────────── */
-.comment-item__text {
-  font-size: 0.8125rem;   /* 13px — between Vuetify's text-body-2 (12px) and text-body-1 (14px) */
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin: 0 0 4px;
-}
-
-.comment-item__target {
-  transition: color 0.18s ease;
-}
-
-/* ── Accessibility ───────────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .comment-item,
-  .comment-item::before,
   .comment-item__target {
-    transition: none;
+    transition: color 0.18s ease;
   }
-}
+
+  /* ── Accessibility ───────────────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .comment-item,
+    .comment-item::before,
+    .comment-item__target {
+      transition: none;
+    }
+  }
 </style>
