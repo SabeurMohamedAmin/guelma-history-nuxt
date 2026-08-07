@@ -62,7 +62,7 @@ describeWithDatabase('ArticleRepository revisions', () => {
       SELECT revision, last_saved_by_user_id
       FROM articles WHERE id = ${articleId}
     `
-    expect(row?.revision).toBe(2)
+    expect(Number(row?.revision)).toBe(2)
     expect(row?.last_saved_by_user_id).toBe(userId)
   })
 
@@ -85,9 +85,9 @@ describeWithDatabase('ArticleRepository revisions', () => {
       title_fr: 'Titre sauvegardé',
       body_ar: 'محتوى محفوظ',
       body_fr: 'Contenu sauvegardé',
-      revision: 3,
       published_at: null,
     })
+    expect(Number(row?.revision)).toBe(3)
   })
 
   it('refuses autosave after publication without changing content', async () => {
@@ -103,6 +103,6 @@ describeWithDatabase('ArticleRepository revisions', () => {
       SELECT body_fr, revision FROM articles WHERE id = ${articleId}
     `
     expect(row?.body_fr).toBe('Contenu sauvegardé')
-    expect(row?.revision).toBe(3)
+    expect(Number(row?.revision)).toBe(3)
   })
 })

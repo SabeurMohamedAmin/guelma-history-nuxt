@@ -39,10 +39,11 @@ describeWithDatabase('ArticleRepository media references', () => {
     `
     await sql`
       INSERT INTO article_media (
-        id, article_id, type, url, public_id, resource_type, position
+        id, article_id, type, url, public_id, resource_type, position,
+        created_at
       ) VALUES (
         ${mediaId}, ${articleId}, 'image', 'https://example.test/image.webp',
-        ${referencedPublicId}, 'image', 0
+        ${referencedPublicId}, 'image', 0, now()
       )
     `
 
