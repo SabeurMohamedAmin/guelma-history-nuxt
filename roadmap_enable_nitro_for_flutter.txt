@@ -701,7 +701,7 @@ Notes: Public API draft protection, unified comment sanitization/validation, com
 - [x] Run typecheck locally (passed via `pnpm nuxt typecheck` / `vue-tsc --noEmit`)
 - [x] Run relevant unit/integration tests locally (passed 181 tests across 35 test files via `pnpm vitest run`)
 - [x] Manually test Nuxt web admin — core flows verified
-- [!] Manually test Flutter against development/staging API — blocked pending a Flutter client build, reachable development/staging API URL, test administrator account, and device/emulator access
+- [!] Manually test Flutter against development/staging API — local Nuxt development now binds to `0.0.0.0` for Android Emulator access through `10.0.2.2`; staging validation remains blocked pending a reachable HTTPS URL and test administrator account
 - [x] No pipeline is required for this workflow
 
 Completed: 2026-08-06
