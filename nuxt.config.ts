@@ -34,7 +34,7 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxtjs/cloudinary',
   ],
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' },
 
   /* ------------------------------------------------------------------ */
   /* App                                                                 */
