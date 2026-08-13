@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, integer, timestamp, jsonb } from 'drizzle-orm/pg-core'
+import { index, pgTable, text, uuid, integer, timestamp, jsonb } from 'drizzle-orm/pg-core'
 import type { ImageVariants } from '../../../shared/types/article'
 import { categories } from './categories'
 import { authors } from './authors'
@@ -40,6 +40,11 @@ export const articles = pgTable('articles', {
   commentCount: integer('comment_count').notNull().default(0),
   // Optimistic concurrency token shared by Nuxt and Flutter editors.
   revision: integer('revision').notNull().default(1),
+  // Server-owned save metadata. Clients cannot choose the actor or timestamp.
+  lastSavedAt: timestamp('last_saved_at', { withTimezone: true, mode: 'date' }),
+  lastSavedByUserId: uuid('last_saved_by_user_id').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().$defaultFn(() => new Date()),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().$defaultFn(() => new Date()),
-})
+}, table => [
+  index('articles_last_saved_by_user_idx').on(table.lastSavedByUserId),
+])

@@ -150,14 +150,35 @@ export class ArticleService {
     }
   }
 
-  async updateWithRevision(id: string, input: UpdateArticleDto, expectedRevision: number): Promise<ArticleResponse> {
+  async updateWithRevision(
+    id: string,
+    input: UpdateArticleDto,
+    expectedRevision: number,
+    savedByUserId?: string,
+    requireUnpublished = false,
+  ): Promise<ArticleResponse> {
     const existing = await this.getById(id)
     if (!existing) throw createNotFoundError(id)
     const data = validateUpdateArticle(input)
     await this.validateRelationIds({ categoryId: data.categoryId, authorId: data.authorId, tagIds: data.tagIds })
     const changedBody = data.bodyFr ?? data.bodyAr
-    const updated = await articleRepository.update(id, data, changedBody ? this.calcReadingTime(changedBody) : undefined, expectedRevision)
-    if (!updated) throw createError({ statusCode: 409, message: 'Article was changed by another editor. Reload and try again.' })
+    const updated = await articleRepository.update(
+      id,
+      data,
+      changedBody ? this.calcReadingTime(changedBody) : undefined,
+      expectedRevision,
+      savedByUserId,
+      requireUnpublished,
+    )
+    if (!updated) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Conflict',
+        message: requireUnpublished
+          ? 'Article was published or changed by another editor. Reload and try again.'
+          : 'Article was changed by another editor. Reload and try again.',
+      })
+    }
 
     if (data.media !== undefined) {
       await destroyManyFromCloudinary(this.toCloudinaryAssets(existing.media))
@@ -260,7 +281,6 @@ export class ArticleService {
     const words = body.trim().split(/\s+/).length
     return Math.max(1, Math.ceil(words / 200))
   }
-
 }
 
 // ─── Module-level singleton ───────────────────────────────────────────────────

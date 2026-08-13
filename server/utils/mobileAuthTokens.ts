@@ -10,15 +10,29 @@ const MINIMUM_SIGNING_KEY_LENGTH = 32
 export function getMobileAuthConfig(): MobileAuthConfig {
   const config = useRuntimeConfig().mobileAuth
   const signingKey = String(config.signingKey || '')
+  const previousSigningKey = String(config.previousSigningKey || '')
 
   if (signingKey.length < MINIMUM_SIGNING_KEY_LENGTH) {
     throw new Error('NUXT_MOBILE_AUTH_SIGNING_KEY must contain at least 32 characters.')
   }
+  if (previousSigningKey && previousSigningKey.length < MINIMUM_SIGNING_KEY_LENGTH) {
+    throw new Error('NUXT_MOBILE_AUTH_PREVIOUS_SIGNING_KEY must contain at least 32 characters.')
+  }
+  if (previousSigningKey && previousSigningKey === signingKey) {
+    throw new Error('The current and previous mobile signing keys must be different.')
+  }
+
+  const issuer = String(config.issuer || '').trim()
+  const audience = String(config.audience || '').trim()
+  if (!issuer || !audience) {
+    throw new Error('Mobile access-token issuer and audience must not be empty.')
+  }
 
   return {
     signingKey,
-    issuer: String(config.issuer),
-    audience: String(config.audience),
+    previousSigningKey: previousSigningKey || undefined,
+    issuer,
+    audience,
     accessTokenTtlSeconds: positiveInteger(config.accessTokenTtlSeconds, 900),
     refreshTokenTtlDays: positiveInteger(config.refreshTokenTtlDays, 30),
     maxActiveDevices: positiveInteger(config.maxActiveDevices, 5),
@@ -63,8 +77,12 @@ export function verifyMobileAccessToken(
   const [header, payload, signature] = parts
   if (!header || !payload || !signature) return null
 
-  const expectedSignature = sign(`${header}.${payload}`, config.signingKey)
-  if (!safeEqual(signature, expectedSignature)) return null
+  const signedValue = `${header}.${payload}`
+  const validCurrentSignature = safeEqual(signature, sign(signedValue, config.signingKey))
+  const validPreviousSignature = config.previousSigningKey
+    ? safeEqual(signature, sign(signedValue, config.previousSigningKey))
+    : false
+  if (!validCurrentSignature && !validPreviousSignature) return null
 
   try {
     const parsedHeader = decodeJson<{ alg?: string, typ?: string }>(header)
@@ -77,6 +95,9 @@ export function verifyMobileAccessToken(
     if (!claims.sub || !claims.sid || !claims.jti) return null
     if (!Number.isInteger(claims.iat) || !Number.isInteger(claims.exp)) return null
     if (claims.iat > now + 30 || claims.exp <= now) return null
+    // Reject correctly signed tokens with a widened or malformed lifetime.
+    // Tokens created by this service always use this exact relationship.
+    if (claims.exp !== claims.iat + config.accessTokenTtlSeconds) return null
 
     return claims
   }

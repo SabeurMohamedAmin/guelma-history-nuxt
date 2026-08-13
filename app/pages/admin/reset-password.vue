@@ -29,19 +29,11 @@ async function onSubmit() {
     done.value = true
   }
   catch (error) {
-    errorMessage.value = getErrorMessage(error, t('auth.resetError'))
+    errorMessage.value = getApiErrorMessage(error, t('auth.resetError'))
   }
   finally {
     loading.value = false
   }
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error && typeof error === 'object' && 'data' in error) {
-    const data = (error as { data?: { message?: string } }).data
-    if (data?.message) return data.message
-  }
-  return fallback
 }
 
 definePageMeta({

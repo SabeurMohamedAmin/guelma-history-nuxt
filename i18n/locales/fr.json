@@ -61,7 +61,12 @@
     "search": "Rechercher",
     "status": "Statut",
     "results": "résultats",
-    "actions": "Actions"
+    "actions": "Actions",
+    "goBack": "Retour",
+    "language": "Langue",
+    "switchToLight": "Passer au mode clair",
+    "switchToDark": "Passer au mode sombre",
+    "home": "Aller à l’accueil"
   },
   "home": {
     "heroTitle": "Histoire de Guelma",
@@ -334,7 +339,14 @@
     "verifying": "Vérification de votre e-mail…",
     "verifySuccess": "Votre e-mail a été vérifié",
     "verifyError": "Ce lien est invalide ou a expiré",
-    "verifyMissingToken": "Lien de vérification manquant"
+    "verifyMissingToken": "Lien de vérification manquant",
+    "verifyEmailTitle": "Vérifiez votre adresse e-mail",
+    "verifyEmailHint": "Nous avons envoyé un lien de confirmation à votre adresse e-mail. Cliquez sur le lien pour activer votre compte et vous connecter.",
+    "verifyEmailSentNotice": "Lien de confirmation envoyé. Vérifiez votre boîte de réception.",
+    "adminAccess": "Accès administrateur",
+    "loginTitle": "Connexion à votre espace",
+    "administrator": "administrateur",
+    "loginSubtitle": "Gérez le contenu historique de Guelma en toute sécurité."
   },
   "adminNav": {
     "dashboard": "Tableau de bord",
@@ -354,8 +366,6 @@
   },
   "admin": {
     "title": "Panneau d'administration",
-    "authors": "Auteurs",
-    "subscribers": "Abonnés",
     "articles": "Articles",
     "newArticle": "Nouvel article",
     "editArticle": "Modifier l'article",
@@ -596,6 +606,17 @@
     "passwordError": "Échec du changement de mot de passe",
     "emailUpdated": "E-mail mis à jour",
     "emailError": "Échec du changement d'e-mail",
+    "mobileSessions": {
+      "title": "Sessions Flutter",
+      "subtitle": "Consultez et révoquez les appareils connectés à l'application mobile.",
+      "unknownDevice": "Appareil sans nom",
+      "lastUsed": "Dernière activité : {date}",
+      "revoke": "Révoquer",
+      "revoked": "Session mobile révoquée",
+      "revokeError": "Impossible de révoquer la session mobile",
+      "empty": "Aucune session mobile active",
+      "emptyHint": "Les appareils connectés à l'application Flutter apparaîtront ici."
+    },
     "deleteAccount": {
       "title": "Zone de danger",
       "description": "Supprimez définitivement votre compte et toutes les données qui lui sont associées.",

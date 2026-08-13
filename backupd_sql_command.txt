@@ -1,0 +1,32 @@
+Run these one at a time:
+1. Start the backup
+
+
+
+BACKUP DATABASE defaultdb INTO 'userfile://defaultdb.public.userfiles/restore-drill' WITH DETACHED;
+
+It returns a job_id immediately. Watch it until it says succeeded:
+
+
+
+SHOW JOBS;
+
+(Re-run SHOW JOBS; every few seconds; look at the status column for the BACKUP row.)
+2. Only after the backup shows succeeded, start the restore
+
+
+
+RESTORE DATABASE defaultdb FROM LATEST IN 'userfile://defaultdb.public.userfiles/restore-drill'
+  WITH new_db_name = 'restore_drill', DETACHED;
+
+Again watch SHOW JOBS; until the RESTORE row is succeeded.
+3. Get the restore duration for the runbook
+
+
+
+SELECT job_type, status, created, finished
+FROM [SHOW JOBS] WHERE job_type IN ('BACKUP', 'RESTORE');
+
+finished - created on the RESTORE row is your duration.
+One small thing I noticed: your shell prompt says cluster curly-husky while your connection string earlier referenced pink-liger-30271. If you have two clusters, double-check you're in the one your production .env points at before continuing - the drill only proves anything if it runs on the real production cluster.
+Then continue with Step 2 verification (USE restore_drill; SHOW TABLES; and the counts) and report back.

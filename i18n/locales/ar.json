@@ -61,7 +61,12 @@
     "search": "بحث",
     "status": "الحالة",
     "results": "نتائج",
-    "actions": "الإجراءات"
+    "actions": "الإجراءات",
+    "goBack": "رجوع",
+    "language": "اللغة",
+    "switchToLight": "التبديل إلى الوضع الفاتح",
+    "switchToDark": "التبديل إلى الوضع الداكن",
+    "home": "الانتقال إلى الصفحة الرئيسية"
   },
   "home": {
     "heroTitle": "تاريخ قالمة",
@@ -344,7 +349,14 @@
     "verifying": "جارٍ تأكيد بريدك…",
     "verifySuccess": "تم تأكيد بريدك بنجاح",
     "verifyError": "هذا الرابط غير صالح أو منتهي الصلاحية",
-    "verifyMissingToken": "رابط التأكيد مفقود"
+    "verifyMissingToken": "رابط التأكيد مفقود",
+    "verifyEmailTitle": "تحقق من بريدك الإلكتروني",
+    "verifyEmailHint": "أرسلنا رابط تأكيد إلى بريدك الإلكتروني. اضغط على الرابط لتفعيل حسابك وتسجيل الدخول.",
+    "verifyEmailSentNotice": "تم إرسال رابط التأكيد. تحقق من صندوق الوارد.",
+    "adminAccess": "وصول المسؤول",
+    "loginTitle": "تسجيل الدخول إلى مساحة",
+    "administrator": "المسؤول",
+    "loginSubtitle": "أدر المحتوى التاريخي لقالمة بأمان."
   },
   "author": {
     "title": "لوحة الكاتب",
@@ -372,8 +384,6 @@
   },
   "admin": {
     "title": "لوحة تحكم المشرف",
-    "authors": "الكُتّاب",
-    "subscribers": "المشتركون",
     "articles": "المقالات",
     "newArticle": "مقال جديد",
     "editArticle": "تعديل المقال",
@@ -614,6 +624,17 @@
     "passwordError": "تعذّر تغيير كلمة المرور",
     "emailUpdated": "تم تحديث البريد",
     "emailError": "تعذّر تغيير البريد",
+    "mobileSessions": {
+      "title": "جلسات Flutter",
+      "subtitle": "اعرض الأجهزة المتصلة بتطبيق الهاتف وألغِ جلساتها.",
+      "unknownDevice": "جهاز بلا اسم",
+      "lastUsed": "آخر نشاط: {date}",
+      "revoke": "إلغاء الجلسة",
+      "revoked": "تم إلغاء جلسة الهاتف",
+      "revokeError": "تعذّر إلغاء جلسة الهاتف",
+      "empty": "لا توجد جلسات هاتف نشطة",
+      "emptyHint": "ستظهر هنا الأجهزة المتصلة بتطبيق Flutter."
+    },
     "deleteAccount": {
       "title": "منطقة الخطر",
       "description": "احذف حسابك وجميع البيانات المرتبطة به نهائياً.",

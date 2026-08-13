@@ -3,7 +3,7 @@ import { z } from 'zod'
 /** Validation schema for a newsletter subscription request. */
 export const newsletterSubscribeSchema = z.object({
   email: z.string().trim().toLowerCase().email('Invalid email address').max(254),
-})
+}).strict()
 
 /**
  * Backwards-compatible alias used by the existing subscribe endpoint.
@@ -21,16 +21,16 @@ const newsletterTokenSchema = z.string()
 /** Validation schema for confirming a pending newsletter subscription. */
 export const newsletterConfirmSchema = z.object({
   token: newsletterTokenSchema,
-})
+}).strict()
 
 /** Validation schema for unsubscribing from article alert emails. */
 export const newsletterUnsubscribeSchema = z.object({
   token: newsletterTokenSchema,
-})
+}).strict()
 
 export const adminSubscriberStatusSchema = z.object({
   status: z.enum(['active', 'unsubscribed']),
-})
+}).strict()
 
 export type AdminSubscriberStatusPayload = z.infer<typeof adminSubscriberStatusSchema>
 export type NewsletterSubscribePayload = z.infer<typeof newsletterSubscribeSchema>

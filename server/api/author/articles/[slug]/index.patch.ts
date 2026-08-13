@@ -1,5 +1,6 @@
 import { articleService } from '~~/server/services/article.service'
 import { toH3Error } from '~~/server/utils/handleError'
+import { revisionAwareUpdateArticleSchema } from '~~/server/validators/article.validator'
 
 /**
  * PATCH /api/author/articles/:slug
@@ -21,10 +22,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, statusMessage: 'Not Found', message: `Article ${slug} not found.` })
     }
 
-    await requireArticleOwner(event, id)
+    const actor = await requireArticleOwner(event, id)
 
-    const body = await readBody(event)
-    return await articleService.updateBySlug(slug, body)
+    const { expectedRevision, ...body } = revisionAwareUpdateArticleSchema.parse(await readBody(event))
+    return await articleService.updateWithRevision(id, body, expectedRevision, actor.id)
   }
   catch (error) {
     toH3Error(error)

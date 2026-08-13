@@ -114,9 +114,13 @@ function getErrorMessage(error: unknown, fallback = 'An unexpected error occurre
   return err?.data?.message || fallback
 }
 
-function isNotFoundError(error: unknown): boolean {
+function getErrorStatus(error: unknown): number | undefined {
   const err = error as ApiError
-  return err?.statusCode === 404 || err?.response?.status === 404
+  return err?.statusCode ?? err?.response?.status
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return getErrorStatus(error) === 404
 }
 
 export const useArticleFormStore = defineStore('articleForm', () => {
@@ -176,6 +180,8 @@ export const useArticleFormStore = defineStore('articleForm', () => {
   const notFound = ref(false)
   const serverError = ref<string | null>(null)
   const editingSlug = ref<string | null>(null)
+  // Optimistic concurrency token returned by the server for the loaded article.
+  const revision = ref<number | null>(null)
 
   const isEditing = computed(() => editingSlug.value !== null)
   const isUploadingMedia = computed(() => uploadingMediaCount.value > 0)
@@ -207,13 +213,18 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     },
   })
 
-  const { data: rawCategories } = useFetch<SelectOption[]>(() => config.value.categoriesUrl, {
+  const { data: rawCategories, refresh: refreshCategories } = useFetch<SelectOption[]>(() => config.value.categoriesUrl, {
     default: () => [],
   })
 
-  const { data: rawAuthors } = useFetch<SelectOption[]>(() => config.value.authorsUrl, {
+  const { data: rawAuthors, refresh: refreshAuthors } = useFetch<SelectOption[]>(() => config.value.authorsUrl, {
     default: () => [],
   })
+
+  /** Reload selectors so newly created database records appear in the editor. */
+  async function refreshOptions() {
+    await Promise.all([refreshCategories(), refreshAuthors()])
+  }
 
   const categories = computed<SelectOption[]>(() =>
     Array.isArray(rawCategories.value) ? rawCategories.value : [],
@@ -248,11 +259,13 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     resetFields()
     clearStatus()
     editingSlug.value = null
+    revision.value = null
     slugManuallyEdited.value = false
     formRef.value?.resetValidation?.()
   }
 
   function hydrateForm(article: ArticleResponse) {
+    revision.value = article.revision
     fields.titleAr = article.titleAr ?? ''
     fields.titleFr = article.titleFr ?? ''
     fields.slug = article.slug ?? ''
@@ -389,11 +402,17 @@ export const useArticleFormStore = defineStore('articleForm', () => {
       const payload = buildPayload()
 
       if (isEditing.value && editingSlug.value) {
-        await $fetch(`${config.value.apiBase}/${editingSlug.value}`, {
+        if (revision.value === null) {
+          serverError.value = 'The article revision is missing. Reload the editor before saving.'
+          return
+        }
+
+        const updated = await $fetch<ArticleResponse>(`${config.value.apiBase}/${editingSlug.value}`, {
           method: 'PATCH',
-          body: payload,
+          body: { ...payload, expectedRevision: revision.value },
         })
 
+        revision.value = updated.revision
         editingSlug.value = fields.slug.trim() || editingSlug.value
       }
       else {
@@ -406,7 +425,9 @@ export const useArticleFormStore = defineStore('articleForm', () => {
       await router.push(localePath(config.value.listPath))
     }
     catch (error: unknown) {
-      serverError.value = getErrorMessage(error)
+      serverError.value = getErrorStatus(error) === 409
+        ? 'This article was changed by another editor. Reload it before saving your changes.'
+        : getErrorMessage(error)
       // The console only shows "400 (Validation Error)": the useful part is the
       // list of failing fields in the response body, so print it while developing.
       if (import.meta.dev) console.error('[articleForm] save failed:', serverError.value)
@@ -553,6 +574,7 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     listPath,
     categories,
     authors,
+    refreshOptions,
     configureFlow,
     submit,
     loadArticle,

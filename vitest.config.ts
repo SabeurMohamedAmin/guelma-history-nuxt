@@ -29,6 +29,26 @@ export default defineConfig({
           environment: 'node',
         },
       },
+      {
+        resolve: {
+          alias: {
+            '~~': rootDir,
+            '~': rootDir,
+            '@@': rootDir,
+            '@': rootDir,
+            '/server': `${rootDir}server`,
+            '/shared': `${rootDir}shared`,
+          },
+        },
+        test: {
+          name: 'integration',
+          include: ['test/integration/**/*.{test,spec}.ts'],
+          environment: 'node',
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
+          fileParallelism: false,
+        },
+      },
       await defineVitestProject({
         test: {
           name: 'nuxt',

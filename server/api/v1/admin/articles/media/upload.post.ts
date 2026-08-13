@@ -7,7 +7,7 @@ import { requireMobileAdmin } from '~~/server/utils/mobileAuthGuard'
 
 /** One multipart request supports native Flutter upload progress reporting. */
 export default defineVersionedApiHandler(async (event) => {
-  await requireMobileAdmin(event)
+  const principal = await requireMobileAdmin(event)
   const key = getHeader(event, 'idempotency-key')?.trim()
   if (!key || !/^[A-Za-z0-9._-]{16,100}$/.test(key)) {
     throw createError({ statusCode: 400, message: 'A valid Idempotency-Key header is required.' })

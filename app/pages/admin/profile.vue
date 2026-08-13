@@ -8,6 +8,11 @@ const {
   changePassword,
   uploadAvatar,
 } = useAdminProfile()
+const {
+  sessions: mobileSessions,
+  pending: mobileSessionsPending,
+  revokeSession,
+} = useAdminMobileSessions()
 
 const editingName = ref(false)
 const nameDraft = ref('')
@@ -15,6 +20,7 @@ const savingName = ref(false)
 const uploadingAvatar = ref(false)
 const passwordDialog = ref(false)
 const emailDialog = ref(false)
+const revokingSessionId = ref<string | null>(null)
 const snackbar = ref<{ show: boolean, text: string, color: 'success' | 'error' }>({
   show: false,
   text: '',
@@ -84,6 +90,20 @@ async function onPasswordSubmit(current: string, next: string) {
 async function onEmailSubmit(email: string, current: string) {
   await changeEmail(email, current)
   notify(t('profile.emailUpdated'))
+}
+
+async function onRevokeSession(sessionId: string) {
+  revokingSessionId.value = sessionId
+  try {
+    await revokeSession(sessionId)
+    notify(t('profile.mobileSessions.revoked'))
+  }
+  catch (error) {
+    notify(extractErrorMessage(error, t('profile.mobileSessions.revokeError')), 'error')
+  }
+  finally {
+    revokingSessionId.value = null
+  }
 }
 
 definePageMeta({
@@ -255,6 +275,75 @@ definePageMeta({
         </v-card>
       </v-col>
     </v-row>
+
+    <v-card
+      v-if="profile"
+      rounded="xl"
+      class="profile-card mt-6"
+    >
+      <v-card-item>
+        <template #prepend>
+          <v-icon
+            icon="mdi-cellphone-lock"
+            color="primary"
+          />
+        </template>
+        <v-card-title>{{ t('profile.mobileSessions.title') }}</v-card-title>
+        <v-card-subtitle>{{ t('profile.mobileSessions.subtitle') }}</v-card-subtitle>
+      </v-card-item>
+
+      <v-divider />
+
+      <v-skeleton-loader
+        v-if="mobileSessionsPending"
+        type="list-item-two-line@2"
+      />
+
+      <v-list
+        v-else-if="mobileSessions.length"
+        lines="three"
+      >
+        <template
+          v-for="(session, index) in mobileSessions"
+          :key="session.id"
+        >
+          <v-list-item
+            :prepend-icon="session.platform === 'ios' ? 'mdi-apple' : 'mdi-android'"
+            :title="session.deviceName || t('profile.mobileSessions.unknownDevice')"
+          >
+            <v-list-item-subtitle>
+              {{ session.platform }}
+              <template v-if="session.appVersion">
+                · v{{ session.appVersion }}
+              </template>
+            </v-list-item-subtitle>
+            <v-list-item-subtitle>
+              {{ t('profile.mobileSessions.lastUsed', { date: formatDateTime(session.lastUsedAt, localeCode) }) }}
+            </v-list-item-subtitle>
+            <template #append>
+              <v-btn
+                color="error"
+                variant="text"
+                prepend-icon="mdi-logout-variant"
+                :loading="revokingSessionId === session.id"
+                :disabled="revokingSessionId !== null"
+                @click="onRevokeSession(session.id)"
+              >
+                {{ t('profile.mobileSessions.revoke') }}
+              </v-btn>
+            </template>
+          </v-list-item>
+          <v-divider v-if="index < mobileSessions.length - 1" />
+        </template>
+      </v-list>
+
+      <v-empty-state
+        v-else
+        icon="mdi-cellphone-off"
+        :title="t('profile.mobileSessions.empty')"
+        :text="t('profile.mobileSessions.emptyHint')"
+      />
+    </v-card>
 
     <v-skeleton-loader
       v-else-if="pending"

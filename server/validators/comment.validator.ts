@@ -39,13 +39,13 @@ export const createCommentSchema = z.object({
   articleSlug: articleSlugSchema,
   parentId: commentId.nullable().optional(),
   body,
-})
+}).strict()
 export type CreateCommentPayload = z.infer<typeof createCommentSchema>
 
 /** Edit a comment body. The id comes from the route, not the body. */
 export const editCommentSchema = z.object({
   body,
-})
+}).strict()
 export type EditCommentPayload = z.infer<typeof editCommentSchema>
 
 /**
@@ -55,13 +55,13 @@ export type EditCommentPayload = z.infer<typeof editCommentSchema>
  */
 export const voteCommentSchema = z.object({
   value: z.union([z.literal(1), z.literal(0), z.literal(-1)]),
-})
+}).strict()
 export type VoteCommentPayload = z.infer<typeof voteCommentSchema>
 
 /** Flag/report a comment with an optional short reason. */
 export const flagCommentSchema = z.object({
   reason: z.string().trim().max(500, 'Reason is too long').optional().or(z.literal('')),
-})
+}).strict()
 export type FlagCommentPayload = z.infer<typeof flagCommentSchema>
 
 /** Sort modes for a comment list. */
@@ -82,7 +82,7 @@ export const listCommentsSchema = z.object({
   // Keyset cursor: the createdAt ISO timestamp of the last root seen (uuids are
   // not time-ordered, so we page on createdAt instead of id).
   cursor: z.string().datetime().optional(),
-})
+}).strict()
 
 /** A comment id from a route param. Exported so handlers validate consistently. */
 export const commentIdSchema = commentId

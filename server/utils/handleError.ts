@@ -21,10 +21,16 @@ export function toH3Error(error: unknown): never {
     throw error
   }
 
+  // Preserve useful diagnostics in server logs without exposing database,
+  // provider, filesystem, or implementation details to production clients.
+  console.error('[server] Unexpected request failure', error)
+
   throw createError({
     statusCode: 500,
     statusMessage: 'Internal Server Error',
-    message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+    message: import.meta.dev && error instanceof Error
+      ? error.message
+      : 'An unexpected error occurred.',
   })
 }
 

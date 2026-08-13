@@ -1,37 +1,64 @@
 <script setup lang="ts">
 const { t, locale, locales } = useI18n()
 const localePath = useLocalePath()
+const switchLocalePath = useSwitchLocalePath()
 const { fetch: refreshSession } = useUserSession()
 const route = useRoute()
+const { isDark, toggleTheme } = useTheme()
 
 const loading = ref(false)
 const errorMessage = ref<string | null>(null)
 
+const rtlLocales = ['ar', 'he', 'fa', 'ur']
+
+const isRtl = computed(() => rtlLocales.includes(locale.value))
+const backIcon = computed(() =>
+  isRtl.value ? 'mdi-arrow-right' : 'mdi-arrow-left',
+)
+const themeIcon = computed(() =>
+  isDark.value ? 'mdi-weather-sunny' : 'mdi-weather-night',
+)
+const themeLabel = computed(() =>
+  isDark.value
+    ? t('common.switchToLight', 'Switch to light mode')
+    : t('common.switchToDark', 'Switch to dark mode'),
+)
+
+const localeOptions = computed(() =>
+  locales.value.map(item => ({
+    code: typeof item === 'string' ? item : item.code,
+    name: typeof item === 'string' ? item : item.name,
+  })),
+)
+
 /**
- * Resolve a safe, locale-aware destination after login.
- *
- * The `redirect` query may already carry a locale prefix (e.g. /fr/admin/...)
- * because it comes from the route's fullPath. We strip any known locale prefix,
- * validate it points inside /admin (and is not a protocol-relative // URL),
- * then re-apply the active locale via localePath so the prefix is preserved.
+ * Only permit internal /admin destinations after authentication.
+ * Locale prefixes are removed before validating then reapplied
+ * using the currently active locale.
  */
 function getSafeAdminRedirect(): string {
-  const raw = typeof route.query.redirect === 'string' ? route.query.redirect : ''
-  const localeCodes = locales.value.map(l => (typeof l === 'string' ? l : l.code))
+  const rawRedirect
+    = typeof route.query.redirect === 'string' ? route.query.redirect : ''
 
-  let path = raw
-  for (const code of localeCodes) {
+  if (!rawRedirect.startsWith('/') || rawRedirect.startsWith('//')) {
+    return localePath('/admin')
+  }
+
+  const url = new URL(rawRedirect, 'http://localhost')
+  let path = url.pathname
+
+  for (const { code } of localeOptions.value) {
     if (path === `/${code}` || path.startsWith(`/${code}/`)) {
       path = path.slice(code.length + 1) || '/'
       break
     }
   }
 
-  if (path.startsWith('/admin') && !path.startsWith('//')) {
-    return localePath(path)
-  }
+  const isAdminPath = path === '/admin' || path.startsWith('/admin/')
 
-  return localePath('/admin')
+  return isAdminPath
+    ? localePath(path)
+    : localePath('/admin')
 }
 
 async function onLogin(credentials: { username: string, password: string }) {
@@ -39,12 +66,19 @@ async function onLogin(credentials: { username: string, password: string }) {
   errorMessage.value = null
 
   try {
-    await $fetch('/api/auth/login', { method: 'POST', body: credentials })
+    await $fetch('/api/auth/login', {
+      method: 'POST',
+      body: credentials,
+    })
+
     await refreshSession()
     await navigateTo(getSafeAdminRedirect())
   }
   catch (error) {
-    errorMessage.value = getErrorMessage(error, t('auth.loginError'))
+    errorMessage.value = getApiErrorMessage(
+      error,
+      t('auth.loginError'),
+    )
   }
   finally {
     loading.value = false
@@ -52,81 +86,105 @@ async function onLogin(credentials: { username: string, password: string }) {
 }
 
 function goBack() {
-  navigateTo(localePath('/admin/login'))
-}
-
-function goHome() {
-  navigateTo(localePath('/'))
-}
-
-/** Extract a human-readable message from an H3/fetch error. */
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error && typeof error === 'object' && 'data' in error) {
-    const data = (error as { data?: { message?: string } }).data
-    if (data?.message) return data.message
+  if (import.meta.client && window.history.length > 1) {
+    window.history.back()
+    return
   }
-  return fallback
+
+  return navigateTo(localePath('/'))
+}
+
+async function switchLocale(code: string) {
+  if (code === locale.value) return
+
+  await navigateTo(switchLocalePath(code as 'fr' | 'ar'))
 }
 
 definePageMeta({
   layout: 'auth',
   middleware: ['admin-guest'],
 })
-
-const isRtl = computed(() =>
-  ['ar', 'he', 'fa', 'ur'].includes(locale.value),
-)
-const backIcon = computed(() =>
-  isRtl.value ? 'mdi-arrow-right' : 'mdi-arrow-left',
-)
 </script>
 
 <template>
-  <div class="admin-login-page">
-    <section class="d-flex justify-space-between items-center">
+  <div
+    class="d-flex flex-column ga-1"
+    :dir="isRtl ? 'rtl' : 'ltr'"
+  >
+    <header
+      class="d-flex align-center justify-space-between"
+      role="banner"
+    >
       <v-btn
-        variant="text"
         :icon="backIcon"
-        class="rounded-lg"
+        :aria-label="t('common.goBack', 'Go back')"
+        variant="text"
+        size="x-small"
+        rounded="lg"
         @click="goBack"
       />
-      <v-btn
-        variant="text"
-        icon="mdi-home-outline"
-        class="rounded-lg"
-        @click="goHome"
-      />
-    </section>
 
-    <admin-login-form
+      <div class="d-flex align-center ga-2">
+        <v-menu location="bottom end">
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-translate"
+              :aria-label="t('common.language', 'Language')"
+              :title="t('common.language', 'Language')"
+              variant="text"
+              size="x-small"
+              rounded="lg"
+            />
+          </template>
+
+          <v-list
+            density="compact"
+            rounded="lg"
+          >
+            <v-list-item
+              v-for="item in localeOptions"
+              :key="item.code"
+              :title="item.name"
+              :active="item.code === locale"
+              @click="switchLocale(item.code)"
+            >
+              <template #append>
+                <v-icon
+                  v-if="item.code === locale"
+                  color="primary"
+                  icon="mdi-check"
+                  size="18"
+                />
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+
+        <v-btn
+          :icon="themeIcon"
+          :aria-label="themeLabel"
+          :title="themeLabel"
+          variant="text"
+          size="x-small"
+          rounded="lg"
+          @click="toggleTheme"
+        />
+
+        <v-btn
+          icon="mdi-home-outline"
+          :aria-label="t('common.home', 'Go to homepage')"
+          :to="localePath('/')"
+          variant="text"
+          size="x-small"
+          rounded="lg"
+        />
+      </div>
+    </header>
+    <AdminLoginForm
       :loading="loading"
       :error-message="errorMessage"
       @submit="onLogin"
     />
   </div>
 </template>
-
-<style scoped>
-.admin-login-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.admin-login-page__actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.admin-login-page__link {
-  border: none;
-  background: transparent;
-  padding: 0;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  text-decoration: underline;
-}
-</style>

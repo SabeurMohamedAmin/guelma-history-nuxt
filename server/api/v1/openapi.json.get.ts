@@ -110,6 +110,26 @@ export default defineVersionedApiHandler(() => ({
         },
       },
     },
+    '/admin/articles/{id}/autosave': {
+      patch: {
+        operationId: 'autosaveMobileAdminArticle',
+        summary: 'Retry-safe autosave for an unpublished bilingual draft',
+        description: 'Accepts draft text only and cannot publish or change structural fields.',
+        security: [{ mobileBearer: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+          { name: 'Idempotency-Key', in: 'header', required: true, schema: { type: 'string', minLength: 16, maxLength: 100, pattern: '^[A-Za-z0-9._-]+$' } },
+        ],
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ArticleAutosaveRequest' } } } },
+        responses: {
+          200: { description: 'Draft saved or completed retry replayed' },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+          404: { $ref: '#/components/responses/ApiError' },
+          409: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
     '/admin/categories': {
       get: {
         operationId: 'listMobileAdminCategories', summary: 'List and search categories', security: [{ mobileBearer: [] }],
@@ -285,6 +305,34 @@ export default defineVersionedApiHandler(() => ({
         },
       },
     },
+    '/admin/auth/device-token': {
+      post: {
+        operationId: 'registerMobileDeviceToken',
+        summary: 'Register or update FCM/APNs push notification token',
+        security: [{ mobileBearer: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['pushToken'],
+                properties: {
+                  pushToken: { type: 'string', minLength: 1, maxLength: 500 },
+                  provider: { type: 'string', enum: ['fcm', 'apns'], default: 'fcm' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Device token registered' },
+          400: { $ref: '#/components/responses/ApiError' },
+          401: { $ref: '#/components/responses/ApiError' },
+          404: { $ref: '#/components/responses/ApiError' },
+        },
+      },
+    },
     '/admin/auth/me': {
       get: {
         operationId: 'getMobileAdmin',
@@ -385,6 +433,25 @@ export default defineVersionedApiHandler(() => ({
             },
           },
         },
+      },
+      ArticleAutosaveRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['expectedRevision'],
+        properties: {
+          expectedRevision: { type: 'integer', minimum: 1 },
+          titleAr: { type: 'string', minLength: 1, maxLength: 255 },
+          titleFr: { type: 'string', minLength: 1, maxLength: 255 },
+          excerptAr: { type: ['string', 'null'], maxLength: 500 },
+          excerptFr: { type: ['string', 'null'], maxLength: 500 },
+          bodyAr: { type: 'string', minLength: 1, maxLength: 1000000 },
+          bodyFr: { type: 'string', minLength: 1, maxLength: 1000000 },
+        },
+        anyOf: [
+          { required: ['titleAr'] }, { required: ['titleFr'] },
+          { required: ['excerptAr'] }, { required: ['excerptFr'] },
+          { required: ['bodyAr'] }, { required: ['bodyFr'] },
+        ],
       },
       HealthResponse: {
         type: 'object',

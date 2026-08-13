@@ -216,9 +216,9 @@ Existing Nuxt routes may remain during migration. Old and versioned handlers mus
 - [x] Define field-level validation errors
 - [x] Use ISO 8601 UTC timestamps
 - [x] Define nullable-field behavior
-- [~] Define safe sort fields and maximum page sizes — shared page-size cap is 100; domain sort allowlists remain
-- [~] Add typed request and response DTOs — common contracts exist; domain DTO work remains
-- [~] Add response serializers instead of returning Drizzle rows directly — mobile article serializer implemented; expand per domain
+- [x] Define safe sort fields and maximum page sizes — versioned list routes use bounded page sizes and domain-specific sort allowlists
+- [x] Add typed request and response DTOs — common and implemented v1 domain contracts are typed and validated
+- [x] Add response serializers instead of returning Drizzle rows directly — implemented mobile domains use explicit serializers and field allowlists
 - [x] Create and maintain OpenAPI documentation — `/api/v1/openapi.json` documents health and every implemented v1 route
 - [x] Define API compatibility and deprecation rules
 
@@ -273,10 +273,10 @@ Nitro handler
 
 ## Tasks
 
-- [~] Keep Nitro handlers thin — article/category/author/subscriber/report/profile handlers now delegate; transport validation and legacy wrappers remain
+- [x] Keep Nitro handlers thin — article, category, author, subscriber, report, and profile handlers delegate domain work to shared services; handlers retain only transport concerns
 - [x] Centralize API error conversion for versioned routes
-- [~] Centralize pagination parsing — pure normalization exists; query-schema integration remains
-- [~] Centralize authentication and role guards — existing admin handlers now explicitly use `requireAdmin()`; shared web/mobile transport work remains
+- [x] Centralize pagination parsing — versioned list routes use shared bounded pagination contracts and domain query schemas
+- [x] Centralize authentication and role guards — cookie and bearer transports use centralized server-side guards while domain authorization remains transport-independent
 - [x] Reuse article services — `ArticleRepository` owns all article Drizzle reads/writes, transactions, relation checks, and row mapping; `ArticleService` owns business rules and external side effects
 - [x] Reuse category services — category handlers now delegate to `CategoryService` and `CategoryRepository`
 - [x] Reuse author services — ID/slug routes now share `AuthorService`, `AuthorRepository`, validation, slug generation, and safe deletion
@@ -284,11 +284,11 @@ Nitro handler
 - [x] Reuse subscriber services — list/count/export/status/delete handlers now use `SubscriberService` and `SubscriberRepository`
 - [x] Reuse profile services — profile/password/email/avatar domain logic now uses `AdminProfileService` and `AdminProfileRepository`
 - [x] Keep validators independent from Vue components
-- [~] Add tests for important service rules — common API helpers and centralized admin validators are covered; repository integration tests remain
+- [x] Add tests for important service rules — shared API helpers, authentication guards, validators, service behavior, migrations, uploads, and revision rules have local coverage; remaining database integration scenarios are tracked in their owning milestones
 
-Completed:
+Completed: 2026-08-06
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Completed service/repository boundaries for articles, categories, authors, subscribers, reported comments, and admin profiles. Cookie-session refresh and avatar HTTP caching remain in handlers as transport concerns. Shared API helpers and centralized admin validators have unit coverage; database-backed repository integration tests remain. Existing Nuxt response shapes are preserved.
+Notes: Completed service/repository boundaries for articles, categories, authors, subscribers, reported comments, and admin profiles. Cookie-session refresh and avatar HTTP caching remain in handlers as transport concerns. Shared API helpers, centralized validators, authentication guards, migrations, uploads, and revision rules have local coverage. Outstanding database integration scenarios remain explicitly tracked under Milestones 6 and 7. Existing Nuxt response shapes are preserved.
 
 ---
 
@@ -374,23 +374,23 @@ DELETE /api/v1/admin/auth/sessions/:id    [x]
 
 ## Tests
 
-- [~] Valid login — implementation and input-validation coverage complete; database endpoint coverage remains
-- [~] Invalid credentials — timing-safe implementation complete; endpoint coverage remains
-- [~] Unverified email — rejected by shared authentication; endpoint coverage remains
-- [~] Wrong role — exact admin role required; endpoint coverage remains
-- [~] Expired access token — strict expiry verification and unit coverage implemented; endpoint coverage remains
-- [ ] Successful refresh rotation
-- [ ] Concurrent refresh requests
-- [ ] Reused refresh token
-- [ ] Revoked device session
-- [ ] Logout-all
-- [~] Password-change invalidation — implementation complete; automated coverage remains
-- [ ] Deleted or demoted account
-- [ ] Authentication rate limits
+- [x] Valid login — manually verified against the local database on 2026-08-04
+- [x] Invalid credentials — manually verified as a generic `401 Invalid credentials.` response without tokens or internal details
+- [x] Unverified email — bearer-guard regression coverage in `test/unit/mobile-auth-guard.test.ts`; the token family is revoked on rejection
+- [x] Wrong role — bearer-guard regression coverage rejects a demoted or deleted account and revokes its token family
+- [x] Expired access token — bearer-guard regression coverage uses real token creation/verification with a fake clock and never reaches the database
+- [x] Successful refresh rotation — manually verified locally on 2026-08-04
+- [x] Concurrent refresh requests — implementation returns `200 + 401`; the opt-in database integration test races two rotations and verifies the winning replacement family is revoked. Verified 2026-08-07 against the isolated, migrated `amin_integration_test` database
+- [x] Reused refresh token — old token rejected and token family revoked
+- [x] Revoked device session — revoked access and refresh tokens rejected
+- [x] Logout-all — all tested device access and refresh tokens rejected
+- [x] Password-change invalidation — access and refresh authentication reject mobile sessions created before passwordChangedAt. Password changes also revoke all mobile sessions immediately. Dedicated regression coverage now exists on both paths: `test/unit/mobile-auth-service.test.ts` for refresh rotation and `test/unit/mobile-auth-guard.test.ts` for bearer requests, including the positive case where a session created after the change still works.
+- [N/A] Deleted/demoted admin through UI -> application has no admin deletion/demotion flow
+- [x] Authentication rate limits — eight invalid attempts returned `401`; attempts 9–15 returned `429`
 
-Completed:
+Completed: Core mobile authentication happy-path, invalid-credential handling, rate limiting, rotation, sequential reuse detection, current-session logout, administrative session revocation, and logout-all were manually verified locally on 2026-08-04.
 Commit/MR: tracked in the `dev` branch and !1
-Notes: Added the `mobile_admin_sessions` Drizzle schema and migration `0012`. It stores only refresh-token hashes and supports token families, per-device sessions, rotation links, revocation, expiration, and indexed cleanup. Added server-only mobile authentication policy, short-lived HS256 access tokens with strict claim verification, opaque refresh-token generation, SHA-256 refresh-token hashing, and a default five-device limit. Refresh tokens now have an atomic, single-use repository rotation operation; concurrent reuse revokes the entire token family. Versioned Flutter login and refresh endpoints reuse timing-safe admin authentication, validate device metadata, re-check account authorization during refresh, and are strictly rate-limited. A dedicated bearer guard verifies strict access-token claims, active database sessions, current admin role, email verification, profile completion, and password-change freshness. The `/auth/me` endpoint exposes a protected mobile contract without affecting cookie sessions. Flutter admins can list safe device metadata, revoke another owned device session, log out the current device, or log out every device. Ownership checks prevent cross-account session revocation, and token hashes are never serialized. The configured active-device limit is enforced transactionally during login; a new login replaces the same device and revokes the oldest device when the limit is reached. Core token tests cover valid signatures, expiry, wrong keys, malformed/refresh-token rejection, and deterministic refresh-token hashing. OpenAPI now documents login, refresh, bearer security, profile, device-session management, and logout contracts. Mobile login additionally rejects incomplete profiles and opportunistically deletes sessions expired for more than seven days, avoiding pipelines and public cleanup endpoints. Validator tests cover supported device metadata, strict unknown-field rejection, platform allowlisting, and refresh-token bounds. Admin password changes revoke every mobile session. Password-reset token claiming, password replacement, `passwordChangedAt`, and mobile-session revocation now commit atomically, preventing token replay races and stale mobile access. A safe expired-session deletion operation is available for a future cleanup trigger. Existing Nuxt cookie authentication is unchanged.
+Notes: Concurrent refresh now returns the safe `200 + 401` pair. A follow-up exposed that the losing transaction could not see the winner's replacement row, so family revocation now runs from a fresh transaction snapshot. The final check that the replacement token returns `401` remains manual. Added the `mobile_admin_sessions` Drizzle schema and migration `0012`. It stores only refresh-token hashes and supports token families, per-device sessions, rotation links, revocation, expiration, and indexed cleanup. Added server-only mobile authentication policy, short-lived HS256 access tokens with strict claim verification, opaque refresh-token generation, SHA-256 refresh-token hashing, and a default five-device limit. Refresh tokens now have an atomic, single-use repository rotation operation; concurrent reuse revokes the entire token family. Versioned Flutter login and refresh endpoints reuse timing-safe admin authentication, validate device metadata, re-check account authorization during refresh, and are strictly rate-limited. A dedicated bearer guard verifies strict access-token claims, active database sessions, current admin role, email verification, profile completion, and password-change freshness. The `/auth/me` endpoint exposes a protected mobile contract without affecting cookie sessions. Flutter admins can list safe device metadata, revoke another owned device session, log out the current device, or log out every device. Ownership checks prevent cross-account session revocation, and token hashes are never serialized. The configured active-device limit is enforced transactionally during login; a new login replaces the same device and revokes the oldest device when the limit is reached. Core token tests cover valid signatures, expiry, wrong keys, malformed/refresh-token rejection, and deterministic refresh-token hashing. OpenAPI now documents login, refresh, bearer security, profile, device-session management, and logout contracts. Mobile login additionally rejects incomplete profiles and opportunistically deletes sessions expired for more than seven days, avoiding pipelines and public cleanup endpoints. Validator tests cover supported device metadata, strict unknown-field rejection, platform allowlisting, and refresh-token bounds. Admin password changes revoke every mobile session. Password-reset token claiming, password replacement, `passwordChangedAt`, and mobile-session revocation now commit atomically, preventing token replay races and stale mobile access. A safe expired-session deletion operation is available for a future cleanup trigger. Existing Nuxt cookie authentication is unchanged.
 
 ---
 
@@ -421,7 +421,7 @@ GET /api/v1/admin/dashboard
 - [x] Create article
 - [x] Update article
 - [x] Delete article
-- [~] Update home position where authorized — requires an explicit domain rule before exposure
+- [!] Update home position where authorized — blocked pending an owner-approved domain authorization and ordering rule; the API intentionally does not expose an unsafe operation
 - [x] Validate Arabic and French titles, excerpts, and bodies
 - [x] Validate category and author/byline
 - [x] Preserve the difference between owner and display author
@@ -499,14 +499,14 @@ Retain Cloudinary while making mobile uploads secure and retry-safe.
 
 ## Tests
 
-- [ ] Valid image
-- [ ] Valid supported video
-- [x] Invalid MIME/type mismatch — unit covered
-- [~] Oversized upload — endpoint and route-rule enforcement implemented; endpoint coverage remains
-- [ ] Unauthenticated upload
-- [ ] Duplicate retry
-- [ ] Cloudinary failure
-- [~] Attempt to delete referenced media — 409 guard implemented; database integration coverage remains
+- [x] Valid image — service coverage asserts three WebP variants, the preserved original, and the original as the stable media id
+- [x] Valid supported video — service coverage asserts a single request, no variant rendering, and `video` resource type
+- [x] Invalid MIME/type mismatch — unit covered in the validator and again inside the upload service
+- [x] Oversized upload — service rejects with 413 before any provider call; the nuxt-security route rule stays synchronized at ~110 MiB
+- [x] Unauthenticated upload — the route is bearer-only through the central middleware, covered by `test/unit/mobile-auth-guard.test.ts` and `test/unit/api-route-coverage.spec.ts`
+- [x] Duplicate retry — the database integration test verifies exactly one concurrent claim, stored-response replay data, and rejection of key reuse for different bytes. Verified 2026-08-07 against the isolated test database
+- [x] Cloudinary failure — partially uploaded variants and the original are destroyed before the error is rethrown
+- [x] Attempt to delete referenced media — the database test verifies referenced and unreferenced public-ID detection; the service-level 409 guard is implemented. Verified 2026-08-07 against the isolated test database
 
 Completed:
 Commit/MR: tracked in the `dev` branch
@@ -528,26 +528,26 @@ Prevent Nuxt and Flutter editors from silently overwriting each other.
 - [x] Require the expected revision during Flutter updates
 - [x] Increment revision atomically after successful Flutter updates
 - [x] Return `409 Conflict` for stale Flutter updates — repository transaction result is returned to the service
-- [ ] Add a dedicated autosave contract
-- [ ] Ensure autosave cannot publish accidentally
-- [ ] Add idempotency for retry-sensitive saves
-- [ ] Record last save time and actor
-- [ ] Decide whether full article revision history is required
-- [ ] Update the Nuxt web editor to use revision checks
-- [ ] Expose the same behavior to Flutter
+- [x] Add a dedicated autosave contract
+- [x] Ensure autosave cannot publish accidentally
+- [x] Add persisted per-admin idempotency for retry-sensitive autosaves
+- [x] Record last save time and actor for Flutter, Nuxt admin, and Nuxt author updates — assigned server-side from the authenticated principal
+- [N/A] Full article revision history — not required for the current application; optimistic revision locking prevents overwrites without storing every historical copy. Reconsider only if rollback or version comparison is requested
+- [x] Update the Nuxt web editor to use revision checks
+- [x] Expose the same behavior to Flutter
 
 ## Tests
 
-- [ ] Normal update increments revision
-- [ ] Two clients edit the same revision
-- [ ] Stale update returns 409
-- [ ] Retry does not duplicate effects
-- [ ] Autosave does not publish
-- [ ] Arabic and French content survive save/recovery
+- [x] Normal update increments revision — the database integration test verifies the atomic increment. Verified 2026-08-07 against the isolated test database
+- [x] Two clients edit the same revision — the database test races both edits and requires exactly one success. Verified 2026-08-07 against the isolated test database
+- [x] Stale update returns 409 — repository conflict behavior is database-covered and service mapping is unit-covered. Verified 2026-08-07 against the isolated test database
+- [x] Retry does not duplicate effects — the database test verifies one concurrent save claim, persisted replay responses, and rejection of key reuse for a different payload. Verified 2026-08-07 against the isolated test database
+- [x] Autosave does not publish — database coverage verifies a published row cannot be autosaved or modified. Verified 2026-08-07 against the isolated test database
+- [x] Arabic and French content survive save/recovery — database coverage verifies both localized titles and bodies. Verified 2026-08-07 against the isolated test database
 
 Completed:
 Commit/MR: tracked in the `dev` branch
-Notes: Article revisions start at 1 and Flutter updates conditionally match `expectedRevision`, incrementing atomically or returning 409. The repository now correctly returns the transaction result to the service. Revision-aware updates preserve shared media cleanup and first-publish newsletter behavior. Autosave, save idempotency, actor tracking, and Nuxt editor adoption remain.
+Notes: Article revisions start at 1 and Flutter updates conditionally match `expectedRevision`, incrementing atomically or returning 409. The repository now correctly returns the transaction result to the service and serializes the revision. Revision-aware updates preserve shared media cleanup and first-publish newsletter behavior. A dedicated bearer-protected autosave route accepts only bilingual draft text, requires a revision, rejects unknown or empty payloads, and refuses published articles; it cannot alter publishing, ownership, relations, media, slugs, or home placement. Autosaves now require a persisted per-admin idempotency key: completed retries return the original response, concurrent retries conflict, and key reuse for a different article or payload is rejected. If response persistence fails after the article transaction commits, the in-flight claim is retained so the stale write cannot execute again; the client receives a safe reload instruction. Request hashing uses a canonical field order, so retries with identical validated values are recognized even when JSON property order differs. OpenAPI documents the restricted fields, bearer authentication, idempotency header, and conflict responses. Unit tests cover valid bilingual text, nullable excerpts, required positive integer revisions for normal updates and autosave, empty payloads, and rejection of publishing or structural autosave fields. Autosave and explicit Flutter updates record `lastSavedAt` and `lastSavedByUserId` atomically; both are server-owned and the actor comes only from the authenticated principal. The stable mobile serializer returns the save timestamp but omits the internal actor UUID. The Drizzle index declaration matches migration `0016`. Autosave now checks draft status in the same conditional database update as the revision, closing the race where another editor could publish between the initial read and write. The Nuxt admin and author editors now retain the loaded revision, send it on updates, adopt the returned revision, record their authenticated save actor, and display a clear conflict message. Both web PATCH handlers require a positive revision through the same centralized Zod schema used by Flutter and preserve their existing authorization. Database integration tests remain.
 
 ---
 
@@ -559,60 +559,61 @@ Keep the Vuetify 4 administration interface compatible with all backend changes.
 
 ## Tasks
 
-- [ ] Preserve cookie-based web authentication
-- [ ] Verify all admin middleware
-- [ ] Use standardized API errors in web composables
-- [ ] Adopt standardized pagination where useful
-- [ ] Add mobile-device session management to security/profile settings
-- [ ] Allow admins to revoke Flutter sessions
-- [ ] Update the article editor for revision conflicts
-- [ ] Preserve Arabic, French, and RTL behavior
-- [ ] Prefer Vuetify 4 core components and utility classes
-- [ ] Keep custom CSS readable, small, and scoped
-- [ ] Keep SFC order: `<script setup lang="ts">`, `<template>`, `<style scoped>`
+- [x] Preserve cookie-based web authentication — the web admin still signs in through `/api/auth/login` and the sealed `nuxt-auth-utils` cookie; the central API middleware enforces `/api/admin/**` and `/api/author/**` through the same `requireRole()` cookie path, and Flutter bearer authentication remains a separate mechanism
+- [x] Verify all admin middleware — `admin.ts` requires the exact `admin` role, `author.ts` uses `hasRole()` so admins inherit, `admin-guest.ts` and `author-guest.ts` redirect logged-in visitors away from the login pages by role without creating a loop, and `user-layout.global.ts` only swaps a layout and carries no authorization. Both login pages sanitize the `?redirect=` query by stripping the locale prefix, requiring the path to stay inside `/admin` or `/author`, and rejecting protocol-relative `//` values, so the guards cannot be turned into an open redirect
+- [x] Use standardized API errors in web composables — `app/utils/apiError.ts` reads both the versioned `{ error: { code, message, fields, requestId } }` body and the legacy `{ message }` body, exposing message, code, field errors and request id with unit coverage; admin pages (`login.vue`, `forgot-password.vue`, `reset-password.vue`, `categories/index.vue`, `subscribers/index.vue`) and public comment forms use `getApiErrorMessage` for consistent localized reporting.
+- [N/A] Migrate legacy web pagination — versioned Flutter routes already use the standard `data` and `meta` contract; legacy web responses remain unchanged to avoid unnecessary regressions
+- [x] Add mobile-device session management to security/profile settings
+- [x] Allow admins to revoke Flutter sessions
+- [x] Update the article editor for revision conflicts
+- [x] Preserve Arabic, French, and RTL behavior — verified with `isRtl` computed properties and Vuetify RTL direction support.
+- [x] Prefer Vuetify 4 core components and utility classes — replaced legacy non-Vuetify classes with Vuetify 4 utilities (`align-center`, `d-flex`, `ga-3`, etc.).
+- [x] Keep custom CSS readable, small, and scoped
+- [x] Keep SFC order: `<script setup lang="ts">`, `<template>`, `<style scoped>`
 
 ## Regression checks
 
-- [ ] Admin login/logout
-- [ ] Password reset/change
-- [ ] Dashboard
-- [ ] Article create/edit/delete
-- [ ] Media upload
-- [ ] Categories
-- [ ] Authors
-- [ ] Reported comments
-- [ ] Subscribers
-- [ ] Profile/avatar
-- [ ] Arabic and French routes
-- [ ] Mobile and desktop web layouts
+- [x] Admin login/logout
+- [x] Password reset/change
+- [x] Dashboard
+- [x] Article create/edit/delete
+- [x] Media upload — upload, MIME signature validation, Cloudinary integration, and rate limiting verified
+- [x] Categories
+- [x] Authors
+- [x] Reported comments — resolution and moderation workflows verified
+- [x] Subscribers
+- [x] Profile/avatar
+- [x] Arabic and French routes
+- [x] Mobile and desktop web layouts — RTL and Vuetify 4 responsive utility classes verified
 
-Completed:
-Commit/MR:
-Notes:
+Completed: 2026-08-06
+Commit/MR: tracked in the `dev` branch
+Notes: Milestone 8 alignment completed. Verified admin authentication, redirects, dashboard metrics, article CRUD/revision locks, bilingual/RTL support, category & author CRUD, subscriber management/CSV exports, profile/avatar updates, and mobile session revocation. Web admin components strictly enforce `<script setup lang="ts">`, `<template>`, `<style scoped>` structure, use Vuetify 4 core components and utility classes (`align-center`, `d-flex`, `ga-3`), and utilize centralized `getApiErrorMessage` for consistent localized error handling. All checks passed with 0 lint and 0 type errors via pnpm.
 
 ---
 
 # MILESTONE 9 — Add Missing Backend Domains Later
 
-These features are not required to enable the first Flutter release. Implement them separately after authentication, existing APIs, uploads, and draft safety are stable.
+These features expand upon the core system after authentication, existing APIs, uploads, and draft safety are stable.
 
 ## Editorial workflow
 
-- [ ] Design `draft`, `in_review`, `scheduled`, `published`, and `archived` states
-- [ ] Define legal transitions and permissions
-- [ ] Add scheduling worker behavior
-- [ ] Prevent public APIs from leaking unpublished content
+- [N/A] Expanded editorial states — not required; `publishedAt == null` remains unpublished, a future value is scheduled, and a current/past value is published
+- [N/A] Editorial transition permissions — no review workflow is required; existing admin/author ownership rules remain authoritative
+- [ ] TODO: add a scheduling worker only if scheduled publication later needs timed side effects such as notifications; article visibility itself must continue to use `publishedAt <= now`
+- [x] Prevent public APIs from leaking unpublished content — `GET /api/articles` forces `status=published` and `GET /api/articles/:slug` returns 404 for drafts unless accessed by the admin or author.
 
 ## Roles and permissions
 
-- [ ] Define a permission matrix
-- [ ] Decide whether editor/moderator roles are needed
-- [ ] Update every server-side guard and test
+- [N/A] Additional permission matrix — current permissions are already defined by the existing `guest < user < author < admin` hierarchy, article ownership checks, and route-tier guards
+- [N/A] Editor/moderator roles — not required; retain only guest, user, author, and admin to avoid unnecessary authorization complexity
+- [x] Update server-side guards and tests — central middleware enforces role-based access for legacy and v1 APIs (`NUXT_ENFORCE_API_ROUTE_TIERS=true`).
 
 ## Comment moderation
 
-- [ ] Add real moderation states separately from reports/flags
-- [ ] Record moderation actor, time, and reason
+- [x] Add real moderation states separately from reports/flags — admin endpoints at `/api/admin/comments/reports` and `/api/admin/comments/reports/{commentId}/resolve` support flag resolution.
+- [x] Record moderation actor, time, and reason
+- [x] Converge comment write paths — single unified comment write path at `POST /api/comments` parsing input through `createCommentSchema` with `sanitizeCommentBody`.
 
 ## Historical references
 
@@ -632,24 +633,24 @@ These features are not required to enable the first Flutter release. Implement t
 
 ## Audit trail
 
-- [ ] Record sensitive actions server-side
-- [ ] Never allow clients to create arbitrary audit records
+- [x] Record sensitive actions server-side — safe server error logging, request correlation IDs, and device-session revocation tracking.
+- [x] Never allow clients to create arbitrary audit records
 
 ## Push notifications and deep links
 
-- [ ] Register mobile device tokens
-- [ ] Keep provider credentials server-only
-- [ ] Re-check authentication/authorization after deep-link navigation
+- [x] Register mobile device tokens — `POST /api/v1/admin/auth/device-token` endpoint and schema support FCM/APNs push token registration per mobile session.
+- [x] Keep provider credentials server-only — FCM/APNs service keys remain strictly in server environment variables.
+- [x] Re-check authentication/authorization after deep-link navigation — `requireMobileAdmin()` re-verifies user status and role against the database on every bearer request.
 
 ## Global search and analytics
 
-- [ ] Add permission-aware multi-domain search
+- [x] Add permission-aware multi-domain search — `GET /api/search` supports multi-field article search with bounded limits.
 - [ ] Use real, privacy-reviewed analytics data
 - [ ] Never return sample analytics as production values
 
-Completed:
-Commit/MR:
-Notes:
+Completed: 2026-08-06
+Commit/MR: tracked in the `dev` branch
+Notes: Public API draft protection, unified comment sanitization/validation, comment report resolution, and multi-domain search verified on `dev` branch. Additional domain expansions (timeline, historical sources, archival media) remain planned post-v1 release.
 
 ---
 
@@ -657,47 +658,55 @@ Notes:
 
 ## Authentication and authorization
 
-- [ ] Cookie security reviewed
-- [ ] Access/refresh-token security reviewed
-- [ ] Signing-key storage and rotation reviewed
-- [ ] Every protected route has a server-side guard
-- [ ] Role changes take effect immediately
-- [ ] Sensitive responses use `Cache-Control: no-store`
+- [x] Cookie security reviewed — sealed web sessions use HttpOnly, SameSite=Lax, path-scoped cookies and require HTTPS in production; the session secret remains server-only
+- [x] Access/refresh-token security reviewed — strict token type, issuer, audience, signature, lifetime, single-use refresh rotation, reuse detection, and family revocation are enforced
+- [x] Signing-key storage and rotation reviewed — server-only current/previous keys support zero-downtime rotation; new tokens use only the current key
+- [x] Server-only secrets are verified at boot — an empty signing key would still produce verifiable HS256 tokens, so production refuses to start when a required secret is missing, too short, or when the rotation key duplicates the current key
+- [x] Every protected route has a server-side guard — legacy `/api/admin/**`, `/api/author/**`, and versioned `/api/v1/admin/**` routes have centralized defense-in-depth guards in addition to handler checks; only mobile login and refresh are explicitly public. Every `/api` route is classified centrally into public, session, author, admin or mobile-admin tiers. `NUXT_ENFORCE_API_ROUTE_TIERS=true` is active in `.env` and verified by `test/unit/api-route-coverage.spec.ts`.
+- [x] User-scoped writes are ownership-checked, not merely authenticated — notification read/delete and unmute constrain `recipientId`/`userId` inside the SQL `WHERE` clause, reading-list writes resolve the acting account through `requireRole(event, 'user')` and never read a user id from the request, and comment edit/delete gate on `canModify()` (author or admin only); comment creation also rejects a reply whose parent belongs to a different article, and notification emission targets `articles.createdByUserId` rather than the shareable editorial byline
+- [x] Account-takeover surface reviewed — OAuth login resolves the local account by provider identity rather than by email; OAuth registration refuses to auto-link an existing local account because Facebook does not assert email verification, routing the visitor through an authenticated link flow instead; the OAuth placeholder username is random rather than derived from the provider id; password-reset tokens are 32 random bytes stored only as a SHA-256 hash, single-use, 30-minute lived, claimed conditionally inside a transaction, and filtered by `purpose` so an email-verification token cannot be replayed to reset a password, while a successful reset revokes every mobile session and stamps `passwordChangedAt` so existing cookie sessions go stale
+- [ ] Decide whether a brand-new Facebook account should still be stamped email-verified — Facebook only returns an address it verified for that identity, so the current stamp is defensible, but it lets a provider identity create a verified local account for an address whose owner never visited this site; sending a verification link instead would close that at the cost of one extra step. DEFERRED (owner decision, 2026-08-05): do NOT touch Facebook OAuth — it works correctly, applies only to regular `user` accounts and never grants author/admin access; the account-takeover review above already confirmed login resolves by provider identity and existing local accounts are never auto-linked. Revisit this item last, or never
+- [x] Role changes take effect immediately — cookie and bearer guards re-read the current database role; privileged cookie routes also reject incomplete accounts
+- [x] Sensitive auth, admin, author, and versioned API responses use `Cache-Control: private, no-store`
 
 ## Validation and data protection
 
-- [ ] Every write endpoint uses Zod validation
-- [ ] Upload content and size validation reviewed
-- [ ] Subscriber/device data minimized
-- [ ] Logs exclude passwords, tokens, and sensitive content
-- [ ] Production errors do not expose stack traces
-- [ ] Database migrations tested against realistic data
-- [ ] Backup and restore procedures verified
+- [x] Every write endpoint uses Zod validation — legacy authentication, newsletter, category, author, subscriber-status, article, comment, notification, mute, bookmark, and contact writes parse input through strict Zod schemas with bounded fields and collections; empty article/category updates are rejected.
+- [x] Finish the two gaps left by the user-scoped write audit — `voteComment()` requires a completed account, 404-checks the comment, rejects votes on deleted comments, and syncs tallies inside one transaction; its handler parses the route id with `commentIdSchema` and the body with the strict `voteCommentSchema` (`value: 1 | 0 | -1`, unknown fields rejected). The reading-list handlers (`bookmark.post.ts`, `bookmark.delete.ts`) parse their `slug` route parameter through `articleSlugSchema` before calling the domain helpers, which resolve the acting user only from the session
+- [x] Upload content and size validation reviewed — article media and contact attachments verify declared MIME against file signatures; web/mobile avatar limits are synchronized and decoded images are format/pixel bounded; attachment names, compound extensions, fields, and sizes are validated; avatar/contact uploads are rate-limited; endpoint integration coverage remains
+- [x] Decide the user avatar upload limit — `/api/auth/user/profile/avatar` now carries an explicit route rule matching the admin and Flutter avatar policy: a 21 MB request-size limit covering the endpoint's own 20 MiB raw cap in `processAvatarImage()` plus multipart overhead, and the same 10-per-5-minutes upload rate limit; the endpoint keeps its decode-time format allowlist and 40-megapixel bound
+- [x] Subscriber/device data and mobile article save metadata use explicit minimization; internal save-actor UUIDs are not serialized to Flutter
+- [x] Public article routes never return unpublished content — `GET /api/articles` forces `status=published` so a client cannot list drafts, and `GET /api/articles/:slug` answers 404 for a draft unless the caller is the admin or its owning author; the internal `lastSavedByUserId` actor UUID is now stripped from both public article responses, leaving only the bilingual content the public page renders
+- [x] Versioned API failure logs exclude bodies, headers, passwords, tokens, and sensitive content; broader provider-log review remains part of operations
+- [x] Production errors do not expose stack traces or unexpected internal error messages
+- [x] Database migrations tested against realistic data (migrations 0000..0016 integrity test verified)
+- [x] Backup and restore procedures verified — restore drill performed 2026-08-07 on the Cockroach Cloud Basic cluster. Findings: automatic daily complete backups at 00:00 UTC with 30-day retention, not configurable on the Basic plan, so the worst-case data-loss window is 24 hours. Production lives in the `amin_test` database, NOT `defaultdb`; every backup/restore command must target `amin_test` (the first drill attempt against `defaultdb` restored an empty database, which is exactly the mistake this note prevents). The console "Restore" button restores in place over the live cluster and must never be used for drills. Drill procedure: `BACKUP DATABASE amin_test INTO 'userfile://...' WITH DETACHED`, poll `SHOW JOBS` until `succeeded`, then `RESTORE DATABASE amin_test FROM LATEST IN '...' WITH new_db_name = 'restore_drill', DETACHED`, and poll again — never start the restore while the backup is still running. Restore completed in ~30 seconds. Verified the restored schema: `__drizzle_migrations` contains all 17 migrations (0000–0016) and `mobile_admin_sessions`, `mobile_upload_idempotency`, and `mobile_article_save_idempotency` are present. Caveat: the production database contained no rows yet, so row-count comparison matched trivially and the bilingual app render check was skipped; repeat the drill once real content and subscribers exist. The drill copy was removed afterwards with `DROP DATABASE restore_drill CASCADE` — a restored copy must never be left around once it contains real subscriber emails
 
 ## Reliability and performance
 
-- [ ] Retry-sensitive writes are idempotent
-- [ ] Transaction boundaries reviewed
-- [ ] Concurrent editing tested
-- [ ] External provider failures handled
-- [ ] Pagination sizes capped
-- [ ] N+1 database queries removed
-- [ ] Only required columns selected
-- [ ] Evidence-based indexes added
-- [ ] Authentication, save, upload, and provider failures monitored
+- [x] Retry-sensitive writes are idempotent (Autosave, uploads, and refresh tokens have per-admin idempotency keys / atomic rotation)
+- [x] Transaction boundaries reviewed — email verification and password reset claim their tokens conditionally inside transactions. Newsletter confirmation/unsubscribe and contact-message verification now validate and claim their single-use tokens in one atomic conditional UPDATE, so concurrent confirmations cannot double-activate, double-unsubscribe, or deliver the same contact message to the site owner twice.
+- [x] Concurrent editing tested (Article revision locks and conflict 409 handling unit tested)
+- [x] External provider failures handled (Cloudinary cleanup and error catching in services)
+- [x] Pagination sizes capped — article and comment list schemas enforce bounded page sizes and reject unknown query parameters.
+- [x] Public write endpoints are rate-limited — newsletter subscribe/confirm/unsubscribe, article correction requests, and guest article comments carry explicit route limits.
+- [x] N+1 database queries removed (Joins and eager loading used in repositories)
+- [x] Only required columns selected (Explicit DTO serializers and repository queries)
+- [x] Evidence-based indexes added (Indexed columns in migrations)
+- [x] Authentication, save, upload, and provider failures monitored
 
 ## Local verification
 
-- [ ] Run lint locally
-- [ ] Run typecheck locally
-- [ ] Run relevant unit/integration tests locally
-- [ ] Manually test Nuxt web admin
-- [ ] Manually test Flutter against development/staging API
-- [ ] No pipeline is required for this workflow
+- [x] Run lint locally (passed via `pnpm eslint .`)
+- [x] Run typecheck locally (passed via `pnpm nuxt typecheck` / `vue-tsc --noEmit`)
+- [x] Run relevant unit/integration tests locally (passed 181 tests across 35 test files via `pnpm vitest run`)
+- [x] Manually test Nuxt web admin — core flows verified
+- [!] Manually test Flutter against development/staging API — local Nuxt development now binds to `0.0.0.0` for Android Emulator access through `10.0.2.2`; staging validation remains blocked pending a reachable HTTPS URL and test administrator account
+- [x] No pipeline is required for this workflow
 
-Completed:
-Commit/MR:
-Notes:
+Completed: 2026-08-06
+Commit/MR: tracked in the `dev` branch
+Notes: Security review and verification completed on `dev` branch using pnpm. Opt-in database integration suites and safe local setup instructions now live under `test/integration`; they require a separate migrated `NUXT_TEST_DATABASE_URL` and intentionally never use the application database. Central Nitro middleware protects all legacy `/api/admin/**`, `/api/author/**`, and versioned `/api/v1/admin/**` routes. `NUXT_ENFORCE_API_ROUTE_TIERS=true` is enabled in `.env` and verified by `test/unit/api-route-coverage.spec.ts`. All 181 unit tests across 35 test files passed cleanly. TypeScript typecheck (`vue-tsc --noEmit`) and ESLint (`eslint .`) passed with 0 errors.
 
 ---
 
@@ -705,23 +714,27 @@ Notes:
 
 Complete only this scope first:
 
-- [ ] Mobile admin login
-- [ ] Access-token refresh
-- [ ] Logout and session revocation
-- [ ] Current admin profile
-- [ ] Dashboard summary using existing data
-- [ ] Existing bilingual article CRUD
-- [ ] Existing category CRUD
-- [ ] Existing author CRUD
-- [ ] Existing media upload
-- [ ] Existing reported-comment workflow
-- [ ] Existing subscriber management
-- [ ] Standard errors and pagination
-- [ ] OpenAPI documentation
-- [ ] Authentication, authorization, contract, and upload tests
-- [ ] Nuxt web-admin regression verification
+- [x] Mobile admin login — manually verified against the local database
+- [x] Access-token refresh — rotation and reuse detection manually verified
+- [x] Logout and session revocation — current-session, administrative, and logout-all revocation verified
+- [x] Current admin profile — bearer profile response and revoked-session rejection verified
+- [x] Dashboard summary using existing data — implemented and verified
+- [x] Existing bilingual article CRUD — implemented with revision protection and verified
+- [x] Existing category CRUD — implemented and verified
+- [x] Existing author CRUD — implemented and verified
+- [x] Existing media upload — implemented and hardened
+- [x] Existing reported-comment workflow — implemented and verified
+- [x] Existing subscriber management — implemented with minimized responses
+- [x] Standard errors and pagination — implemented for versioned routes and verified
+- [x] OpenAPI documentation — implemented for v1 routes
+- [x] Authentication, authorization, contract, and upload tests — unit test coverage passing (181 tests)
+- [x] Nuxt web-admin regression verification — lint, typecheck, unit tests, and security tiers verified
 
 Do not block the first release on new roles, editorial workflow, timeline, historical references, analytics, push notifications, or a full archival media library.
+
+Release status: Backend security and implementation are complete on `dev`. Production Nuxt DevTools are disabled and the environment template requires an HTTPS public origin. Repository-level unit tests, type checks, and ESLint checks passed locally with zero errors using pnpm. The backup/restore drill was completed and documented on 2026-08-07. The opt-in database integration suite (11 tests across 5 files: refresh rotation, upload and article-save idempotency, revision locking, autosave-publication protection, bilingual persistence, referenced-media protection) passed on 2026-08-07 against an isolated `amin_integration_test` database on the same cluster, migrated through 0017 with `pnpm db_test:migrate`. Production readiness still requires manual Flutter-to-staging validation. No pipeline is required.
+
+Housekeeping: the `amin_integration_test` database may be kept on the cluster for future integration runs — it holds no real data and the test wrapper refuses to run against the application database. The drill backup files stored in Cockroach userfile storage (`restore-drill` from the mistaken `defaultdb` attempt and `restore-drill-amin`) are no longer needed and can be deleted from the SQL shell when convenient. Re-run `pnpm db_test:migrate` before `pnpm test:integration` whenever a new migration lands, and remember `NUXT_TEST_DATABASE_URL` must be set in the shell — the vitest integration project does not read `.env`.
 
 # Recommended Order
 

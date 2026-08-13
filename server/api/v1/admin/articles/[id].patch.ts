@@ -8,9 +8,14 @@ import { versionedUpdateArticleSchema } from '~~/server/validators/article.valid
 
 /** Update an article while reusing existing validation and publish rules. */
 export default defineVersionedApiHandler(async (event) => {
-  await requireMobileAdmin(event)
+  const principal = await requireMobileAdmin(event)
   const id = z.uuid().parse(getRouterParam(event, 'id'))
   const { expectedRevision, ...input } = versionedUpdateArticleSchema.parse(await readBody(event))
-  const article = await articleService.updateWithRevision(id, input, expectedRevision)
+  const article = await articleService.updateWithRevision(
+    id,
+    input,
+    expectedRevision,
+    principal.user.id,
+  )
   return success(serializeMobileArticle(article))
 })

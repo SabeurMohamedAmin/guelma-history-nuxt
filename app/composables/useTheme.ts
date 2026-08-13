@@ -1,10 +1,37 @@
 import { useTheme as useVuetifyTheme } from 'vuetify'
 
+const THEME_COOKIE = 'guelma-theme'
+
+/**
+ * The persisted theme, defaulting to 'light' so SSR always renders a valid
+ * value. Because of that default it is NEVER empty: use
+ * useStoredThemePreference() when you need to know whether the visitor has
+ * actually chosen a theme.
+ */
+export function useThemeCookie() {
+  return useCookie<'light' | 'dark'>(THEME_COOKIE, {
+    default: () => 'light',
+    decode: value => (value === 'dark' ? 'dark' : 'light'),
+    encode: value => value,
+  })
+}
+
+/**
+ * The same cookie WITHOUT a default, so `null` really means "no choice yet".
+ * System dark-mode detection in plugins/auto-theme.client.ts depends on this
+ * distinction and would otherwise never run.
+ */
+export function useStoredThemePreference() {
+  return useCookie<'light' | 'dark' | null>(THEME_COOKIE, {
+    default: () => null,
+    decode: value => (value === 'dark' || value === 'light' ? value : null),
+    encode: value => value ?? 'light',
+  })
+}
+
 export const useTheme = () => {
   const vuetifyTheme = useVuetifyTheme()
-  const themeCookie = useCookie<'light' | 'dark'>('guelma-theme', {
-    default: () => 'light',
-  })
+  const themeCookie = useThemeCookie()
 
   // Read the current theme name reactively from the theme instance
   const isDark = computed(() => vuetifyTheme.global.current.value.dark)

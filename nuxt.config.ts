@@ -34,7 +34,7 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxtjs/cloudinary',
   ],
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' },
 
   /* ------------------------------------------------------------------ */
   /* App                                                                 */
@@ -56,10 +56,29 @@ export default defineNuxtConfig({
   runtimeConfig: {
     resendFromEmail: 'Guelma History <onboarding@resend.dev>',
 
+    // nuxt-auth-utils sealed web session. The password remains server-only and
+    // is supplied through NUXT_SESSION_PASSWORD. Secure is disabled only for
+    // local HTTP development; production cookies require HTTPS.
+    session: {
+      // Empty only as a repository-safe default. Production and development
+      // must provide NUXT_SESSION_PASSWORD through the environment.
+      password: '',
+      cookie: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+      },
+    },
+
     // Flutter admin authentication. These values are server-only and must
     // never be moved into runtimeConfig.public.
     mobileAuth: {
       signingKey: '',
+      // Temporary fallback for zero-downtime key rotation. Set the old key via
+      // NUXT_MOBILE_AUTH_PREVIOUS_SIGNING_KEY, then remove it after the access
+      // token TTL has elapsed. New tokens are always signed by signingKey.
+      previousSigningKey: '',
       issuer: 'guelma-history-api',
       audience: 'guelma-history-flutter-admin',
       accessTokenTtlSeconds: 15 * 60,
@@ -76,6 +95,21 @@ export default defineNuxtConfig({
         clientSecret: '',
       },
     },
+
+    // Deny-by-default switch for the central /api route classification in
+    // server/middleware/privileged-api-auth.ts.
+    //
+    // false (default) = AUDIT mode: privileged prefixes are enforced, while
+    //   session-tier and unclassified routes are only logged as [security]
+    //   warnings. Nothing is blocked, so a wrong classification cannot break a
+    //   page.
+    // true = ENFORCE mode: session-tier routes require a signed-in account and
+    //   an unclassified /api route is rejected with 401.
+    //
+    // Roll it out by setting NUXT_ENFORCE_API_ROUTE_TIERS=true in DEVELOPMENT
+    // first, exercising the app, and enabling it in production only once no
+    // [security] warning appears. Server-only: never move this to public.
+    enforceApiRouteTiers: process.env.NUXT_ENFORCE_API_ROUTE_TIERS === 'true',
 
     // Destination inbox for verified contact messages
     // (override via NUXT_CONTACT_OWNER_EMAIL).
@@ -177,6 +211,10 @@ export default defineNuxtConfig({
     // Strict rate limit on the sensitive auth routes (max 10 requests / 5 min
     // per IP) to slow brute-force and credential-stuffing attacks.
     '/api/auth/**': {
+      headers: {
+        'cache-control': 'private, no-store',
+        'pragma': 'no-cache',
+      },
       security: {
         rateLimiter: {
           tokensPerInterval: 10,
@@ -184,13 +222,54 @@ export default defineNuxtConfig({
         },
       },
     },
+    // Session-scoped reads live under /api/auth/** but are NOT brute-force
+    // targets: they need an authenticated session already. Under the strict
+    // limit above, a member browsing a handful of pages in five minutes could
+    // exhaust a budget meant for credential stuffing and be locked out of
+    // ordinary navigation — including logout.
+    //
+    // Only these EXACT paths are relaxed. Every credential endpoint (all the
+    // logins, register, forgot/reset password, verify-email, and the
+    // password/email profile changes that verify the current password) keeps
+    // the strict limit from the broad rule above.
+    '/api/auth/user/avatar': {
+      security: { rateLimiter: { tokensPerInterval: 60, interval: 300000 } },
+    },
+    '/api/auth/user/profile': {
+      security: { rateLimiter: { tokensPerInterval: 60, interval: 300000 } },
+    },
+    '/api/auth/user/profile/display-name': {
+      security: { rateLimiter: { tokensPerInterval: 60, interval: 300000 } },
+    },
+    '/api/auth/logout': {
+      security: { rateLimiter: { tokensPerInterval: 30, interval: 300000 } },
+    },
+
     // Flutter credentials and refresh tokens receive the same strict limit.
     '/api/v1/admin/auth/**': {
+      headers: {
+        'cache-control': 'private, no-store',
+        'pragma': 'no-cache',
+      },
       security: {
         rateLimiter: {
           tokensPerInterval: 10,
           interval: 300000,
         },
+      },
+    },
+
+    // All administrator API responses may contain drafts or personal data.
+    '/api/admin/**': {
+      headers: {
+        'cache-control': 'private, no-store',
+        'pragma': 'no-cache',
+      },
+    },
+    '/api/author/**': {
+      headers: {
+        'cache-control': 'private, no-store',
+        'pragma': 'no-cache',
       },
     },
 
@@ -209,6 +288,17 @@ export default defineNuxtConfig({
         },
       },
     },
+    // Autosave is intentionally more permissive than authentication while
+    // still bounded to prevent a broken or hostile client from flooding writes.
+    '/api/v1/admin/articles/*/autosave': {
+      security: {
+        rateLimiter: { tokensPerInterval: 120, interval: 300000 },
+        requestSizeLimiter: {
+          maxRequestSizeInBytes: 2_100_000,
+          maxUploadFileRequestInBytes: 0,
+        },
+      },
+    },
     '/api/v1/admin/articles/media/upload': {
       security: {
         rateLimiter: { tokensPerInterval: 10, interval: 300000 },
@@ -218,8 +308,33 @@ export default defineNuxtConfig({
         },
       },
     },
+    '/api/admin/profile/avatar': {
+      security: {
+        rateLimiter: { tokensPerInterval: 10, interval: 300000 },
+        requestSizeLimiter: {
+          maxRequestSizeInBytes: 21_000_000,
+          maxUploadFileRequestInBytes: 21_000_000,
+        },
+      },
+    },
     '/api/v1/admin/profile/avatar': {
       security: {
+        rateLimiter: { tokensPerInterval: 10, interval: 300000 },
+        requestSizeLimiter: {
+          maxRequestSizeInBytes: 21_000_000,
+          maxUploadFileRequestInBytes: 21_000_000,
+        },
+      },
+    },
+    // The regular user avatar upload. Without an explicit rule it inherited
+    // nuxt-security's 2 MB default, which rejected a typical phone photo
+    // before the endpoint's own 20 MiB cap (processAvatarImage) ever ran.
+    // 21 MB = the endpoint cap plus multipart overhead, synchronized with the
+    // admin and Flutter avatar routes above. The rate limit matches theirs and
+    // stays as strict as the surrounding /api/auth/** credential budget.
+    '/api/auth/user/profile/avatar': {
+      security: {
+        rateLimiter: { tokensPerInterval: 10, interval: 300000 },
         requestSizeLimiter: {
           maxRequestSizeInBytes: 21_000_000,
           maxUploadFileRequestInBytes: 21_000_000,
@@ -228,14 +343,53 @@ export default defineNuxtConfig({
     },
     '/api/contact/submit': {
       security: {
+        rateLimiter: { tokensPerInterval: 5, interval: 300000 },
         requestSizeLimiter: {
           maxRequestSizeInBytes: 55_000_000,
           maxUploadFileRequestInBytes: 55_000_000,
         },
       },
     },
-  }, compatibilityDate: '2025-07-15',
 
+    // Public writes that cost money, reach a third party, or publish content.
+    // Without an explicit rule these fell back to the global 150/minute budget.
+    //
+    // Subscribe emails whatever address is posted, so an unlimited endpoint is
+    // an email-bombing amplifier: it burns the Resend quota and the domain's
+    // sending reputation, which breaks delivery for real subscribers.
+    '/api/newsletter/subscribe': {
+      security: { rateLimiter: { tokensPerInterval: 5, interval: 300000 } },
+    },
+
+    // Both act on a token, so the limit also slows down guessing one.
+    '/api/newsletter/confirm': {
+      security: { rateLimiter: { tokensPerInterval: 20, interval: 300000 } },
+    },
+    '/api/newsletter/unsubscribe': {
+      security: { rateLimiter: { tokensPerInterval: 20, interval: 300000 } },
+    },
+
+    '/api/articles/correction-requests': {
+      security: { rateLimiter: { tokensPerInterval: 5, interval: 300000 } },
+    },
+
+    // Guest comments are inserted already approved, so this endpoint writes
+    // straight onto public article pages. It cannot be as strict as the others:
+    // route rules cannot distinguish methods, and this same path serves the GET
+    // that renders the comment list on every article page. 60 per 5 minutes
+    // leaves normal reading untouched while cutting the spam ceiling from about
+    // 750 to 60 per five minutes. Real protection needs moderation states
+    // (Milestone 9), not a rate limit.
+    '/api/articles/comments': {
+      security: { rateLimiter: { tokensPerInterval: 60, interval: 300000 } },
+    },
+  },
+
+  experimental: {
+    appManifest: process.env.NODE_ENV === 'production',
+  },
+
+  compatibilityDate: '2025-07-15',
   /* ------------------------------------------------------------------ */
   /* Nitro (server engine)                                               */
   /* ------------------------------------------------------------------ */

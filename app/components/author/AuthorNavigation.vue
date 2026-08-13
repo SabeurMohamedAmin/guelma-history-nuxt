@@ -61,7 +61,11 @@ onMounted(() => {
 const isDesktop = computed(() => !mounted.value || width.value >= 1280)
 const drawer = ref(true)
 const rail = ref(false)
-const pinned = useCookie<boolean>('guelma-author-nav-pinned', { default: () => false })
+const pinned = useCookie<boolean>('guelma-author-nav-pinned', {
+  default: () => false,
+  decode: val => val === 'true',
+  encode: val => String(val),
+})
 
 watchEffect(() => {
   if (mounted.value) {
@@ -140,7 +144,7 @@ const userName = computed(() => user.value?.displayName || user.value?.username 
 
 // ── Theme ────────────────────────────────────────
 const vuetifyTheme = useTheme()
-const themeCookie = useCookie<'light' | 'dark'>('guelma-theme', { default: () => 'light' })
+const themeCookie = useThemeCookie()
 const isDark = computed(() => vuetifyTheme.global.current.value.dark)
 
 function toggleTheme() {

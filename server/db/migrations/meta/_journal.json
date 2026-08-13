@@ -99,6 +99,27 @@
       "when": 1785801600000,
       "tag": "0014_article_revision",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1785805200000,
+      "tag": "0015_mobile_article_save_idempotency",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785808800000,
+      "tag": "0016_article_save_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1786060800000,
+      "tag": "0017_mobile_push_tokens",
+      "breakpoints": true
     }
   ]
 }

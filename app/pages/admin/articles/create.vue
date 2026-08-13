@@ -6,7 +6,12 @@ definePageMeta({ layout: 'admin', middleware: ['admin'] })
 // Initialize the store and start from a clean slate (the store is shared with
 // the edit page, so any previous edit session must be cleared here).
 const store = useArticleFormStore()
+store.configureFlow('admin')
 store.resetForm()
+
+// Pinia keeps the form store alive while navigating through the admin. Fetch
+// fresh selectors whenever this page opens so newly created records appear.
+onMounted(() => store.refreshOptions())
 </script>
 
 <template>

@@ -72,20 +72,22 @@ export async function createPendingMessage(input: ContactInput): Promise<{ id: s
  * the site owner. Returns null when the token is invalid or expired.
  */
 export async function verifyMessageToken(rawToken: string): Promise<VerifiedContactMessage | null> {
-  const row = await db.query.contactMessages.findFirst({
-    where: and(
+  const now = new Date()
+
+  // Single conditional UPDATE: validating and claiming the token in one
+  // atomic statement means two concurrent clicks on the same link can only
+  // claim it once, so the owner can never receive the message twice.
+  const [row] = await db
+    .update(contactMessages)
+    .set({ status: 'verified', verifiedAt: now, updatedAt: now })
+    .where(and(
       eq(contactMessages.tokenHash, hashToken(rawToken)),
       isNull(contactMessages.verifiedAt),
-      gt(contactMessages.tokenExpiresAt, new Date()),
-    ),
-  })
+      gt(contactMessages.tokenExpiresAt, now),
+    ))
+    .returning()
 
   if (!row) return null
-
-  await db
-    .update(contactMessages)
-    .set({ status: 'verified', verifiedAt: new Date(), updatedAt: new Date() })
-    .where(eq(contactMessages.id, row.id))
 
   return {
     id: row.id,

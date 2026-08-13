@@ -1,4 +1,5 @@
 import { authenticateAdmin } from '~~/server/utils/auth'
+import { adminLoginSchema } from '~~/server/validators/admin-auth.validator'
 
 /**
  * POST /api/auth/login
@@ -9,19 +10,10 @@ import { authenticateAdmin } from '~~/server/utils/auth'
  * username or an email.
  */
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{ identifier?: string, username?: string, password?: string }>(event)
-  const identifier = body.identifier ?? body.username
-  const password = body.password
+  const body = adminLoginSchema.parse(await readBody(event))
+  const identifier = body.identifier ?? body.username!
 
-  if (!identifier || !password) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
-      message: 'Username or email and password are required.',
-    })
-  }
-
-  const admin = await authenticateAdmin(identifier, password)
+  const admin = await authenticateAdmin(identifier, body.password)
   if (!admin) {
     throw createError({
       statusCode: 401,

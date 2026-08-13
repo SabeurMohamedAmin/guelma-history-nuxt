@@ -3,13 +3,12 @@
 // Shown after an OAuth (Facebook) sign-up so the user can pick a username and
 // set a password before the account can be used with the form login.
 //
-// The backend endpoint POST /api/auth/user/complete-profile only accepts a
-// `username` and a `password` (see completeProfileSchema), so this page keeps
-// the form intentionally small and focused.
+// After a successful submission the server sends a verification email and
+// clears the session. This page then shows a "check your inbox" state so the
+// user knows what to do next.
 
 const { t } = useI18n()
 const localePath = useLocalePath()
-const router = useRouter()
 const { fetch: refreshSession, user } = useUserSession()
 const auth = useAuthStore()
 
@@ -24,6 +23,9 @@ const errorMessage = ref<string | null>(null)
 const fieldErrors = reactive<Partial<Record<'username' | 'password', string>>>({})
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
+
+// True once the server has sent the verification email and cleared the session.
+const verificationSent = ref(false)
 
 // Form fields
 const form = reactive({
@@ -87,18 +89,28 @@ async function onSubmit() {
   fieldErrors.password = undefined
 
   try {
-    await $fetch('/api/auth/user/complete-profile', {
-      method: 'POST',
-      body: {
-        username: form.username.trim().toLowerCase(),
-        password: form.password,
+    const res = await $fetch<{ verificationEmailSent?: boolean }>(
+      '/api/auth/user/complete-profile',
+      {
+        method: 'POST',
+        body: {
+          username: form.username.trim().toLowerCase(),
+          password: form.password,
+        },
       },
-    })
+    )
 
-    // Refresh the client session so it reflects the new username and the
-    // now-completed profile, then send the user back to the home page.
+    if (res.verificationEmailSent) {
+      // Server cleared the session — refresh the client state then show the
+      // "check your inbox" screen. No redirect: the user must verify first.
+      await refreshSession()
+      verificationSent.value = true
+      return
+    }
+
+    // Edge case: already-verified account — refresh session and go home.
     await refreshSession()
-    router.push(localePath('/'))
+    navigateTo(localePath('/'))
   }
   catch (error) {
     const response = getErrorResponse(error)
@@ -116,7 +128,7 @@ async function onSubmit() {
 // to let them leave without completing the form.
 async function onLogout() {
   await auth.clear()
-  router.push(localePath('/'))
+  navigateTo(localePath('/'))
 }
 
 interface CompleteProfileErrorResponse {
@@ -133,105 +145,136 @@ function getErrorResponse(error: unknown): CompleteProfileErrorResponse | null {
 
 <template>
   <div class="complete-profile-page">
-    <v-form @submit.prevent="onSubmit">
-      <!-- Header: avatar + title + subtitle -->
-      <div class="text-center mb-6">
-        <v-avatar
-          size="72"
+    <!-- ── Check-your-inbox state ─────────────────────────────────────── -->
+    <template v-if="verificationSent">
+      <div class="text-center">
+        <v-icon
+          icon="mdi-email-check-outline"
+          size="64"
           color="primary"
-          class="complete-avatar mb-4"
-        >
-          <span class="text-headline-small font-weight-bold">
-            {{ avatarInitial }}
-          </span>
-        </v-avatar>
+          class="mb-4"
+        />
 
-        <h1 class="text-headline-small font-weight-bold mb-1">
-          {{ t('auth.completeTitle') }}
+        <h1 class="text-headline-small font-weight-bold mb-2">
+          {{ t('auth.verifyEmailTitle') }}
         </h1>
 
-        <p class="text-body-2 text-medium-emphasis">
-          {{ t('auth.completeSubtitle') }}
+        <p class="text-body-2 text-medium-emphasis mb-6">
+          {{ t('auth.verifyEmailHint') }}
         </p>
+
+        <v-btn
+          variant="text"
+          :to="localePath('/login')"
+          prepend-icon="mdi-login"
+        >
+          {{ t('auth.backToLogin') }}
+        </v-btn>
       </div>
+    </template>
 
-      <!-- Error feedback -->
-      <v-alert
-        v-if="errorMessage"
-        type="error"
-        variant="tonal"
-        density="compact"
-        class="mb-4"
-      >
-        {{ errorMessage }}
-      </v-alert>
+    <!-- ── Profile-completion form ────────────────────────────────────── -->
+    <template v-else>
+      <v-form @submit.prevent="onSubmit">
+        <!-- Header: avatar + title + subtitle -->
+        <div class="text-center mb-6">
+          <v-avatar
+            size="72"
+            color="primary"
+            class="complete-avatar mb-4"
+          >
+            <span class="text-headline-small font-weight-bold">
+              {{ avatarInitial }}
+            </span>
+          </v-avatar>
 
-      <!-- Username -->
-      <v-text-field
-        v-model="form.username"
-        :label="t('auth.username')"
-        prepend-inner-icon="mdi-account-outline"
-        variant="outlined"
-        autocomplete="username"
-        class="mb-2"
-        :error="Boolean(usernameError)"
-        :error-messages="usernameError"
-      />
+          <h1 class="text-headline-small font-weight-bold mb-1">
+            {{ t('auth.completeTitle') }}
+          </h1>
 
-      <!-- Password -->
-      <v-text-field
-        v-model="form.password"
-        :label="t('auth.newPassword')"
-        :type="showPassword ? 'text' : 'password'"
-        prepend-inner-icon="mdi-lock-outline"
-        :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-        variant="outlined"
-        autocomplete="new-password"
-        class="mb-2"
-        :error="passwordTooShort || Boolean(fieldErrors.password)"
-        :error-messages="fieldErrors.password || (passwordTooShort ? t('auth.passwordHint') : '')"
-        :hint="t('auth.passwordHint')"
-        persistent-hint
-        @click:append-inner="showPassword = !showPassword"
-      />
+          <p class="text-body-2 text-medium-emphasis">
+            {{ t('auth.completeSubtitle') }}
+          </p>
+        </div>
 
-      <!-- Confirm password -->
-      <v-text-field
-        v-model="form.confirmPassword"
-        :label="t('auth.confirmPassword')"
-        :type="showConfirmPassword ? 'text' : 'password'"
-        prepend-inner-icon="mdi-lock-check-outline"
-        :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
-        variant="outlined"
-        autocomplete="new-password"
-        class="mb-4"
-        :error="passwordMismatch"
-        :error-messages="passwordMismatch ? t('auth.passwordsDoNotMatch') : ''"
-        @click:append-inner="showConfirmPassword = !showConfirmPassword"
-      />
+        <!-- Error feedback -->
+        <v-alert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+        >
+          {{ errorMessage }}
+        </v-alert>
 
-      <!-- Actions -->
-      <v-btn
-        type="submit"
-        color="primary"
-        size="large"
-        block
-        :loading="saving"
-        :disabled="!canSubmit"
-        class="mb-3"
-      >
-        {{ t('auth.finishSetup') }}
-      </v-btn>
+        <!-- Username -->
+        <v-text-field
+          v-model="form.username"
+          :label="t('auth.username')"
+          prepend-inner-icon="mdi-account-outline"
+          variant="outlined"
+          autocomplete="username"
+          class="mb-2"
+          :error="Boolean(usernameError)"
+          :error-messages="usernameError"
+        />
 
-      <v-btn
-        variant="text"
-        block
-        prepend-icon="mdi-logout"
-        @click="onLogout"
-      >
-        {{ t('auth.logout') }}
-      </v-btn>
-    </v-form>
+        <!-- Password -->
+        <v-text-field
+          v-model="form.password"
+          :label="t('auth.newPassword')"
+          :type="showPassword ? 'text' : 'password'"
+          prepend-inner-icon="mdi-lock-outline"
+          :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+          variant="outlined"
+          autocomplete="new-password"
+          class="mb-2"
+          :error="passwordTooShort || Boolean(fieldErrors.password)"
+          :error-messages="fieldErrors.password || (passwordTooShort ? t('auth.passwordHint') : '')"
+          :hint="t('auth.passwordHint')"
+          persistent-hint
+          @click:append-inner="showPassword = !showPassword"
+        />
+
+        <!-- Confirm password -->
+        <v-text-field
+          v-model="form.confirmPassword"
+          :label="t('auth.confirmPassword')"
+          :type="showConfirmPassword ? 'text' : 'password'"
+          prepend-inner-icon="mdi-lock-check-outline"
+          :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
+          variant="outlined"
+          autocomplete="new-password"
+          class="mb-4"
+          :error="passwordMismatch"
+          :error-messages="passwordMismatch ? t('auth.passwordsDoNotMatch') : ''"
+          @click:append-inner="showConfirmPassword = !showConfirmPassword"
+        />
+
+        <!-- Actions -->
+        <v-btn
+          type="submit"
+          color="primary"
+          size="large"
+          block
+          :loading="saving"
+          :disabled="!canSubmit"
+          class="mb-3"
+        >
+          {{ t('auth.finishSetup') }}
+        </v-btn>
+
+        <v-btn
+          variant="text"
+          block
+          prepend-icon="mdi-logout"
+          @click="onLogout"
+        >
+          {{ t('auth.logout') }}
+        </v-btn>
+      </v-form>
+    </template>
   </div>
 </template>
 

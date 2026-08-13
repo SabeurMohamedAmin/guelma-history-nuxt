@@ -15,6 +15,8 @@ export const mobileAdminSessions = pgTable('mobile_admin_sessions', {
   deviceName: text('device_name'),
   platform: text('platform', { enum: ['android', 'ios'] }).notNull(),
   appVersion: text('app_version'),
+  pushToken: text('push_token'),
+  pushTokenProvider: text('push_token_provider', { enum: ['fcm', 'apns'] }),
   lastUsedAt: timestamp('last_used_at', { withTimezone: true, mode: 'date' }).notNull().$defaultFn(() => new Date()),
   expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
   revokedAt: timestamp('revoked_at', { withTimezone: true, mode: 'date' }),

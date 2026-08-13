@@ -182,6 +182,7 @@ const readMoreIcon = computed(() =>
           {{ t('home.newsletterDesc') }}
         </p>
         <div class="mx-auto">
+          <!-- Bottom of the page: hydrate only when the visitor reaches it. -->
           <LazyNewsletterForm />
         </div>
       </v-card>

@@ -3,11 +3,13 @@
 // an SSR mismatch (the server has no way to know the system preference, so it
 // always renders the cookie value or the 'light' default).
 export default defineNuxtPlugin((nuxtApp) => {
-  const themeCookie = useCookie('guelma-theme')
+  const storedTheme = useStoredThemePreference()
+  const themeCookie = useThemeCookie()
 
   nuxtApp.hook('app:mounted', () => {
-    // Only auto-detect when the user has no persisted preference yet
-    if (themeCookie.value) return
+    // Only auto-detect when the visitor has no persisted preference yet.
+    // useThemeCookie() defaults to 'light', so it can never answer this.
+    if (storedTheme.value) return
 
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const theme = prefersDark ? 'dark' : 'light'
