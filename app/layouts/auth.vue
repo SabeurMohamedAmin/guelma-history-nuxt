@@ -21,7 +21,7 @@
 
       <div class="auth-layout__content">
         <v-card
-          class="auth-layout__card rounded-xl pa-6"
+          class="auth-layout__card rounded-xl pa-3"
           elevation="8"
           max-width="440"
           width="100%"

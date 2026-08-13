@@ -30,13 +30,31 @@ function onSubmit() {
 
 <template>
   <v-form @submit.prevent="onSubmit">
-    <h1 class="text-headline-small font-weight-bold mb-1">
-      {{ $t('auth.login') }}
-    </h1>
-    <p class="text-body-2 text-medium-emphasis mb-6">
-      {{ $t('admin.title') }}
-    </p>
+    <header
+      class="d-flex flex-column align-start my-2"
+      :aria-label="$t('auth.adminAccess', 'Admin portal branding')"
+    >
+      <v-chip
+        color="primary"
+        variant="tonal"
+        size="small"
+        prepend-icon="mdi-shield-check-outline"
+        class="text-label-small"
+      >
+        {{ $t('auth.adminAccess', 'Accès administrateur') }}
+      </v-chip>
 
+      <h1 class="text-title-medium text-md-title-large font-weight-bold mt-2 mb-0">
+        {{ $t('auth.loginTitle', 'Connexion à votre espace') }}
+        <span class="text-primary">
+          {{ $t('auth.administrator', 'administrateur') }}
+        </span>
+      </h1>
+
+      <p class="text-body-small text-md-body-medium text-medium-emphasis mt-1 mb-0">
+        {{ $t('auth.loginSubtitle', 'Gérez le contenu historique de Guelma en toute sécurité.') }}
+      </p>
+    </header>
     <v-alert
       v-if="errorMessage"
       type="error"

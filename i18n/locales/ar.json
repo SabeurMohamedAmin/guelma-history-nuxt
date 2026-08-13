@@ -61,7 +61,12 @@
     "search": "بحث",
     "status": "الحالة",
     "results": "نتائج",
-    "actions": "الإجراءات"
+    "actions": "الإجراءات",
+    "goBack": "رجوع",
+    "language": "اللغة",
+    "switchToLight": "التبديل إلى الوضع الفاتح",
+    "switchToDark": "التبديل إلى الوضع الداكن",
+    "home": "الانتقال إلى الصفحة الرئيسية"
   },
   "home": {
     "heroTitle": "تاريخ قالمة",
@@ -347,7 +352,11 @@
     "verifyMissingToken": "رابط التأكيد مفقود",
     "verifyEmailTitle": "تحقق من بريدك الإلكتروني",
     "verifyEmailHint": "أرسلنا رابط تأكيد إلى بريدك الإلكتروني. اضغط على الرابط لتفعيل حسابك وتسجيل الدخول.",
-    "verifyEmailSentNotice": "تم إرسال رابط التأكيد. تحقق من صندوق الوارد."
+    "verifyEmailSentNotice": "تم إرسال رابط التأكيد. تحقق من صندوق الوارد.",
+    "adminAccess": "وصول المسؤول",
+    "loginTitle": "تسجيل الدخول إلى مساحة",
+    "administrator": "المسؤول",
+    "loginSubtitle": "أدر المحتوى التاريخي لقالمة بأمان."
   },
   "author": {
     "title": "لوحة الكاتب",
@@ -375,8 +384,6 @@
   },
   "admin": {
     "title": "لوحة تحكم المشرف",
-    "authors": "الكُتّاب",
-    "subscribers": "المشتركون",
     "articles": "المقالات",
     "newArticle": "مقال جديد",
     "editArticle": "تعديل المقال",

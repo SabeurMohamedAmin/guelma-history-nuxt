@@ -61,7 +61,12 @@
     "search": "Rechercher",
     "status": "Statut",
     "results": "résultats",
-    "actions": "Actions"
+    "actions": "Actions",
+    "goBack": "Retour",
+    "language": "Langue",
+    "switchToLight": "Passer au mode clair",
+    "switchToDark": "Passer au mode sombre",
+    "home": "Aller à l’accueil"
   },
   "home": {
     "heroTitle": "Histoire de Guelma",
@@ -337,7 +342,11 @@
     "verifyMissingToken": "Lien de vérification manquant",
     "verifyEmailTitle": "Vérifiez votre adresse e-mail",
     "verifyEmailHint": "Nous avons envoyé un lien de confirmation à votre adresse e-mail. Cliquez sur le lien pour activer votre compte et vous connecter.",
-    "verifyEmailSentNotice": "Lien de confirmation envoyé. Vérifiez votre boîte de réception."
+    "verifyEmailSentNotice": "Lien de confirmation envoyé. Vérifiez votre boîte de réception.",
+    "adminAccess": "Accès administrateur",
+    "loginTitle": "Connexion à votre espace",
+    "administrator": "administrateur",
+    "loginSubtitle": "Gérez le contenu historique de Guelma en toute sécurité."
   },
   "adminNav": {
     "dashboard": "Tableau de bord",
@@ -357,8 +366,6 @@
   },
   "admin": {
     "title": "Panneau d'administration",
-    "authors": "Auteurs",
-    "subscribers": "Abonnés",
     "articles": "Articles",
     "newArticle": "Nouvel article",
     "editArticle": "Modifier l'article",
