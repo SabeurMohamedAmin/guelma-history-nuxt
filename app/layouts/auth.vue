@@ -10,7 +10,7 @@
         aria-hidden="true"
       >
         <img
-          src="/img/login/backimage-faded.jpg"
+          :src="$localePath('/img/login/backimage-faded.jpg')"
           alt=""
           class="auth-layout__backdrop-img"
           loading="eager"
