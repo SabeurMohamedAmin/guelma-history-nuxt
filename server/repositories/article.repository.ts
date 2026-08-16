@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, ilike, inArray, isNotNull, isNull, or, type SQL } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { articleMedia, articles, articleTags, authors, categories, tags, users } from '~~/server/db/schema'
+import { resolveArticleThumbnail } from '~~/server/utils/articleThumbnail'
 import type {
   ArticleMediaResponse,
   ArticleResponse,
@@ -212,6 +213,12 @@ export class ArticleRepository {
       category: row.category ? (row.category.nameFr || row.category.nameAr) : '—',
       publishedAt: (row.publishedAt ?? row.createdAt).toISOString(),
       status: row.publishedAt ? 'published' : 'draft',
+      // Both columns are already on the loaded row, so resolving the
+      // thumbnail costs no extra query and no Cloudinary API call.
+      thumbnailUrl: resolveArticleThumbnail(
+        row.coverImage ?? null,
+        row.coverImageVariants ?? null,
+      ),
     }))
   }
 

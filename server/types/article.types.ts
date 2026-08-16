@@ -83,4 +83,10 @@ export interface RecentArticleResponse {
   category: string
   publishedAt: string
   status: 'published' | 'draft'
+  /**
+   * Small cover image for a list row, or null when the article has no cover.
+   *
+   * Never the full size cover image: see `resolveArticleThumbnail`.
+   */
+  thumbnailUrl: string | null
 }
