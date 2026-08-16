@@ -408,7 +408,7 @@ GET /api/v1/admin/dashboard
 - [x] Return category count
 - [x] Return author count
 - [x] Return subscriber count
-- [x] Return recent articles
+- [x] Return recent articles — bilingual since 2026-08-16: `titleAr`, `titleFr`, `categoryAr`, and `categoryFr` travel with every row, so an Arabic client never renders a French title. Both columns are already on the loaded row, so there is no extra query. The collapsed `title` and `category` strings remain for clients that have not adopted the new fields.
 - [x] Return unresolved report count where available
 - [x] Do not return fake analytics or review queues
 
