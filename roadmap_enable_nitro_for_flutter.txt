@@ -596,6 +596,8 @@ Notes: Milestone 8 alignment completed. Verified admin authentication, redirects
 
 These features expand upon the core system after authentication, existing APIs, uploads, and draft safety are stable.
 
+Status: DEFERRED (owner decision, 2026-08-16). The unchecked items below — the scheduling worker, historical references, timeline and periods, the archival media library, and real analytics — are deliberately not being built now. They remain post-v1 scope, they must not block the first release, and they should be revisited only when the owner asks for them. The items already marked [x] or [N/A] shipped or were ruled out earlier and are unaffected.
+
 ## Editorial workflow
 
 - [N/A] Expanded editorial states — not required; `publishedAt == null` remains unpublished, a future value is scheduled, and a current/past value is published
