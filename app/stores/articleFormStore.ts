@@ -255,11 +255,23 @@ export const useArticleFormStore = defineStore('articleForm', () => {
     Object.assign(fields, createEmptyFields())
   }
 
+  /**
+   * The gallery as it was last seen on the server, serialized.
+   *
+   * A payload that carries `media` makes the server rebuild the gallery rows
+   * and release the assets that disappeared from it, so an unchanged array is
+   * pure waste. Comparing against this snapshot keeps `media` out of the
+   * payload when the edit only touched text. Null means "no server state yet",
+   * which is the case when creating an article.
+   */
+  const savedMediaSignature = ref<string | null>(null)
+
   function resetForm() {
     resetFields()
     clearStatus()
     editingSlug.value = null
     revision.value = null
+    savedMediaSignature.value = null
     slugManuallyEdited.value = false
     formRef.value?.resetValidation?.()
   }
@@ -292,9 +304,33 @@ export const useArticleFormStore = defineStore('articleForm', () => {
       captionAr: item.captionAr ?? '',
       captionFr: item.captionFr ?? '',
     }))
+    savedMediaSignature.value = JSON.stringify(serializeMedia())
+  }
+
+  /**
+   * Gallery rows in the shape the API expects: only the items that carry a
+   * URL, numbered by their position in the list.
+   */
+  function serializeMedia() {
+    return fields.media
+      .filter(item => item.url.trim())
+      .map((item, index) => ({
+        type: item.type,
+        url: item.url.trim(),
+        publicId: item.publicId.trim() || null,
+        resourceType: item.resourceType,
+        posterUrl: item.posterUrl.trim() || null,
+        imageVariants: item.imageVariants,
+        captionAr: item.captionAr.trim() || null,
+        captionFr: item.captionFr.trim() || null,
+        position: index,
+      }))
   }
 
   function buildPayload() {
+    const media = serializeMedia()
+    const mediaChanged = JSON.stringify(media) !== savedMediaSignature.value
+
     return {
       titleAr: fields.titleAr.trim(),
       titleFr: fields.titleFr.trim(),
@@ -309,20 +345,9 @@ export const useArticleFormStore = defineStore('articleForm', () => {
       authorId: toDatabaseUuid(fields.authorId),
       readingTime: fields.readingTime && fields.readingTime > 0 ? fields.readingTime : undefined,
       publishedAt: toIsoFromDatetimeLocal(fields.publishedAt),
-      // Keep only rows that actually have a URL, and persist their order.
-      media: fields.media
-        .filter(item => item.url.trim())
-        .map((item, index) => ({
-          type: item.type,
-          url: item.url.trim(),
-          publicId: item.publicId.trim() || null,
-          resourceType: item.resourceType,
-          posterUrl: item.posterUrl.trim() || null,
-          imageVariants: item.imageVariants,
-          captionAr: item.captionAr.trim() || null,
-          captionFr: item.captionFr.trim() || null,
-          position: index,
-        })),
+      // Only send the gallery when it changed. On creation there is no snapshot,
+      // so the media are always sent.
+      ...(mediaChanged ? { media } : {}),
     }
   }
 
