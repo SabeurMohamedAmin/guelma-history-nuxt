@@ -1,6 +1,7 @@
 import { articleRepository } from '~~/server/repositories/article.repository'
 import { slugify } from '~~/server/utils/slugify'
 import { destroyManyFromCloudinary } from '~~/server/utils/cloudinary'
+import { mediaAssetsToDestroy } from '~~/server/utils/articleMediaCleanup'
 import { sendPublishedArticleNewsletterAlerts } from '~~/server/utils/newsletter'
 import { isFirstPublish } from '~~/server/utils/newsletterRules'
 import {
@@ -11,7 +12,6 @@ import type {
   CreateArticleDto,
   UpdateArticleDto,
   ArticleResponse,
-  ArticleMediaResponse,
   RecentArticleResponse,
   ArticlesQueryParams,
   PaginatedResponse,
@@ -124,12 +124,7 @@ export class ArticleService {
 
     await articleRepository.update(id, data, readingTime)
 
-    // The old rows are gone from the DB; now free their Cloudinary assets so
-    // repeated edits don't leak orphaned images/videos. Runs after the commit
-    // and is best-effort (failures are logged inside the helper).
-    if (data.media !== undefined) {
-      await destroyManyFromCloudinary(this.toCloudinaryAssets(existing.media))
-    }
+    await this.releaseRemovedMedia(existing, data)
 
     const updated = (await this.getById(id))!
 
@@ -180,9 +175,7 @@ export class ArticleService {
       })
     }
 
-    if (data.media !== undefined) {
-      await destroyManyFromCloudinary(this.toCloudinaryAssets(existing.media))
-    }
+    await this.releaseRemovedMedia(existing, data)
 
     const result = (await this.getById(id))!
     if (isFirstPublish(existing.publishedAt, result.publishedAt)) {
@@ -201,19 +194,21 @@ export class ArticleService {
     // Cloudinary cleanup as a best-effort domain side effect.
     await articleRepository.deleteById(id)
 
-    await destroyManyFromCloudinary(this.toCloudinaryAssets(existing.media))
+    // The article is gone, so nothing is kept: an empty incoming gallery frees
+    // every asset, renditions included.
+    await destroyManyFromCloudinary(mediaAssetsToDestroy(existing.media, []))
   }
 
   /**
-   * Map stored media rows to Cloudinary assets for deletion. Prefer the
-   * resource_type captured at upload time; fall back to inferring it from the
-   * display `type` for legacy rows saved before that column existed.
+   * Free the Cloudinary assets a write removed from the gallery.
+   *
+   * Saving replaces the `article_media` rows, but the incoming payload still
+   * references most of the same files, so only the public ids that disappeared
+   * may be destroyed. Runs after the commit and is best-effort: failures are
+   * logged inside the helper and never fail the write.
    */
-  private toCloudinaryAssets(media: ArticleMediaResponse[]) {
-    return media.map(item => ({
-      publicId: item.publicId ?? '',
-      type: item.resourceType ?? (item.type === 'video' ? 'video' : 'image'),
-    }))
+  private async releaseRemovedMedia(existing: ArticleResponse, data: UpdateArticleDto): Promise<void> {
+    await destroyManyFromCloudinary(mediaAssetsToDestroy(existing.media, data.media))
   }
 
   // ─── Slug-based writes (admin layer) ────────────────────────────────────────
