@@ -31,6 +31,37 @@ Notes:
 
 ---
 
+# Code review findings (2026-08-17)
+
+Found while reviewing the day's commits across both repositories.
+
+- [x] **Mobile routes rejected migrated UUIDs.** `z.uuid()` (Zod 4) enforces the RFC
+  version and variant bits, but `server/db/rebuild-with-uuids.ts` builds ids straight
+  from an MD5 digest, so roughly seven of eight ids migrated from the old integer keys
+  failed validation. `GET /api/v1/admin/articles/:id` answered 400 for those articles,
+  the Flutter app showed a retry button that could never succeed, and the list
+  endpoints kept working because they do not validate ids. Every `/api/v1/admin/**`
+  route param now uses the shared `databaseUuidSchema`, which is what the web admin
+  routes already used. Commit e1c76dfe.
+- [x] **Gallery alt text was accepted and discarded.** `mediaItemSchema` gained
+  `altAr` / `altFr`, but `article_media` had no columns, `toMediaRows` did not map them
+  and `ArticleMediaResponse` did not return them. Migration 0018 adds the columns and
+  both directions are now wired through.
+- [ ] **Render alt text on the public article page.** The gallery components still emit
+  no `alt` attribute. Needs `altAr` / `altFr` picked by locale, falling back to the
+  caption and then to an empty string for decorative images.
+- [ ] **Add alt text inputs to both editors.** The Nuxt admin gallery form and the
+  Flutter media picker collect a caption but no alt text, so the new columns stay
+  empty until an editor can fill them.
+- [ ] **Commit a UUID-aware snapshot for migration 0011.** `db:generate` refuses to run
+  until `meta/0011_snapshot.json` exists, so every migration since 0011 has been
+  hand-written. This is deliberate but it means schema drift is not detected.
+- [ ] **`resolveIdBySlug` has no route.** The service exposes it and the Flutter app
+  navigates by UUID only, so a deep link carrying a slug cannot be resolved by the
+  mobile API. Decide whether `/api/v1/admin/articles/by-slug/:slug` is needed.
+
+---
+
 # MILESTONE 1 — Audit the Existing Nitro API
 
 ## Current system
