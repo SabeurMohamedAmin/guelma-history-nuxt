@@ -31,6 +31,34 @@ Notes:
 
 ---
 
+# Owner actions (2026-08-17)
+
+Ordered. The first three can be done locally right now.
+
+- [ ] **Run the migration.** `pnpm db:migrate`, on every environment that holds data.
+  Migration 0018 adds `article_media.alt_ar` and `alt_fr`. Nothing reads the columns
+  yet, so delaying it is safe, but alt text stays lossy until it runs.
+- [ ] **Type check and test.** `pnpm typecheck` and `pnpm test`. Today's commits touched
+  the article repository, the media schema, the response types and ten route handlers,
+  and none of it has been executed.
+- [ ] **Restart the server and re-open a legacy article** from the Flutter app, to
+  confirm the 400 on migrated UUIDs is gone. Any article created before the integer to
+  UUID rebuild is a valid test case.
+- [ ] **Decide the alt text scope.** Gallery inputs in the Nuxt admin plus an `alt`
+  attribute on the public article page, or leave the columns unused for now. The
+  columns are useless to readers and to search engines until both sides exist.
+- [ ] **Decide on `/api/v1/admin/articles/by-slug/:slug`.** Needed only if the app must
+  open an article from a shared web URL or a deep link, since the mobile client
+  navigates by UUID today.
+- [!] **Commit a UUID-aware `meta/0011_snapshot.json`,** or accept hand-written
+  migrations permanently. `db:generate` refuses to run without it, so drift between
+  `server/db/schema` and the database is never detected automatically. This is the
+  single largest remaining risk in the schema workflow.
+- [!] **Staging URL and test admin account,** which milestone 10 still lists as its last
+  blocker for the manual Flutter to staging verification.
+
+---
+
 # Code review findings (2026-08-17)
 
 Found while reviewing the day's commits across both repositories.
