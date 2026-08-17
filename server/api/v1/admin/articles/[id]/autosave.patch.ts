@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto'
-import { z } from 'zod'
 import { mobileArticleSaveIdempotencyRepository } from '~~/server/repositories/mobile-article-save-idempotency.repository'
 import { articleService } from '~~/server/services/article.service'
 import { serializeMobileArticle } from '~~/server/serializers/article.serializer'
@@ -7,6 +6,7 @@ import { defineVersionedApiHandler } from '~~/server/utils/apiHandler'
 import { success } from '~~/server/utils/apiResponse'
 import { requireMobileAdmin } from '~~/server/utils/mobileAuthGuard'
 import { autosaveArticleSchema } from '~~/server/validators/article.validator'
+import { databaseUuidSchema } from '~~/shared/database-uuid'
 
 /**
  * Save draft text without exposing publishing or structural article fields.
@@ -19,7 +19,7 @@ export default defineVersionedApiHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'A valid Idempotency-Key header is required.' })
   }
 
-  const id = z.uuid().parse(getRouterParam(event, 'id'))
+  const id = databaseUuidSchema.parse(getRouterParam(event, 'id'))
   const parsed = autosaveArticleSchema.parse(await readBody(event))
   const requestHash = createHash('sha256')
     .update(JSON.stringify(canonicalAutosavePayload(id, parsed)))
