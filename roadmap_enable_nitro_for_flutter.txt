@@ -78,9 +78,11 @@ Found while reviewing the day's commits across both repositories.
 - [ ] **Render alt text on the public article page.** The gallery components still emit
   no `alt` attribute. Needs `altAr` / `altFr` picked by locale, falling back to the
   caption and then to an empty string for decorative images.
-- [ ] **Add alt text inputs to both editors.** The Nuxt admin gallery form and the
-  Flutter media picker collect a caption but no alt text, so the new columns stay
-  empty until an editor can fill them.
+- [ ] **Add alt text inputs to the Nuxt admin gallery form.** The Flutter editor already
+  collects `altAr` and `altFr`: its widget test asserts the alt input and the stored
+  value, which is why the API was receiving alt text and discarding it. Only the web
+  form is missing, so an article edited on the web still loses nothing but gains
+  nothing either.
 - [ ] **Commit a UUID-aware snapshot for migration 0011.** `db:generate` refuses to run
   until `meta/0011_snapshot.json` exists, so every migration since 0011 has been
   hand-written. This is deliberate but it means schema drift is not detected.
