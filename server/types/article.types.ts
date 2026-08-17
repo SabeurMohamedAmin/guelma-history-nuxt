@@ -23,6 +23,14 @@ export interface ArticleMediaResponse {
   imageVariants: ImageVariants | null
   captionAr: string | null
   captionFr: string | null
+  /**
+   * Alternative text for screen readers and search engines.
+   *
+   * Separate from the caption, which is shown to every reader. Null when the
+   * image is decorative or the editor left it empty.
+   */
+  altAr: string | null
+  altFr: string | null
   position: number
 }
 

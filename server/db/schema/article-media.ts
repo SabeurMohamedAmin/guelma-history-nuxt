@@ -35,6 +35,11 @@ export const articleMedia = pgTable('article_media', {
   imageVariants: jsonb('image_variants').$type<ImageVariants>(),
   captionAr: text('caption_ar'),
   captionFr: text('caption_fr'),
+  // Alternative text for screen readers and search engines. Separate from the
+  // caption, which is shown to every reader. Null when the image is decorative
+  // or the editor left it empty.
+  altAr: text('alt_ar'),
+  altFr: text('alt_fr'),
   position: integer('position').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
     .notNull()

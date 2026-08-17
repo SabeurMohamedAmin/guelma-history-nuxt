@@ -31,6 +31,69 @@ Notes:
 
 ---
 
+# Owner actions (2026-08-17)
+
+Ordered. The first three can be done locally right now.
+
+- [x] **Run the migration.** Applied to the development database on 2026-08-17:
+  `0018_article_media_alt_text`, two statements, which CockroachDB ran as background
+  schema change jobs. Still to be applied to staging and production once they exist.
+- [x] **Type check and test.** `pnpm test` is green: 275 passed, 11 skipped, 47 files.
+  `pnpm typecheck` reported one error, in `server/db/migrate-test.ts`, and it was
+  pre-existing and unrelated to the day's changes: the file uses top level `await` but
+  has no imports or exports, so TypeScript treats it as a script (TS1375). Fixed with an
+  empty export. Re-run to confirm a clean pass.
+- [ ] **Restart the server and re-open a legacy article** from the Flutter app, to
+  confirm the 400 on migrated UUIDs is gone. Any article created before the integer to
+  UUID rebuild is a valid test case.
+- [ ] **Decide the alt text scope.** Gallery inputs in the Nuxt admin plus an `alt`
+  attribute on the public article page, or leave the columns unused for now. The
+  columns are useless to readers and to search engines until both sides exist.
+- [ ] **Decide on `/api/v1/admin/articles/by-slug/:slug`.** Needed only if the app must
+  open an article from a shared web URL or a deep link, since the mobile client
+  navigates by UUID today.
+- [!] **Commit a UUID-aware `meta/0011_snapshot.json`,** or accept hand-written
+  migrations permanently. `db:generate` refuses to run without it, so drift between
+  `server/db/schema` and the database is never detected automatically. This is the
+  single largest remaining risk in the schema workflow.
+- [!] **Staging URL and test admin account,** which milestone 10 still lists as its last
+  blocker for the manual Flutter to staging verification.
+
+---
+
+# Code review findings (2026-08-17)
+
+Found while reviewing the day's commits across both repositories.
+
+- [x] **Mobile routes rejected migrated UUIDs.** `z.uuid()` (Zod 4) enforces the RFC
+  version and variant bits, but `server/db/rebuild-with-uuids.ts` builds ids straight
+  from an MD5 digest, so roughly seven of eight ids migrated from the old integer keys
+  failed validation. `GET /api/v1/admin/articles/:id` answered 400 for those articles,
+  the Flutter app showed a retry button that could never succeed, and the list
+  endpoints kept working because they do not validate ids. Every `/api/v1/admin/**`
+  route param now uses the shared `databaseUuidSchema`, which is what the web admin
+  routes already used. Commit e1c76dfe.
+- [x] **Gallery alt text was accepted and discarded.** `mediaItemSchema` gained
+  `altAr` / `altFr`, but `article_media` had no columns, `toMediaRows` did not map them
+  and `ArticleMediaResponse` did not return them. Migration 0018 adds the columns and
+  both directions are now wired through.
+- [ ] **Render alt text on the public article page.** The gallery components still emit
+  no `alt` attribute. Needs `altAr` / `altFr` picked by locale, falling back to the
+  caption and then to an empty string for decorative images.
+- [ ] **Add alt text inputs to the Nuxt admin gallery form.** The Flutter editor already
+  collects `altAr` and `altFr`: its widget test asserts the alt input and the stored
+  value, which is why the API was receiving alt text and discarding it. Only the web
+  form is missing, so an article edited on the web still loses nothing but gains
+  nothing either.
+- [ ] **Commit a UUID-aware snapshot for migration 0011.** `db:generate` refuses to run
+  until `meta/0011_snapshot.json` exists, so every migration since 0011 has been
+  hand-written. This is deliberate but it means schema drift is not detected.
+- [ ] **`resolveIdBySlug` has no route.** The service exposes it and the Flutter app
+  navigates by UUID only, so a deep link carrying a slug cannot be resolved by the
+  mobile API. Decide whether `/api/v1/admin/articles/by-slug/:slug` is needed.
+
+---
+
 # MILESTONE 1 — Audit the Existing Nitro API
 
 ## Current system

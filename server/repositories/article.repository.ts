@@ -270,6 +270,8 @@ export class ArticleRepository {
       imageVariants: item.imageVariants ?? null,
       captionAr: item.captionAr?.trim() || null,
       captionFr: item.captionFr?.trim() || null,
+      altAr: item.altAr?.trim() || null,
+      altFr: item.altFr?.trim() || null,
       position: item.position ?? index,
     }))
   }
@@ -354,6 +356,8 @@ export class ArticleRepository {
         imageVariants: media.imageVariants ?? null,
         captionAr: media.captionAr ?? null,
         captionFr: media.captionFr ?? null,
+        altAr: media.altAr ?? null,
+        altFr: media.altFr ?? null,
         position: media.position,
       })),
     }

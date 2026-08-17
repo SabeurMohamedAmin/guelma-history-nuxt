@@ -120,6 +120,13 @@
       "when": 1786060800000,
       "tag": "0017_mobile_push_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1786147200000,
+      "tag": "0018_article_media_alt_text",
+      "breakpoints": true
     }
   ]
 }
