@@ -356,6 +356,8 @@ export class ArticleRepository {
         imageVariants: media.imageVariants ?? null,
         captionAr: media.captionAr ?? null,
         captionFr: media.captionFr ?? null,
+        altAr: media.altAr ?? null,
+        altFr: media.altFr ?? null,
         position: media.position,
       })),
     }
