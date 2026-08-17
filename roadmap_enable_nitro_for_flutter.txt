@@ -35,12 +35,14 @@ Notes:
 
 Ordered. The first three can be done locally right now.
 
-- [ ] **Run the migration.** `pnpm db:migrate`, on every environment that holds data.
-  Migration 0018 adds `article_media.alt_ar` and `alt_fr`. Nothing reads the columns
-  yet, so delaying it is safe, but alt text stays lossy until it runs.
-- [ ] **Type check and test.** `pnpm typecheck` and `pnpm test`. Today's commits touched
-  the article repository, the media schema, the response types and ten route handlers,
-  and none of it has been executed.
+- [x] **Run the migration.** Applied to the development database on 2026-08-17:
+  `0018_article_media_alt_text`, two statements, which CockroachDB ran as background
+  schema change jobs. Still to be applied to staging and production once they exist.
+- [x] **Type check and test.** `pnpm test` is green: 275 passed, 11 skipped, 47 files.
+  `pnpm typecheck` reported one error, in `server/db/migrate-test.ts`, and it was
+  pre-existing and unrelated to the day's changes: the file uses top level `await` but
+  has no imports or exports, so TypeScript treats it as a script (TS1375). Fixed with an
+  empty export. Re-run to confirm a clean pass.
 - [ ] **Restart the server and re-open a legacy article** from the Flutter app, to
   confirm the 400 on migrated UUIDs is gone. Any article created before the integer to
   UUID rebuild is a valid test case.
