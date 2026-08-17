@@ -209,8 +209,16 @@ export class ArticleRepository {
     return rows.map(row => ({
       id: row.id,
       slug: row.slug,
+      // Collapsed strings kept for clients that have not adopted the
+      // bilingual fields below.
       title: row.titleFr || row.titleAr,
       category: row.category ? (row.category.nameFr || row.category.nameAr) : '—',
+      // Both languages travel, so an Arabic interface never renders a French
+      // title. The row is already loaded, so this costs no extra query.
+      titleAr: row.titleAr,
+      titleFr: row.titleFr,
+      categoryAr: row.category?.nameAr ?? null,
+      categoryFr: row.category?.nameFr ?? null,
       publishedAt: (row.publishedAt ?? row.createdAt).toISOString(),
       status: row.publishedAt ? 'published' : 'draft',
       // Both columns are already on the loaded row, so resolving the

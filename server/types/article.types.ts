@@ -79,8 +79,26 @@ export interface PaginatedResponse<T> {
 export interface RecentArticleResponse {
   id: string
   slug: string
+  /**
+   * Collapsed display strings: `titleFr || titleAr` and `nameFr || nameAr`.
+   *
+   * They are kept because existing clients read them, but a client rendering
+   * an Arabic interface must use the bilingual fields below instead: these two
+   * show French text in an Arabic list.
+   */
   title: string
   category: string
+  /**
+   * Both languages, exactly as stored.
+   *
+   * The server never guesses which language a client wants. Each client picks
+   * the field matching its own interface language and falls back to the other
+   * one when a translation is missing.
+   */
+  titleAr: string
+  titleFr: string
+  categoryAr: string | null
+  categoryFr: string | null
   publishedAt: string
   status: 'published' | 'draft'
   /**

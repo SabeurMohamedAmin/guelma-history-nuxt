@@ -24,8 +24,14 @@ interface DashboardTotals {
 interface RecentArticle {
   id: string
   slug: string
+  /** Collapsed server strings, kept as a fallback for the fields below. */
   title: string
   category: string
+  /** Optional so an older server build cannot break the dashboard. */
+  titleAr?: string
+  titleFr?: string
+  categoryAr?: string | null
+  categoryFr?: string | null
   publishedAt: string
   status: 'published' | 'draft'
 }
@@ -64,6 +70,21 @@ const isLoading = ref(true)
 const errorMessage = ref<string | null>(null)
 
 const displayName = computed(() => user.value?.displayName || user.value?.username || '')
+
+/** Narrows the i18n locale to the two languages the content is stored in. */
+const currentLocale = computed(() => (locale.value === 'ar' ? 'ar' : 'fr'))
+
+/** Title in the interface language, not always the French one. */
+function articleTitle(article: RecentArticle): string {
+  return pickLocalizedText(currentLocale.value, article.titleAr, article.titleFr)
+    || article.title
+}
+
+/** Category name in the interface language. */
+function articleCategory(article: RecentArticle): string {
+  return pickLocalizedText(currentLocale.value, article.categoryAr, article.categoryFr)
+    || article.category
+}
 
 async function loadDashboard() {
   isLoading.value = true
@@ -343,10 +364,10 @@ onMounted(loadDashboard)
               </template>
 
               <v-list-item-title class="font-weight-medium">
-                {{ article.title }}
+                {{ articleTitle(article) }}
               </v-list-item-title>
               <v-list-item-subtitle class="d-flex flex-wrap align-center ga-2 mt-1">
-                <span>{{ article.category }}</span>
+                <span>{{ articleCategory(article) }}</span>
                 <span aria-hidden="true">•</span>
                 <time :datetime="article.publishedAt">
                   {{ formatDate(article.publishedAt) }}
