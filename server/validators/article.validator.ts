@@ -34,6 +34,8 @@ export const mediaItemSchema = z.object({
   imageVariants: imageVariantsSchema.nullable().optional(),
   captionAr: z.string().max(255).nullable().optional(),
   captionFr: z.string().max(255).nullable().optional(),
+  altAr: z.string().max(255).nullable().optional(),
+  altFr: z.string().max(255).nullable().optional(),
   position: z.number().int().min(0).optional(),
 }).strict()
 
