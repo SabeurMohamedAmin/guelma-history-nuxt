@@ -19,7 +19,7 @@ const isDark = computed(() => theme.global.current.value.dark)
   <v-fade-transition>
     <div
       v-if="visible"
-      class="back-to-top-container position-fixed bottom-0 end-0 ma-7 d-flex align-center justify-center"
+      class="back-to-top-container position-fixed bottom-0 end-0 ma-5 d-flex align-center justify-center"
       style="z-index: 1000; width: 52px; height: 52px;"
     >
       <!-- Progress Ring -->
