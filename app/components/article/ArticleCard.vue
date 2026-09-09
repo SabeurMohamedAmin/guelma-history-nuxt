@@ -63,7 +63,7 @@ const formattedDate = computed(() => {
 
 const commentCount = computed(() => props.article.commentCount ?? 0)
 
-const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
+const coverSrc = computed(() => props.article.coverImage)
 </script>
 
 <template>
@@ -78,7 +78,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
     <template v-if="cardVariant === 'horizontal'">
       <div class="article-card__h-layout">
         <div class="article-card__h-image-wrap">
-          <NuxtImg
+          <ArticleImage
             :src="coverSrc"
             :alt="title"
             width="200"
@@ -159,7 +159,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
     <!-- VERTICAL (borderless native grid card) -->
     <template v-else-if="cardVariant === 'vertical'">
       <div class="article-card__v-image-wrap rounded-lg">
-        <NuxtImg
+        <ArticleImage
           :src="coverSrc"
           :alt="title"
           width="400"
@@ -240,7 +240,7 @@ const coverSrc = computed(() => props.article.coverImage || '/og-default.jpg')
     <!-- FEATURED -->
     <template v-else>
       <div class="article-card__f-wrapper">
-        <NuxtImg
+        <ArticleImage
           :src="coverSrc"
           :alt="title"
           width="900"

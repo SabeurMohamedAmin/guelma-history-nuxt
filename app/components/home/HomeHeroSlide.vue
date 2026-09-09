@@ -83,8 +83,8 @@ function getArticleLink(slug: string): string {
                    tells the browser to fetch it immediately instead of
                    queuing it behind CSS/JS (the 6.7s "resource load delay"
                    Lighthouse reported). -->
-              <NuxtImg
-                :src="featuredArticle.coverImageVariants?.slider || featuredArticle.coverImage || '/og-default.jpg'"
+              <ArticleImage
+                :src="featuredArticle.coverImageVariants?.slider || featuredArticle.coverImage"
                 :alt="getTitle(featuredArticle)"
                 contain
                 class="featured-image"
@@ -184,8 +184,8 @@ function getArticleLink(slug: string): string {
                   <div class="thumbnail-wrapper w-100 h-100">
                     <!-- lazy: these small thumbnails must not compete with
                          the featured (LCP) image for bandwidth at startup. -->
-                    <NuxtImg
-                      :src="article.coverImageVariants?.thumbnail || article.coverImage || '/og-default.jpg'"
+                    <ArticleImage
+                      :src="article.coverImageVariants?.thumbnail || article.coverImage"
                       :alt="getTitle(article)"
                       cover
                       height="100%"

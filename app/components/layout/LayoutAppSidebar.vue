@@ -82,7 +82,7 @@ function date(article: ArticleListItem): string {
             color="surface-variant"
             class="recent-item__thumb"
           >
-            <NuxtImg
+            <ArticleImage
               v-if="article.coverImage"
               :src="article.coverImage"
               :alt="title(article)"

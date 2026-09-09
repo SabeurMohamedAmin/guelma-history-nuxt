@@ -139,32 +139,31 @@ function goNext(): void {
           class="top-read__slide"
           :aria-label="title(article)"
         >
-          <NuxtImg
+          <ArticleImage
             :src="coverSrc(article)"
             :alt="title(article)"
             cover
             height="200"
             class="top-read__image"
             :loading="'eager'"
-          >
-            <div class="top-read__overlay">
-              <span class="top-read__rank">{{ index + 1 }}</span>
+          />
+          <div class="top-read__overlay">
+            <span class="top-read__rank">{{ index + 1 }}</span>
 
-              <div class="top-read__content">
-                <v-chip
-                  v-if="categoryName(article)"
-                  size="x-small"
-                  color="primary"
-                  variant="flat"
-                  label
-                  class="mb-2"
-                >
-                  {{ categoryName(article) }}
-                </v-chip>
-                <h3 class="top-read__slide-title">{{ title(article) }}</h3>
-              </div>
+            <div class="top-read__content">
+              <v-chip
+                v-if="categoryName(article)"
+                size="x-small"
+                color="primary"
+                variant="flat"
+                label
+                class="mb-2"
+              >
+                {{ categoryName(article) }}
+              </v-chip>
+              <h3 class="top-read__slide-title">{{ title(article) }}</h3>
             </div>
-          </NuxtImg>
+          </div>
         </NuxtLink>
       </v-carousel-item>
     </v-carousel>
@@ -182,6 +181,7 @@ function goNext(): void {
 }
 
 .top-read__slide {
+  position: relative;
   display: block;
   height: 100%;
   text-decoration: none;
