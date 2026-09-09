@@ -121,6 +121,11 @@ export default defineNuxtConfig({
     cloudinaryApiSecret: '',
 
     public: {
+      // Overridden at runtime by NUXT_PUBLIC_POSTHOG_KEY and
+      // NUXT_PUBLIC_POSTHOG_HOST. An empty key disables analytics.
+      posthogKey: '',
+      posthogHost: 'https://eu.i.posthog.com',
+
       // Public base URL used to build links inside emails.
       siteUrl: 'http://localhost:3000',
 
@@ -588,6 +593,9 @@ export default defineNuxtConfig({
           'https://*.google-analytics.com',
           'https://*.analytics.google.com',
           'https://stats.g.doubleclick.net',
+          // PostHog EU event ingestion and SDK configuration.
+          'https://eu.i.posthog.com',
+          'https://eu-assets.i.posthog.com',
 
         ],
       },
