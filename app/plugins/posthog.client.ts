@@ -5,18 +5,14 @@ import type { PosthogEvent } from '../utils/posthog'
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig().public
   const key = String(config.posthogKey || '').trim()
-  const host = String(config.posthogHost || '').replace(/\/+$/, '')
+  // Use PostHog's official EU ingestion endpoint directly. The configured
+  // t.guelmahistory.com proxy currently returns HTTP 403, so do not route events
+  // through it until that proxy is repaired and verified.
+  const host = 'https://eu.i.posthog.com'
   const privacyPreferences = navigator as Navigator & { globalPrivacyControl?: boolean }
 
   // Keep local development and visitors requesting privacy out of analytics.
   if (import.meta.dev || !key || navigator.doNotTrack === '1' || privacyPreferences.globalPrivacyControl) return
-
-  // Accept either PostHog's EU ingestion endpoint or the site's configured
-  // first-party EU reverse proxy. Do not allow arbitrary ingestion hosts.
-  if (!['https://eu.i.posthog.com', 'https://t.guelmahistory.com'].includes(host)) {
-    console.warn('[PostHog] Unsupported host. Use https://eu.i.posthog.com or https://t.guelmahistory.com')
-    return
-  }
 
   const router = useRouter()
   let lastPath: string | undefined

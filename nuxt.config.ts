@@ -593,8 +593,6 @@ export default defineNuxtConfig({
           // PostHog EU event ingestion and SDK configuration.
           'https://eu.i.posthog.com',
           'https://eu-assets.i.posthog.com',
-          // First-party PostHog EU reverse proxy configured in Cloudflare DNS.
-          'https://t.guelmahistory.com',
 
         ],
       },
