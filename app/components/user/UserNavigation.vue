@@ -180,7 +180,7 @@ function toggleTheme() {
         <v-list
           nav
           density="compact"
-          rounded="xl"
+          rounded="lg"
           class="app-dropdown pa-1"
           min-width="220"
         >
@@ -238,7 +238,7 @@ function toggleTheme() {
         <v-list
           nav
           density="compact"
-          rounded="xl"
+          rounded="lg"
           class="app-dropdown pa-1"
           min-width="200"
         >
