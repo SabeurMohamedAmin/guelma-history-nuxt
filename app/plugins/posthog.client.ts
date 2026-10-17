@@ -62,7 +62,7 @@ export default defineNuxtPlugin((_nuxtApp) => {
       advanced_disable_decide: true,
       respect_dnt: true,
       ip: false,
-      before_send: (event) => sanitizePosthogEvent(event as PosthogEvent | null, window.location.origin) as typeof event,
+      before_send: event => sanitizePosthogEvent(event as PosthogEvent | null, window.location.origin) as typeof event,
       loaded: () => {
         initialized = true
         capturePageView()
