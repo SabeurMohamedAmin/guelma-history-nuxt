@@ -11,9 +11,10 @@ export default defineNuxtPlugin((nuxtApp) => {
   // Keep local development and visitors requesting privacy out of analytics.
   if (import.meta.dev || !key || navigator.doNotTrack === '1' || privacyPreferences.globalPrivacyControl) return
 
-  // This integration deliberately uses only PostHog's EU infrastructure.
-  if (host !== 'https://eu.i.posthog.com') {
-    console.warn('[PostHog] Expected NUXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com')
+  // Accept either PostHog's EU ingestion endpoint or the site's configured
+  // first-party EU reverse proxy. Do not allow arbitrary ingestion hosts.
+  if (!['https://eu.i.posthog.com', 'https://t.guelmahistory.com'].includes(host)) {
+    console.warn('[PostHog] Unsupported host. Use https://eu.i.posthog.com or https://t.guelmahistory.com')
     return
   }
 
