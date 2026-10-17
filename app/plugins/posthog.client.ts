@@ -1,5 +1,5 @@
 import posthog from 'posthog-js'
-import { sanitizePosthogEvent } from '../utils/posthog'
+import { getPosthogPageUrl, sanitizePosthogEvent } from '../utils/posthog'
 import type { PosthogEvent } from '../utils/posthog'
 
 export default defineNuxtPlugin(() => {
@@ -16,9 +16,10 @@ export default defineNuxtPlugin(() => {
   // Respect browser privacy signals.
   if (navigator.doNotTrack === '1' || privacyPreferences.globalPrivacyControl) return
 
-  // Use the same proven history-change capture mode as the CTS tracker. The SDK
-  // owns initial and client-side pageview timing; before_send still strips query
-  // strings, fragments, private routes, and every unapproved event/property.
+  // Capture pageviews explicitly. This avoids relying on SDK history listeners
+  // for Nuxt's initial SSR page and client-side route transitions.
+  const router = useRouter()
+
   try {
     posthog.init(key, {
       api_host: host,
@@ -26,7 +27,7 @@ export default defineNuxtPlugin(() => {
       persistence: 'memory',
       person_profiles: 'never',
       autocapture: false,
-      capture_pageview: 'history_change',
+      capture_pageview: false,
       capture_pageleave: false,
       capture_dead_clicks: false,
       capture_performance: false,
@@ -35,6 +36,26 @@ export default defineNuxtPlugin(() => {
       respect_dnt: true,
       ip: false,
       before_send: event => sanitizePosthogEvent(event as PosthogEvent | null, window.location.origin) as typeof event,
+      loaded: (client) => {
+        let lastPageUrl = ''
+
+        const capturePageview = (href: string) => {
+          const safeUrl = getPosthogPageUrl(href, window.location.origin)
+          if (!safeUrl || safeUrl.href === lastPageUrl) return
+
+          lastPageUrl = safeUrl.href
+          client.capture('$pageview', { $current_url: safeUrl.href })
+        }
+
+        // The callback runs once the SDK is ready; href is read at that point
+        // so the first event reflects the page actually displayed to the user.
+        capturePageview(window.location.href)
+
+        router.afterEach((to, _from, failure) => {
+          if (failure) return
+          capturePageview(new URL(to.fullPath, window.location.origin).href)
+        })
+      },
     })
   }
   catch (error) {
