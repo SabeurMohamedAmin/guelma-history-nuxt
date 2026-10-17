@@ -2,22 +2,30 @@ import posthog from 'posthog-js'
 import { getPosthogPageUrl, sanitizePosthogEvent } from '../utils/posthog'
 import type { PosthogEvent } from '../utils/posthog'
 
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig().public
   const key = String(config.posthogKey || '').trim()
-  // Use PostHog's official EU ingestion endpoint directly. The configured
-  // t.guelmahistory.com proxy currently returns HTTP 403, so do not route events
-  // through it until that proxy is repaired and verified.
-  const host = 'https://eu.i.posthog.com'
+  // Prefer the configured endpoint, falling back to PostHog's official EU host.
+  // The custom t.guelmahistory.com proxy previously returned HTTP 403.
+  const host = String(config.posthogHost || 'https://eu.i.posthog.com').trim()
   const privacyPreferences = navigator as Navigator & { globalPrivacyControl?: boolean }
 
-  // Keep local development and visitors requesting privacy out of analytics.
-  if (import.meta.dev || !key || navigator.doNotTrack === '1' || privacyPreferences.globalPrivacyControl) return
+  if (!key) {
+    console.warn('[PostHog] Analytics disabled: NUXT_PUBLIC_POSTHOG_KEY is missing.')
+    return
+  }
+
+  // Respect browser privacy signals. If a key is configured, allow local preview
+  // and development to initialize too, so analytics can be tested before deploy.
+  if (navigator.doNotTrack === '1' || privacyPreferences.globalPrivacyControl) return
 
   const router = useRouter()
   let lastPath: string | undefined
+  let initialized = false
 
   function capturePageView() {
+    if (!initialized) return
+
     const url = getPosthogPageUrl(router.currentRoute.value.fullPath, window.location.origin)
     if (!url) {
       lastPath = undefined
@@ -39,38 +47,35 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (!failure) capturePageView()
   })
 
-  // Initialize the installed SDK after hydration. Bundling it with the client
-  // avoids relying on a dynamically injected third-party script that can be
-  // blocked by CSP or browser privacy protections before it reports an error.
-  nuxtApp.hook('app:mounted', () => {
-    try {
-      posthog.init(key, {
-        api_host: host,
-        ui_host: 'https://eu.posthog.com',
-        persistence: 'memory',
-        person_profiles: 'never',
-        autocapture: false,
-        capture_pageview: false,
-        capture_pageleave: false,
-        capture_dead_clicks: false,
-        capture_performance: false,
-        disable_session_recording: true,
-        disable_surveys: true,
-        disable_external_dependency_loading: true,
-        advanced_disable_decide: true,
-        respect_dnt: true,
-        ip: false,
-        before_send: (event: PosthogEvent | null) => sanitizePosthogEvent(event, window.location.origin),
-        loaded: () => {
-          // Read the current route after SDK initialization, not before it.
-          capturePageView()
-        },
-      })
-    }
-    catch {
-      console.warn('[PostHog] Analytics could not initialize')
-    }
-  })
+  // Initialize immediately, following the working CTS tracker integration.
+  // The SDK is bundled locally; this does not inject an external script tag.
+  try {
+    posthog.init(key, {
+      api_host: host,
+      ui_host: 'https://eu.posthog.com',
+      persistence: 'memory',
+      person_profiles: 'never',
+      autocapture: false,
+      capture_pageview: false,
+      capture_pageleave: false,
+      capture_dead_clicks: false,
+      capture_performance: false,
+      disable_session_recording: true,
+      disable_surveys: true,
+      disable_external_dependency_loading: true,
+      advanced_disable_decide: true,
+      respect_dnt: true,
+      ip: false,
+      before_send: event => sanitizePosthogEvent(event as PosthogEvent | null, window.location.origin) as typeof event,
+      loaded: () => {
+        initialized = true
+        capturePageView()
+      },
+    })
+  }
+  catch (error) {
+    console.error('[PostHog] Analytics could not initialize', error)
+  }
 
   if (import.meta.hot) {
     import.meta.hot.dispose(removeNavigationHook)
