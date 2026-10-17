@@ -1,16 +1,6 @@
+import posthog from 'posthog-js'
 import { getPosthogPageUrl, sanitizePosthogEvent } from '../utils/posthog'
 import type { PosthogEvent } from '../utils/posthog'
-
-interface PosthogClient {
-  init: (key: string, options: Record<string, unknown>) => void
-  capture: (event: string, properties: Record<string, unknown>) => void
-}
-
-declare global {
-  interface Window {
-    posthog?: PosthogClient
-  }
-}
 
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig().public
@@ -28,12 +18,9 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
 
   const router = useRouter()
-  let client: PosthogClient | undefined
   let lastPath: string | undefined
 
   function capturePageView() {
-    if (!client) return
-
     const url = getPosthogPageUrl(router.currentRoute.value.fullPath, window.location.origin)
     if (!url) {
       lastPath = undefined
@@ -42,7 +29,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (url.pathname === lastPath) return
 
     try {
-      client.capture('$pageview', { $current_url: url.href })
+      posthog.capture('$pageview', { $current_url: url.href })
       lastPath = url.pathname
     }
     catch {
@@ -55,47 +42,37 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (!failure) capturePageView()
   })
 
-  // Load the browser SDK asynchronously after hydration, like the site's
-  // other third-party scripts. No server import or package lock change needed.
+  // Initialize the installed SDK after hydration. Bundling it with the client
+  // avoids relying on a dynamically injected third-party script that can be
+  // blocked by CSP or browser privacy protections before it reports an error.
   nuxtApp.hook('app:mounted', () => {
-    const script = document.createElement('script')
-    script.src = 'https://eu-assets.i.posthog.com/static/array.js'
-    script.async = true
-    script.referrerPolicy = 'no-referrer'
-    script.onload = () => {
-      try {
-        window.posthog?.init(key, {
-          api_host: host,
-          ui_host: 'https://eu.posthog.com',
-          persistence: 'memory',
-          person_profiles: 'never',
-          autocapture: false,
-          capture_pageview: false,
-          capture_pageleave: false,
-          capture_dead_clicks: false,
-          capture_performance: false,
-          disable_session_recording: true,
-          disable_surveys: true,
-          disable_external_dependency_loading: true,
-          advanced_disable_decide: true,
-          respect_dnt: true,
-          ip: false,
-          before_send: (event: PosthogEvent | null) => sanitizePosthogEvent(event, window.location.origin),
-          loaded: (posthog: PosthogClient) => {
-            client = posthog
-            // Read the current route now, not the route before the download.
-            capturePageView()
-          },
-        })
-      }
-      catch {
-        console.warn('[PostHog] Analytics could not initialize')
-      }
+    try {
+      posthog.init(key, {
+        api_host: host,
+        ui_host: 'https://eu.posthog.com',
+        persistence: 'memory',
+        person_profiles: 'never',
+        autocapture: false,
+        capture_pageview: false,
+        capture_pageleave: false,
+        capture_dead_clicks: false,
+        capture_performance: false,
+        disable_session_recording: true,
+        disable_surveys: true,
+        disable_external_dependency_loading: true,
+        advanced_disable_decide: true,
+        respect_dnt: true,
+        ip: false,
+        before_send: (event: PosthogEvent | null) => sanitizePosthogEvent(event, window.location.origin),
+        loaded: () => {
+          // Read the current route after SDK initialization, not before it.
+          capturePageView()
+        },
+      })
     }
-    script.onerror = () => {
-      console.warn('[PostHog] Analytics SDK could not load')
+    catch {
+      console.warn('[PostHog] Analytics could not initialize')
     }
-    document.head.appendChild(script)
   })
 
   if (import.meta.hot) {
