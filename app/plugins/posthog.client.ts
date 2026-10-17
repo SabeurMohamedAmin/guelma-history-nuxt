@@ -2,17 +2,22 @@ import posthog from 'posthog-js'
 import { getPosthogPageUrl, sanitizePosthogEvent } from '../utils/posthog'
 import type { PosthogEvent } from '../utils/posthog'
 
-export default defineNuxtPlugin((_nuxtApp) => {
+export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig().public
   const key = String(config.posthogKey || '').trim()
-  // Use PostHog's official EU ingestion endpoint directly. The configured
-  // t.guelmahistory.com proxy currently returns HTTP 403, so do not route events
-  // through it until that proxy is repaired and verified.
-  const host = 'https://eu.i.posthog.com'
+  // Prefer the configured endpoint, falling back to PostHog's official EU host.
+  // The custom t.guelmahistory.com proxy previously returned HTTP 403.
+  const host = String(config.posthogHost || 'https://eu.i.posthog.com').trim()
   const privacyPreferences = navigator as Navigator & { globalPrivacyControl?: boolean }
 
-  // Keep local development and visitors requesting privacy out of analytics.
-  if (import.meta.dev || !key || navigator.doNotTrack === '1' || privacyPreferences.globalPrivacyControl) return
+  if (!key) {
+    console.warn('[PostHog] Analytics disabled: NUXT_PUBLIC_POSTHOG_KEY is missing.')
+    return
+  }
+
+  // Respect browser privacy signals. If a key is configured, allow local preview
+  // and development to initialize too, so analytics can be tested before deploy.
+  if (navigator.doNotTrack === '1' || privacyPreferences.globalPrivacyControl) return
 
   const router = useRouter()
   let lastPath: string | undefined
@@ -42,9 +47,8 @@ export default defineNuxtPlugin((_nuxtApp) => {
     if (!failure) capturePageView()
   })
 
-  // Initialize immediately while the client plugin is executing. Waiting for
-  // app:mounted can miss initialization in some hydration/lifecycle paths.
-  // The SDK is already bundled, so this does not inject an external script.
+  // Initialize immediately, following the working CTS tracker integration.
+  // The SDK is bundled locally; this does not inject an external script tag.
   try {
     posthog.init(key, {
       api_host: host,
