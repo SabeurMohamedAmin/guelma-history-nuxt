@@ -7,6 +7,7 @@ import {
   isProtectedMobileAdminPath,
   matchesAnyRoute,
   matchesRoutePattern,
+  shouldEnforceApiRouteTiers,
 } from '~~/server/utils/apiRouteTiers'
 
 /**
@@ -108,6 +109,21 @@ describe('isProtectedMobileAdminPath', () => {
   it('ignores unversioned and non-admin paths', () => {
     expect(isProtectedMobileAdminPath('/api/v1/health')).toBe(false)
     expect(isProtectedMobileAdminPath('/api/articles')).toBe(false)
+  })
+})
+
+describe('shouldEnforceApiRouteTiers', () => {
+  it('always enforces route tiers in production, even when explicitly disabled', () => {
+    expect(shouldEnforceApiRouteTiers('production', false)).toBe(true)
+  })
+
+  it('allows audit mode by default outside production', () => {
+    expect(shouldEnforceApiRouteTiers('development', false)).toBe(false)
+    expect(shouldEnforceApiRouteTiers('test', false)).toBe(false)
+  })
+
+  it('allows explicit enforcement outside production', () => {
+    expect(shouldEnforceApiRouteTiers('development', true)).toBe(true)
   })
 })
 

@@ -1,7 +1,8 @@
 # Local database integration tests
 
 These tests verify concurrency and persistence rules that mocks cannot prove.
-They are opt-in and do not use pipelines.
+They are opt-in when run locally. CI provisions a disposable CockroachDB instance,
+applies migrations to it, and runs this suite automatically.
 
 ## Safe setup
 

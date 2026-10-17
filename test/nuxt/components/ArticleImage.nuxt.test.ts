@@ -8,6 +8,11 @@ const NuxtImgStub = defineComponent({
   props: ['src', 'alt'],
   emits: ['error'],
   template: '<img :src="src" :alt="alt" @error="$emit(\'error\')">',
+  mounted() {
+    // happy-dom does not fetch image files, so make the initial source behave
+    // like a successfully loaded image unless a test explicitly emits error.
+    Object.defineProperty(this.$el, 'naturalWidth', { configurable: true, value: 1 })
+  },
 })
 
 async function mountImage(src: string | null) {

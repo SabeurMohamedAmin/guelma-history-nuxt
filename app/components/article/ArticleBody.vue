@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MediaItem } from '~/components/article/ArticleMediaGallery.vue'
+import { linkifyHttpUrls } from '~/utils/linkifyHttpUrls'
 
 const props = withDefaults(defineProps<{
   body: string
@@ -13,6 +14,8 @@ const props = withDefaults(defineProps<{
 }>(), {
   media: () => [],
 })
+
+const { t } = useI18n()
 
 // Pull bare video URLs out of the body so they can be shown in the gallery
 // instead of as raw links inside the text.
@@ -38,7 +41,7 @@ const paragraphs = computed(() => cleanBody.value
   .split(/\n{2,}/)
   .map(text => text.trim())
   .filter(Boolean)
-  .map(text => ({ text, dir: detectDirection(text) })))
+  .map(text => ({ text, dir: detectDirection(text), segments: linkifyHttpUrls(text) })))
 
 // Final list of slides for the gallery: explicit media from the page first,
 // then any video URLs detected in the body, then the cover image as a fallback
@@ -88,14 +91,30 @@ function getVideoThumbnail(url: string) {
         class="article-lead__paragraph mt-1"
         :class="`article-lead__paragraph--${paragraph.dir}`"
       >
-        {{ paragraph.text }}
+        <template
+          v-for="(segment, index) in paragraph.segments"
+          :key="`${index}-${segment.text}`"
+        >
+          <a
+            v-if="segment.type === 'link' && segment.href"
+            :href="segment.href"
+            :aria-label="`${t('article.externalLink')}: ${segment.text}`"
+            dir="ltr"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="article-lead__link"
+          >{{ segment.text }}</a>
+          <template v-else>
+            {{ segment.text }}
+          </template>
+        </template>
       </p>
     </div>
 
     <section
       v-if="gallerySlides.length"
       class="article-body__gallery"
-      aria-label="Article media gallery"
+      :aria-label="t('article.mediaGallery')"
     >
       <ArticleMediaGallery
         :items="gallerySlides"
@@ -113,6 +132,20 @@ function getVideoThumbnail(url: string) {
 
 .article-lead__paragraph {
   margin-bottom: 1.35rem;
+}
+
+.article-lead__link {
+  color: rgb(var(--v-theme-primary));
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+  overflow-wrap: anywhere;
+}
+
+.article-lead__link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 /* Align each paragraph to its own reading side so the text starts on the

@@ -655,7 +655,9 @@
     "breadcrumbLabel": "Fil d’ariane",
     "metaLabel": "Informations sur l’article",
     "tagsLabel": "Mots-clés",
-    "asideLabel": "À découvrir aussi"
+    "asideLabel": "À découvrir aussi",
+    "mediaGallery": "Galerie multimédia de l’article",
+    "externalLink": "Lien externe"
   },
   "sidebar": {
     "siteDescription": "Plateforme éditoriale dédiée à l'histoire et au patrimoine culturel de Guelma, Algérie",

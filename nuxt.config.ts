@@ -1,4 +1,5 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
+import { shouldEnforceApiRouteTiers } from './server/utils/apiRouteTiers'
 
 // Private and low-value pages kept out of search engine indexes.
 // robots.txt asks crawlers not to visit; the per-route "noindex" header (see
@@ -99,17 +100,13 @@ export default defineNuxtConfig({
     // Deny-by-default switch for the central /api route classification in
     // server/middleware/privileged-api-auth.ts.
     //
-    // false (default) = AUDIT mode: privileged prefixes are enforced, while
-    //   session-tier and unclassified routes are only logged as [security]
-    //   warnings. Nothing is blocked, so a wrong classification cannot break a
-    //   page.
-    // true = ENFORCE mode: session-tier routes require a signed-in account and
-    //   an unclassified /api route is rejected with 401.
-    //
-    // Roll it out by setting NUXT_ENFORCE_API_ROUTE_TIERS=true in DEVELOPMENT
-    // first, exercising the app, and enabling it in production only once no
-    // [security] warning appears. Server-only: never move this to public.
-    enforceApiRouteTiers: process.env.NUXT_ENFORCE_API_ROUTE_TIERS === 'true',
+    // Development can opt into audit/enforce mode while testing. Production is
+    // always deny-by-default: a runtime env override cannot disable this guard.
+    // Every API route is covered by test/unit/api-route-coverage.spec.ts.
+    enforceApiRouteTiers: shouldEnforceApiRouteTiers(
+      process.env.NODE_ENV,
+      process.env.NUXT_ENFORCE_API_ROUTE_TIERS === 'true',
+    ),
 
     // Destination inbox for verified contact messages
     // (override via NUXT_CONTACT_OWNER_EMAIL).

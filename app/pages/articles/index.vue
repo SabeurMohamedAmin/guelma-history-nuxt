@@ -15,6 +15,8 @@ const {
   displayMode,
   articles,
   total,
+  page,
+  pageCount,
   pending,
   error,
   isEmpty,
@@ -117,6 +119,20 @@ useHead({
       :articles="articles"
       :display="displayMode"
     />
+
+    <nav
+      v-if="pageCount > 1"
+      class="d-flex justify-center mt-8"
+      :aria-label="t('nav.articles')"
+    >
+      <v-pagination
+        v-model="page"
+        :length="pageCount"
+        :total-visible="5"
+        rounded="circle"
+        :aria-label="t('nav.articles')"
+      />
+    </nav>
   </div>
 </template>
 

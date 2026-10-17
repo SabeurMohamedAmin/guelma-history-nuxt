@@ -673,7 +673,9 @@
     "breadcrumbLabel": "مسار الصفحة",
     "metaLabel": "معلومات المقال",
     "tagsLabel": "الكلمات المفتاحية",
-    "asideLabel": "اقرأ أيضا"
+    "asideLabel": "اقرأ أيضا",
+    "mediaGallery": "معرض وسائط المقال",
+    "externalLink": "رابط خارجي"
   },
   "sidebar": {
     "siteDescription": "منصة تحريرية مخصصة لتاريخ وتراث وثقافة مدينة قالمة الجزائرية",

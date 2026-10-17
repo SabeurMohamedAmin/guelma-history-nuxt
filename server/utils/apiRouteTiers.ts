@@ -88,6 +88,16 @@ export const PUBLIC_MOBILE_ADMIN_ROUTES = new Set([
   '/api/v1/admin/auth/refresh',
 ])
 
+/**
+ * Production must never run the API route-tier middleware in audit-only mode.
+ * The environment flag is a convenience for local development, not a way to
+ * disable authorization in a deployed server (including via runtime env
+ * overrides).
+ */
+export function shouldEnforceApiRouteTiers(nodeEnv: string | undefined, configured: boolean): boolean {
+  return nodeEnv === 'production' || configured
+}
+
 /** True when the path needs a valid Flutter bearer session. */
 export function isProtectedMobileAdminPath(pathname: string): boolean {
   return isPathInside(pathname, '/api/v1/admin')

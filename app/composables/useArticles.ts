@@ -10,7 +10,12 @@ import {
 interface ArticlesResponse {
   articles: ArticleListItem[]
   total: number
+  page: number
+  limit: number
+  totalPages: number
 }
+
+const ARTICLES_PER_PAGE = 24
 
 /**
  * Owns all state for the public /articles page: the free-text query, the
@@ -37,6 +42,8 @@ export function useArticles() {
     typeof route.query.range === 'string' ? route.query.range : DEFAULT_DATE_RANGE,
   )
   const displayMode = ref<DisplayMode>(DEFAULT_DISPLAY_MODE)
+  const initialPage = Number(route.query.page)
+  const page = ref(Number.isSafeInteger(initialPage) && initialPage > 0 ? initialPage : 1)
 
   // Minimum characters (trimmed) before a search term is sent to the API.
   const MIN_SEARCH_LENGTH = 2
@@ -85,14 +92,24 @@ export function useArticles() {
         category,
         sort,
         from: fromDate,
+        page,
+        limit: ARTICLES_PER_PAGE,
       },
-      watch: [trimmedQuery, category, sort, fromDate],
-      default: () => ({ articles: [], total: 0 }),
+      watch: [trimmedQuery, category, sort, fromDate, page],
+      default: () => ({ articles: [], total: 0, page: 1, limit: ARTICLES_PER_PAGE, totalPages: 0 }),
     },
   )
 
   const articles = computed<ArticleListItem[]>(() => data.value?.articles ?? [])
   const total = computed(() => data.value?.total ?? 0)
+  const pageCount = computed(() => Math.max(1, data.value?.totalPages ?? Math.ceil(total.value / ARTICLES_PER_PAGE)))
+
+  watch(pageCount, (lastPage) => {
+    if (page.value > lastPage) page.value = lastPage
+  })
+  watch(data, () => {
+    if (page.value > pageCount.value) page.value = pageCount.value
+  })
   const isEmpty = computed(() => !pending.value && articles.value.length === 0)
 
   // True when any filter narrows the default "all articles" view. Uses the raw
@@ -112,6 +129,7 @@ export function useArticles() {
     if (category.value) queryEntries.category = category.value
     if (sort.value !== DEFAULT_SORT) queryEntries.sort = sort.value
     if (range.value !== DEFAULT_DATE_RANGE) queryEntries.range = range.value
+    if (page.value > 1) queryEntries.page = String(page.value)
 
     return queryEntries
   }
@@ -140,6 +158,11 @@ export function useArticles() {
 
   // Keep the URL in sync with the active filters (omit defaults for clean links).
   watch([trimmedQuery, category, sort, range], () => {
+    if (page.value !== 1) page.value = 1
+    void syncFiltersToUrl()
+  })
+
+  watch(page, () => {
     void syncFiltersToUrl()
   })
 
@@ -153,6 +176,8 @@ export function useArticles() {
     // data
     articles,
     total,
+    page,
+    pageCount,
     pending,
     error,
     isEmpty,

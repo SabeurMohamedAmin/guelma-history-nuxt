@@ -5,6 +5,7 @@ import {
   getCookieSessionRole,
   isProtectedMobileAdminPath,
   matchesAnyRoute,
+  shouldEnforceApiRouteTiers,
 } from '~~/server/utils/apiRouteTiers'
 
 /**
@@ -23,10 +24,9 @@ import {
  * Privileged prefixes are ALWAYS enforced. What the runtime flag
  * `enforceApiRouteTiers` (NUXT_ENFORCE_API_ROUTE_TIERS) controls is the rest:
  *
- * - false (default): session-tier and unclassified routes are only LOGGED, so
- *   a wrong classification cannot break a page.
- * - true: session-tier routes require a signed-in account, and an unclassified
- *   `/api` route is rejected with 401.
+ * - development: audit mode is available unless explicitly enabled.
+ * - production: enforcement is unconditional; an environment override cannot
+ *   put the deployed server back into audit-only mode.
  *
  * Enable it in development first and watch for `[security]` warnings before
  * turning it on in production.
@@ -53,7 +53,11 @@ export default defineEventHandler(async (event) => {
   // ── Audited tiers ───────────────────────────────────────────────────
   if (matchesAnyRoute(PUBLIC_ROUTES, event.method, pathname)) return
 
-  const { enforceApiRouteTiers } = useRuntimeConfig(event)
+  const { enforceApiRouteTiers: configuredEnforcement } = useRuntimeConfig(event)
+  const enforceApiRouteTiers = shouldEnforceApiRouteTiers(
+    process.env.NODE_ENV,
+    configuredEnforcement,
+  )
 
   if (matchesAnyRoute(SESSION_ROUTES, event.method, pathname)) {
     if (enforceApiRouteTiers) {

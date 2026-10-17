@@ -1,8 +1,15 @@
-import { and, asc, desc, eq, gte, ilike, isNotNull, lte, or, type SQL } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gte, ilike, isNotNull, lte, or, type SQL } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { articles } from '~~/server/db/schema/articles'
 import { categories } from '~~/server/db/schema/categories'
 import { authors } from '~~/server/db/schema/authors'
+import {
+  DEFAULT_ARTICLE_PAGE_SIZE,
+  MAX_ARTICLE_PAGE_NUMBER,
+  MAX_ARTICLE_PAGE_SIZE,
+  positiveInteger,
+  resolveArticlePagination,
+} from '~~/server/utils/articlePagination'
 import type { ArticleListItem } from '~~/shared/types/article'
 
 /**
@@ -19,9 +26,8 @@ import type { ArticleListItem } from '~~/shared/types/article'
  *   - from:     ISO date string — only articles published on/after this date
  *   - to:       ISO date string — only articles published on/before this date
  *
- * Returns the matching articles, the total count, and the list of categories
- * (each with its published-article count) so the client can render the filter
- * controls without a second request.
+ * Returns one bounded page of matching articles and the full filtered count.
+ * `page` defaults to 1 and `limit` defaults to 24 (maximum 100).
  */
 
 // Single source of truth for sortable columns. Mirrors the category endpoint
@@ -64,6 +70,8 @@ function toTrimmedString(value: unknown): string {
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
+  const requestedPage = positiveInteger(query.page, 1, MAX_ARTICLE_PAGE_NUMBER)
+  const limit = positiveInteger(query.limit, DEFAULT_ARTICLE_PAGE_SIZE, MAX_ARTICLE_PAGE_SIZE)
 
   const sortKey = resolveSortKey(query.sort)
   const orderDir = query.order === 'asc' || query.order === 'desc'
@@ -102,6 +110,18 @@ export default defineEventHandler(async (event) => {
   if (from) conditions.push(gte(articles.publishedAt, from))
   if (to) conditions.push(lte(articles.publishedAt, to))
 
+  const [countRow] = await db
+    .select({ total: count() })
+    .from(articles)
+    .leftJoin(categories, eq(articles.categoryId, categories.id))
+    .leftJoin(authors, eq(articles.authorId, authors.id))
+    .where(and(...conditions))
+
+  const total = Number(countRow?.total ?? 0)
+  // Clamp out-of-range pages before applying OFFSET, including maliciously
+  // large page numbers, so the database never scans an absurd offset.
+  const { page, totalPages, offset } = resolveArticlePagination(requestedPage, total, limit)
+
   const rows = await db
     .select({
       id: articles.id,
@@ -128,9 +148,14 @@ export default defineEventHandler(async (event) => {
     .leftJoin(authors, eq(articles.authorId, authors.id))
     .where(and(...conditions))
     .orderBy(order(orderColumn))
+    .limit(limit)
+    .offset(offset)
 
   return {
     articles: rows as ArticleListItem[],
-    total: rows.length,
+    total,
+    page,
+    limit,
+    totalPages,
   }
 })

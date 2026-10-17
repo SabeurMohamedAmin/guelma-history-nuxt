@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Public, non-secret placeholder so Nuxt's Cloudinary module does not emit
+      # a missing-config warning during CI-only tests and builds.
+      NUXT_CLOUDINARY_CLOUD_NAME: ci-cloud
+      CLOUDINARY_CLOUD_NAME: ci-cloud
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.22.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Security regression tests
+        run: pnpm test:security
+      - name: Unit tests
+        run: pnpm exec vitest run --project unit
+      - name: Nuxt component and API tests
+        run: pnpm exec vitest run --project nuxt
+      - name: Start isolated CockroachDB for integration tests
+        run: |
+          # The UUID migration uses schema_locked, which requires CockroachDB 25.2+.
+          docker run -d --name guelma-test-db -p 26257:26257 cockroachdb/cockroach:v25.2.0 start-single-node --insecure --listen-addr=0.0.0.0:26257 --http-addr=0.0.0.0:8080
+          for attempt in $(seq 1 30); do
+            if docker exec guelma-test-db cockroach sql --insecure --execute 'SELECT 1' >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          docker exec guelma-test-db cockroach sql --insecure --execute 'CREATE DATABASE guelma_test'
+      - name: Apply migrations to the isolated test database
+        run: pnpm db_test:migrate
+        env:
+          NUXT_TEST_DATABASE_URL: postgresql://root@127.0.0.1:26257/guelma_test?sslmode=disable
+      - name: Integration tests
+        run: pnpm test:integration
+        env:
+          NUXT_TEST_DATABASE_URL: postgresql://root@127.0.0.1:26257/guelma_test?sslmode=disable
+      - name: Production build
+        run: pnpm build
+        env:
+          NODE_ENV: production
+          NUXT_SESSION_PASSWORD: ci-only-session-password-at-least-32-chars
+          NUXT_MOBILE_AUTH_SIGNING_KEY: ci-only-mobile-signing-key-at-least-32-chars
+          NUXT_CLOUDINARY_API_SECRET: ci-only-cloudinary-secret
+          NUXT_CLOUDINARY_CLOUD_NAME: ci-cloud
+          CLOUDINARY_CLOUD_NAME: ci-cloud

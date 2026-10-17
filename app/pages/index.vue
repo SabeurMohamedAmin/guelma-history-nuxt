@@ -30,6 +30,7 @@ interface ArticleListResponse {
 const { data: articlesResponse, pending } = await useFetch<ArticleListResponse>(
   '/api/articles/list',
   {
+    query: { limit: 100 },
     default: () => ({ articles: [], total: 0 }),
   },
 )
