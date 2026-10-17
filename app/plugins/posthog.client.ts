@@ -35,7 +35,18 @@ export default defineNuxtPlugin(() => {
       disable_surveys: true,
       respect_dnt: true,
       ip: false,
-      before_send: event => sanitizePosthogEvent(event as PosthogEvent | null, window.location.origin) as typeof event,
+      before_send: (event) => {
+        const sanitized = sanitizePosthogEvent(
+          event as PosthogEvent | null,
+          window.location.origin,
+        )
+
+        if (!sanitized) {
+          console.warn('[PostHog] Event rejected by before_send:', event?.event)
+        }
+
+        return sanitized as typeof event
+      },
       loaded: (client) => {
         console.info('[PostHog] SDK initialized; starting pageview tracking.')
         let lastPageUrl = ''
