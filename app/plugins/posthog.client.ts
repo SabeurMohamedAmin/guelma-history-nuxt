@@ -37,6 +37,7 @@ export default defineNuxtPlugin(() => {
       ip: false,
       before_send: event => sanitizePosthogEvent(event as PosthogEvent | null, window.location.origin) as typeof event,
       loaded: (client) => {
+        console.info('[PostHog] SDK initialized; starting pageview tracking.')
         let lastPageUrl = ''
 
         const capturePageview = (href: string) => {
@@ -44,6 +45,7 @@ export default defineNuxtPlugin(() => {
           if (!safeUrl || safeUrl.href === lastPageUrl) return
 
           lastPageUrl = safeUrl.href
+          console.info('[PostHog] Capturing public pageview:', safeUrl.pathname)
           client.capture('$pageview', { $current_url: safeUrl.href })
         }
 
