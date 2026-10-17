@@ -33,6 +33,11 @@ export default defineNuxtPlugin(() => {
       // SDK's batch timer/beacon transport. This makes delivery more reliable
       // on short visits and avoids depending on /batch/ transport behavior.
       request_batching: false,
+      // Surface ingestion failures in the browser console instead of silently
+      // leaving a pageview that was captured locally but never accepted.
+      on_request_error: (response) => {
+        console.error('[PostHog] Event request failed:', response.statusCode, response.text)
+      },
       capture_dead_clicks: false,
       capture_performance: false,
       disable_session_recording: true,
@@ -56,7 +61,12 @@ export default defineNuxtPlugin(() => {
           if (!safeUrl || safeUrl.href === lastPageUrl) return
 
           lastPageUrl = safeUrl.href
-          client.capture('$pageview', { $current_url: safeUrl.href })
+          client.capture('$pageview', { $current_url: safeUrl.href }, {
+            // Explicitly bypass any request queue and use standard XHR so the
+            // browser Network panel shows the actual ingestion response.
+            send_instantly: true,
+            transport: 'XHR',
+          })
         }
 
         // Use Nuxt's resolved route rather than window.location: i18n can
