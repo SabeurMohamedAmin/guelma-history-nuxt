@@ -29,6 +29,10 @@ export default defineNuxtPlugin(() => {
       autocapture: false,
       capture_pageview: false,
       capture_pageleave: false,
+      // Send each approved event immediately instead of waiting for the
+      // SDK's batch timer/beacon transport. This makes delivery more reliable
+      // on short visits and avoids depending on /batch/ transport behavior.
+      request_batching: false,
       capture_dead_clicks: false,
       capture_performance: false,
       disable_session_recording: true,
@@ -41,17 +45,10 @@ export default defineNuxtPlugin(() => {
           window.location.origin,
         )
 
-        if (!sanitized) {
-          console.warn('[PostHog] Event rejected by before_send:', event?.event)
-        }
-        else if (event?.event === '$pageview') {
-          console.info('[PostHog] Pageview passed before_send:', sanitized.properties.$pathname)
-        }
-
+        // Returning null is the SDK's supported way to drop an event.
         return sanitized as typeof event
       },
       loaded: (client) => {
-        console.info('[PostHog] SDK initialized; starting pageview tracking.')
         let lastPageUrl = ''
 
         const capturePageview = (href: string) => {
@@ -59,13 +56,12 @@ export default defineNuxtPlugin(() => {
           if (!safeUrl || safeUrl.href === lastPageUrl) return
 
           lastPageUrl = safeUrl.href
-          console.info('[PostHog] Capturing public pageview:', safeUrl.pathname)
           client.capture('$pageview', { $current_url: safeUrl.href })
         }
 
-        // The callback runs once the SDK is ready; href is read at that point
-        // so the first event reflects the page actually displayed to the user.
-        capturePageview(window.location.href)
+        // Use Nuxt's resolved route rather than window.location: i18n can
+        // redirect from `/` to `/fr` while the SDK is initializing.
+        capturePageview(new URL(router.currentRoute.value.fullPath, window.location.origin).href)
 
         router.afterEach((to, _from, failure) => {
           if (failure) return
