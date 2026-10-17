@@ -44,6 +44,9 @@ export default defineNuxtPlugin(() => {
         if (!sanitized) {
           console.warn('[PostHog] Event rejected by before_send:', event?.event)
         }
+        else if (event?.event === '$pageview') {
+          console.info('[PostHog] Pageview passed before_send:', sanitized.properties.$pathname)
+        }
 
         return sanitized as typeof event
       },
